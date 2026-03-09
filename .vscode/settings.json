@@ -1,0 +1,6 @@
+{
+    "autoDocstring.docstringFormat": "google",
+    "editor.renderWhitespace": "all",
+    "python.defaultInterpreterPath": ".venv\\Scripts\\python.exe",
+    "python.terminal.activateEnvInCurrentTerminal": true
+}
