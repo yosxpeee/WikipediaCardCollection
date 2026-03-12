@@ -32,7 +32,7 @@ def main(page: ft.Page):
     page.window.height=1024
 
     # ガチャタブの中身のクラス生成
-    gacha = Gacha()
+    gacha = Gacha(page)
 
     # DBがない場合初期作成する
     
