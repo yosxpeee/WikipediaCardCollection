@@ -68,16 +68,7 @@ class Gacha:
                 else: #C
                     color = ft.Colors.LIME_900
             return color
-        def selectGachaResult(n):
-            #print(f"{n}番目がクリックされました")
-            views = self.dialog.content.controls[1].content.controls
-            cnt = 0
-            for cont in views:
-                if cnt == n:
-                    cont.visible = True
-                else:
-                    cont.visible = False
-                cnt+=1
+        
         def createCardImage(data, isShow):
             # ランクとカードタイトル
             if data["isSozai"]:
@@ -111,7 +102,6 @@ class Gacha:
                             height=300,
                             bgcolor=getCardColor(data["rank"], data["isSozai"]),
                             alignment=ft.Alignment.CENTER,
-                            content=ft.Text("Now loading...",size=24),
                         ),
                         ft.Image(
                             src=data["imageUrl"],
@@ -302,6 +292,49 @@ class Gacha:
         self.page.update()
         # 結果を表示する
         self.close_btn = ft.TextButton("Close", on_click=lambda e: self.page.pop_dialog())
+
+        # 選択インデックス（初期は0）
+        selected_index = 0
+
+        # サムネイルのコンテンツを生成するヘルパー
+        def make_thumb_content(idx, selected):
+            color = getCardColor(getCardList[idx]["rank"], getCardList[idx]["isSozai"])
+            if selected:
+                # 選択時の黒い枠(内側は白)をContainerで表現
+                return ft.Container(
+                    padding=ft.Padding.all(3),
+                    bgcolor=ft.Colors.BLACK,
+                    content=ft.Container(
+                        padding=ft.Padding.all(3),
+                        bgcolor=ft.Colors.WHITE,
+                        content=ft.Container(
+                            width=120,
+                            height=120,
+                            bgcolor=color,
+                            border_radius=6,
+                        ),
+                    ),
+                )
+            else:
+                return ft.Container(
+                    width=120,
+                    height=120,
+                    bgcolor=color,
+                    border_radius=8,
+                )
+
+        # Grid のサムネイルコントロール群を作る
+        grid_controls = []
+        for i in range(10):
+            c = ft.Container(
+                content=make_thumb_content(i, i == selected_index),
+                on_click=(lambda e, idx=i: selectGachaResult(idx)),
+            )
+            grid_controls.append(c)
+
+        # Stack の表示用コントロール群
+        stack_controls = [createCardImage(getCardList[i], i == selected_index) for i in range(10)]
+
         self.dialog = ft.AlertDialog(
             modal=True,
             title=ft.Text("ガチャ結果"),
@@ -314,65 +347,13 @@ class Gacha:
                         runs_count=5,
                         spacing=8,
                         child_aspect_ratio=0.8,
-                        controls=[
-                            ft.Container(
-                                bgcolor=getCardColor(getCardList[0]["rank"], getCardList[0]["isSozai"]), border_radius=8,
-                                on_click=lambda x:selectGachaResult(0),
-                            ),
-                            ft.Container(
-                                bgcolor=getCardColor(getCardList[1]["rank"], getCardList[1]["isSozai"]), border_radius=8,
-                                on_click=lambda x:selectGachaResult(1),
-                            ),
-                            ft.Container(
-                                bgcolor=getCardColor(getCardList[2]["rank"], getCardList[2]["isSozai"]), border_radius=8,
-                                on_click=lambda x:selectGachaResult(2),
-                            ),
-                            ft.Container(
-                                bgcolor=getCardColor(getCardList[3]["rank"], getCardList[3]["isSozai"]), border_radius=8,
-                                on_click=lambda x:selectGachaResult(3),
-                            ),
-                            ft.Container(
-                                bgcolor=getCardColor(getCardList[4]["rank"], getCardList[4]["isSozai"]), border_radius=8,
-                                on_click=lambda x:selectGachaResult(4),
-                            ),
-                            ft.Container(
-                                bgcolor=getCardColor(getCardList[5]["rank"], getCardList[5]["isSozai"]), border_radius=8,
-                                on_click=lambda x:selectGachaResult(5),
-                            ),
-                            ft.Container(
-                                bgcolor=getCardColor(getCardList[6]["rank"], getCardList[6]["isSozai"]), border_radius=8,
-                                on_click=lambda x:selectGachaResult(6),
-                            ),
-                            ft.Container(
-                                bgcolor=getCardColor(getCardList[7]["rank"], getCardList[7]["isSozai"]), border_radius=8,
-                                on_click=lambda x:selectGachaResult(7),
-                            ),
-                            ft.Container(
-                                bgcolor=getCardColor(getCardList[8]["rank"], getCardList[8]["isSozai"]), border_radius=8,
-                                on_click=lambda x:selectGachaResult(8),
-                            ),
-                            ft.Container(
-                                bgcolor=getCardColor(getCardList[9]["rank"], getCardList[9]["isSozai"]), border_radius=8,
-                                on_click=lambda x:selectGachaResult(9),
-                            ),
-                        ],
+                        controls=grid_controls,
                     ),
                     ft.Container(
                         width=310,
                         height=480,
                         content=ft.Stack(
-                            controls=[
-                                createCardImage(getCardList[0], True),
-                                createCardImage(getCardList[1], False),
-                                createCardImage(getCardList[2], False),
-                                createCardImage(getCardList[3], False),
-                                createCardImage(getCardList[4], False),
-                                createCardImage(getCardList[5], False),
-                                createCardImage(getCardList[6], False),
-                                createCardImage(getCardList[7], False),
-                                createCardImage(getCardList[8], False),
-                                createCardImage(getCardList[9], False),
-                            ]
+                            controls=stack_controls,
                         ),
                         bgcolor=ft.Colors.GREY_100, border_radius=5,
                         padding=ft.Padding.all(5),
@@ -383,6 +364,19 @@ class Gacha:
             actions_alignment=ft.MainAxisAlignment.END,
             title_padding=ft.Padding.all(10),
         )
+
+        # 選択処理の更新（外側の変数を変更するため nonlocal）
+        def selectGachaResult(n):
+            nonlocal selected_index, grid_controls, stack_controls
+            selected_index = n
+            # スタックの表示切替
+            for idx, v in enumerate(self.dialog.content.controls[1].content.controls):
+                v.visible = (idx == n)
+            # サムネイルの再構築（選択枠を変更）
+            for idx, c in enumerate(grid_controls):
+                c.content = make_thumb_content(idx, idx == selected_index)
+            self.dialog.update()
+
         self.page.show_dialog(self.dialog)
     # 画面作成
     def create(self):
