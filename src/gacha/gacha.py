@@ -1,8 +1,10 @@
 import flet as ft
 import urllib.parse
 import asyncio
+import webbrowser
 import re
-from utils.utils import doApi
+
+from utils.utils import doApi, fetch_json
 
 class Gacha:
     # 初期化
@@ -15,22 +17,12 @@ class Gacha:
         # ローディングオーバーレイを表示
         self.loading_overlay.visible = True
         self.page.update()
-        # 非同期でブロッキングなHTTP呼び出しをスレッドで実行するヘルパー
-        async def fetch_json(url, key_path=None):
-            def _call():
-                r = doApi(url)
-                j = r.json()
-                if key_path is None:
-                    return j
-                v = j
-                for k in key_path:
-                    v = v.get(k, {})
-                return v
-            return await asyncio.to_thread(_call)
         # ランダム記事取得
         async def getRandom(n):
             randomUrl = f"https://ja.wikipedia.org/w/api.php?format=json&action=query&list=random&rnnamespace=0&rnlimit={n}"
             j = await fetch_json(randomUrl)
+            if "error" in j:
+                return []
             return j.get("query", {}).get("random", [])
         # ランク取得
         async def getRankData(t_quote):
@@ -41,12 +33,15 @@ class Gacha:
         async def getInfoData(t_quote):
             infoUrl = f"https://ja.wikipedia.org/w/api.php?format=json&action=query&titles={t_quote}&prop=info%7Cpageimages%7Cpageprops%7Cpageviews%7Ccategories&inprop=url%7Ctalkid&pithumbsize=600"
             j = await fetch_json(infoUrl)
-            #print(j)
+            if "error" in j:
+                return {}
             return j
         # 記事の概要取得
-        async def getSummary(title_str):
-            summaryUrl = f"https://ja.wikipedia.org/api/rest_v1/page/summary/{title_str}"
+        async def getSummary(t_quote):
+            summaryUrl = f"https://ja.wikipedia.org/api/rest_v1/page/summary/{t_quote}"
             j = await fetch_json(summaryUrl)
+            if "status" in j:
+                return "ERROR"
             return j.get("extract", "")
         # ランクからカードの色を決める
         def getCardColor(rank, isSozai):
@@ -68,14 +63,29 @@ class Gacha:
                 else: #C
                     color = ft.Colors.LIME_900
             return color
-        
+        # カードイメージの作成
         def createCardImage(data, isShow):
             # ランクとカードタイトル
+            linkText =  ft.GestureDetector(
+                content=ft.Text(
+                    spans=[
+                        ft.TextSpan(
+                        text=f"{data["title"]}",
+                            style=ft.TextStyle(
+                                color=ft.Colors.BLUE,
+                                decoration=ft.TextDecoration.UNDERLINE,
+                            ),
+                        ),
+                    ],
+                ),
+                mouse_cursor=ft.MouseCursor.CLICK,
+                on_tap=lambda e:webbrowser.open(data["pageUrl"]),
+            )
             if data["isSozai"]:
                 title = ft.Row(
                     controls=[
                         ft.Text(f"★"),
-                        ft.Text(f"{data["title"]}")
+                        linkText,
                     ]
                 )
             else:
@@ -83,25 +93,31 @@ class Gacha:
                     title = ft.Row(
                         controls=[
                             ft.Text(f"{data["rank"]}",weight=ft.FontWeight.BOLD),
-                            ft.Text(f"{data["title"]}")
+                            linkText,
                         ]
                     )
                 else:
                     title = ft.Row(
                         controls=[
                             ft.Text(f"{data["rank"]}"),
-                            ft.Text(f"{data["title"]}")
+                            linkText,
                         ]
                     )
             # 画像
             if data["imageUrl"] != "":
                 image = ft.Stack(
+                    alignment=ft.Alignment.CENTER,
                     controls=[
                         ft.Container(
-                            width=300,
-                            height=300,
+                            width=310,
+                            height=310,
                             bgcolor=getCardColor(data["rank"], data["isSozai"]),
                             alignment=ft.Alignment.CENTER,
+                            content=ft.Container(
+                                width=300,
+                                height=300,
+                                bgcolor=ft.Colors.WHITE
+                            )
                         ),
                         ft.Image(
                             src=data["imageUrl"],
@@ -113,11 +129,34 @@ class Gacha:
                 )
             else:
                 image = ft.Container(
-                    width=300,
-                    height=300,
+                    width=310,
+                    height=310,
                     bgcolor=getCardColor(data["rank"], data["isSozai"]),
                     alignment=ft.Alignment.CENTER,
-                    content=ft.Text("NO IMAGE",size=30),
+                    content=ft.Container(
+                        width=300,
+                        height=300,
+                        bgcolor=ft.Colors.WHITE,
+                        content=ft.Text("NO IMAGE",size=30),
+                        alignment=ft.Alignment.CENTER,
+                    )
+                )
+            #ステータス
+            if data["isSozai"]:
+                statuses = ft.Column(
+                    controls=[
+                        ft.Text(f"HP : -    ",size=24, font_family="Consolas"),
+                        ft.Text(f"ATK: -    ",size=24, font_family="Consolas"),
+                        ft.Text(f"DEF: -    ",size=24, font_family="Consolas"),
+                    ],
+                )
+            else:
+                statuses = ft.Column(
+                    controls=[
+                        ft.Text(f"HP : {data["HP"]}".ljust(10," "),  size=24,font_family="Consolas"),
+                        ft.Text(f"ATK: {data["ATK"]}".ljust(10," "), size=24,font_family="Consolas"),
+                        ft.Text(f"DEF: {data["DEF"]}".ljust(10," "), size=24,font_family="Consolas"),
+                    ],
                 )
             view = ft.Container(
                 alignment=ft.Alignment.CENTER,
@@ -127,9 +166,21 @@ class Gacha:
                     controls=[
                         title,
                         image,
-                        ft.Text(f"HP : {data["HP"]}", size=24),
-                        ft.Text(f"ATK: {data["ATK"]}",size=24),
-                        ft.Text(f"DEF: {data["DEF"]}",size=24),
+                        ft.Row(
+                            controls=[
+                                # ステータス
+                                statuses,
+                                # 概要
+                                ft.Container(
+                                    expand=True,
+                                    content=ft.Text(
+                                        data["extract"],
+                                        max_lines=5,
+                                        overflow=ft.TextOverflow.ELLIPSIS,
+                                    ),
+                                ),
+                            ],
+                        ),
                     ],
                 ),
             )
@@ -144,8 +195,10 @@ class Gacha:
                 break
             # デバッグ：テスト用にdata固定
             #if count == 0:
+            #      rand_list = [{"id":"94872", "title":"アイヌの一覧"}]
             #    rand_list = [{"id":"7219",    "title":"UTC (曖昧さ回避)"}] #素材
             #elif count == 1:
+            #    rand_list = [{"id":"296076",    "title":"菊水町"}] #素材
             #    rand_list = [{"id":"4690122", "title":"2024年アメリカ合衆国選挙"}] #C (svg画像)
             #elif count == 2:
             #    rand_list = [{"id":"673688",  "title":"カール9世 (スウェーデン王)"}] #C（tif画像）
@@ -154,7 +207,7 @@ class Gacha:
             #elif count == 4:
             #    rand_list = [{"id":"139036",  "title":"宇宙空母ブルーノア"}] #R
             #elif count == 5:
-            #    rand_list = [{"id":"371", "title":"愛媛県"}] #SR
+            #    rand_list = [{"id":"371",     "title":"愛媛県"}] #SR
             #elif count == 6:
             #    rand_list = [{"id":"1492869", "title":"キンシャサノキセキ"}] #SSR
             #elif count == 7:
@@ -167,47 +220,63 @@ class Gacha:
                 pageid = r["id"]
                 title = r["title"]
                 t_quote = urllib.parse.quote(title)
-                rankData = await getRankData(t_quote)
+                rankData = await getRankData(t_quote) #Rank
+                infoData = await getInfoData(t_quote) #info
+                if infoData == {}:
+                    print("記事情報取得失敗。リトライ")
+                    break
+                extract  = await getSummary(t_quote) #概要
+                if extract == "ERROR":
+                    print("記事概要取得失敗。リトライ")
+                    break
                 if rankData["result"] == "not found" :
                     #評価されていない場合はCとみなす
-                    rank = "C"
                     q = 0
+                    rank = "C"
+                    atk_multi = 1
+                    def_multi = 1
                 else:
                     q = float(rankData["result"]["ja"]["quality"])
-                    match q:
-                        case float(q) if q == 100:
-                            rank = "LR"
-                            atk_multi = 25
-                            def_multi = 25
-                        case float(q) if q >= 90:
-                            rank = "UR"
-                            atk_multi = 20
-                            def_multi = 20
-                        case float(q) if q >= 80:
-                            rank = "SSR"
-                            atk_multi = 15
-                            def_multi = 15
-                        case float(q) if q >= 60:
-                            rank = "SR"
-                            atk_multi = 10
-                            def_multi = 10
-                        case float(q) if q >= 35:
-                            rank = "R"
-                            atk_multi = 7.5
-                            def_multi = 7.5
-                        case float(q) if q >= 20:
-                            rank = "UC"
-                            atk_multi = 4
-                            def_multi = 4
-                        case _:
-                            rank = "C"
-                            atk_multi = 1
-                            def_multi = 1
-                # 記事のinfo取得
-                infoData = await getInfoData(t_quote)
+                    if q == 100:
+                        rank = "LR"
+                        atk_multi = 25
+                        def_multi = 25
+                    elif q >= 90:
+                        rank = "UR"
+                        atk_multi = 20
+                        def_multi = 20
+                    elif q >= 80:
+                        rank = "SSR"
+                        atk_multi = 15
+                        def_multi = 15
+                    elif q >= 60:
+                        rank = "SR"
+                        atk_multi = 10
+                        def_multi = 10
+                    elif q >= 35:
+                        rank = "R"
+                        atk_multi = 7.5
+                        def_multi = 7.5
+                    elif q >= 20:
+                        rank = "UC"
+                        atk_multi = 4
+                        def_multi = 4
+                    else:
+                        rank = "C"
+                        atk_multi = 1
+                        def_multi = 1
                 p_str = str(pageid)
-                # 曖昧さ回避のページかどうか
-                isSozai = any("曖昧さ回避" in category.get("title", "") for category in infoData["query"]["pages"][p_str]["categories"])
+                # 素材判定
+                isAimai   = any("曖昧さ回避" in category.get("title", "") for category in infoData["query"]["pages"][p_str]["categories"])
+                isList    = any(category.get("title", "").endswith("一覧") for category in infoData["query"]["pages"][p_str]["categories"])
+                isHikaku  = any("の比較" in category.get("title", "") for category in infoData["query"]["pages"][p_str]["categories"])
+                isHistory = any("年表" in category.get("title", "") for category in infoData["query"]["pages"][p_str]["categories"])
+                #print(isAimai, isList, isHikaku, isHistory)
+                if isAimai or isList or isHikaku or isHistory:
+                    #print(infoData["query"]["pages"][p_str]["categories"])
+                    isSozai = True
+                else:
+                    isSozai = False
                 try:
                     d_resource = infoData["query"]["pages"][p_str]["length"]
                     query = True
@@ -244,6 +313,8 @@ class Gacha:
                             a_hosei = 2000
                         else:
                             a_hosei = 5000
+                        #print(def_multi)
+                        #print(atk_multi)
                         defence  = int((d_resource*d_hosei*def_multi)**0.5*7)
                         atk      = int((a_resource*a_hosei*atk_multi)**0.5*7)
                         hitPoint = defence+3000
@@ -255,8 +326,6 @@ class Gacha:
                         imageUrl = infoData["query"]["pages"][p_str]["thumbnail"]["source"]
                     else:
                         imageUrl = ""
-                    # 記事の概要取得
-                    extract = await getSummary(title)
                     fullUrl = infoData["query"]["pages"][p_str]["fullurl"]
                     print("#########################################################")
                     if isSozai:
@@ -292,10 +361,8 @@ class Gacha:
         self.page.update()
         # 結果を表示する
         self.close_btn = ft.TextButton("Close", on_click=lambda e: self.page.pop_dialog())
-
         # 選択インデックス（初期は0）
         selected_index = 0
-
         # サムネイルのコンテンツを生成するヘルパー
         def make_thumb_content(idx, selected):
             color = getCardColor(getCardList[idx]["rank"], getCardList[idx]["isSozai"])
@@ -322,7 +389,6 @@ class Gacha:
                     bgcolor=color,
                     border_radius=8,
                 )
-
         # Grid のサムネイルコントロール群を作る
         grid_controls = []
         for i in range(10):
@@ -331,10 +397,8 @@ class Gacha:
                 on_click=(lambda e, idx=i: selectGachaResult(idx)),
             )
             grid_controls.append(c)
-
         # Stack の表示用コントロール群
         stack_controls = [createCardImage(getCardList[i], i == selected_index) for i in range(10)]
-
         self.dialog = ft.AlertDialog(
             modal=True,
             title=ft.Text("ガチャ結果"),
@@ -350,7 +414,7 @@ class Gacha:
                         controls=grid_controls,
                     ),
                     ft.Container(
-                        width=310,
+                        width=320,
                         height=480,
                         content=ft.Stack(
                             controls=stack_controls,

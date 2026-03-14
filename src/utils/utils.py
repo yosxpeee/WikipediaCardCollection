@@ -1,5 +1,6 @@
 import requests
 import time
+import asyncio
 
 HEADER = {
     "Content-Type":"application/json", 
@@ -15,6 +16,18 @@ def doApi(url):
             break
         except Exception as e:
             print(e)
-            print("5秒待機してリトライします。")
-            time.sleep(5)
+            break
     return response
+
+# 非同期でブロッキングなHTTP呼び出しをスレッドで実行するヘルパー
+async def fetch_json(url, key_path=None):
+    def _call():
+        r = doApi(url)
+        j = r.json()
+        if key_path is None:
+            return j
+        v = j
+        for k in key_path:
+            v = v.get(k, {})
+        return v
+    return await asyncio.to_thread(_call)
