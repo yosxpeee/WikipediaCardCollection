@@ -39,25 +39,15 @@ class Gacha:
             return j
         # 記事の情報取得
         async def getInfoData(t_quote):
-            infoUrl = f"https://ja.wikipedia.org/w/api.php?format=json&action=query&titles={t_quote}&prop=info%7Cpageprops%7Cpageviews%7Ccategories&inprop=url%7Ctalkid"
+            infoUrl = f"https://ja.wikipedia.org/w/api.php?format=json&action=query&titles={t_quote}&prop=info%7Cpageimages%7Cpageprops%7Cpageviews%7Ccategories&inprop=url%7Ctalkid&pithumbsize=600"
             j = await fetch_json(infoUrl)
-            print(j)
+            #print(j)
             return j
         # 記事の概要取得
         async def getSummary(title_str):
             summaryUrl = f"https://ja.wikipedia.org/api/rest_v1/page/summary/{title_str}"
             j = await fetch_json(summaryUrl)
             return j.get("extract", "")
-        async def getImageUrlEntity(image):
-            imageUrl = f"https://ja.wikipedia.org/w/api.php?format=json&action=query&titles=File:{image}&prop=imageinfo&iiprop=url&&iiurlwidth=300"
-            j = await fetch_json(imageUrl)
-            print(j)
-            page = next(iter(j["query"]["pages"].values()))
-            url = page["imageinfo"][0]["url"]
-            if url.lower().endswith(".svg") or url.lower().endswith(".tif"):
-                return page["imageinfo"][0]["thumburl"]
-            else:
-                return page["imageinfo"][0]["url"]
         # ランクからカードの色を決める
         def getCardColor(rank, isSozai):
             if isSozai:
@@ -79,7 +69,7 @@ class Gacha:
                     color = ft.Colors.LIME_900
             return color
         def selectGachaResult(n):
-            print(f"{n}番目がクリックされました")
+            #print(f"{n}番目がクリックされました")
             views = self.dialog.content.controls[1].content.controls
             cnt = 0
             for cont in views:
@@ -162,27 +152,27 @@ class Gacha:
         while True:
             if count >= num:
                 break
-            # デバッグ：テスト用にdata固定中
-            if count == 0:
-                rand_list = [{"id":"7219",    "title":"UTC (曖昧さ回避)"}] #素材
-            elif count == 1:
-                rand_list = [{"id":"4690122", "title":"2024年アメリカ合衆国選挙"}] #C
-            elif count == 2:
-                rand_list = [{"id":"24342",   "title":"ソロモン"}] #UC
-            elif count == 3:
-                rand_list = [{"id":"139036",  "title":"宇宙空母ブルーノア"}] #R
-            elif count == 4:
-                rand_list = [{"id":"371", "title":"愛媛県"}] #SR
-            elif count == 5:
-                rand_list = [{"id":"1492869", "title":"キンシャサノキセキ"}] #SSR
-            elif count == 6:
-                rand_list = [{"id":"1855047", "title":"新宿駅"}] #UR
-            elif count == 7:
-                rand_list = [{"id":"228773",  "title":"ディープインパクト (競走馬)"}] #LR
-            elif count == 8:
-                rand_list = [{"id":"673688",  "title":"カール9世 (スウェーデン王)"}] #C
-            else:
-                rand_list = await getRandom(1)
+            # デバッグ：テスト用にdata固定
+            #if count == 0:
+            #    rand_list = [{"id":"7219",    "title":"UTC (曖昧さ回避)"}] #素材
+            #elif count == 1:
+            #    rand_list = [{"id":"4690122", "title":"2024年アメリカ合衆国選挙"}] #C (svg画像)
+            #elif count == 2:
+            #    rand_list = [{"id":"673688",  "title":"カール9世 (スウェーデン王)"}] #C（tif画像）
+            #elif count == 3:
+            #    rand_list = [{"id":"24342",   "title":"ソロモン"}] #UC
+            #elif count == 4:
+            #    rand_list = [{"id":"139036",  "title":"宇宙空母ブルーノア"}] #R
+            #elif count == 5:
+            #    rand_list = [{"id":"371", "title":"愛媛県"}] #SR
+            #elif count == 6:
+            #    rand_list = [{"id":"1492869", "title":"キンシャサノキセキ"}] #SSR
+            #elif count == 7:
+            #    rand_list = [{"id":"1855047", "title":"新宿駅"}] #UR
+            #elif count == 8:
+            #    rand_list = [{"id":"228773",  "title":"ディープインパクト (競走馬)"}] #LR
+            #else:
+            rand_list = await getRandom(1)
             for r in rand_list:
                 pageid = r["id"]
                 title = r["title"]
@@ -271,9 +261,8 @@ class Gacha:
                         defence = -1
                         atk = -1
                         hitPoint = -1
-                    if "page_image_free" in infoData["query"]["pages"][p_str]["pageprops"]:
-                        imgFileName = infoData["query"]["pages"][p_str]["pageprops"]["page_image_free"]
-                        imageUrl = await getImageUrlEntity(imgFileName)
+                    if "thumbnail" in infoData["query"]["pages"][p_str]:
+                        imageUrl = infoData["query"]["pages"][p_str]["thumbnail"]["source"]
                     else:
                         imageUrl = ""
                     # 記事の概要取得
@@ -392,7 +381,6 @@ class Gacha:
             ),
             actions=[self.close_btn],
             actions_alignment=ft.MainAxisAlignment.END,
-            #on_dismiss=lambda e: print("Dialog dismissed!"),
             title_padding=ft.Padding.all(10),
         )
         self.page.show_dialog(self.dialog)

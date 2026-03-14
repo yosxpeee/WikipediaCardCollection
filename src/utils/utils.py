@@ -9,7 +9,7 @@ HEADER = {
 def doApi(url):
     while True:
         try:
-            print(url)
+            #print(url)
             response = requests.get(url, headers=HEADER)
             response.raise_for_status()  # エラー時にすぐ分かる
             break
