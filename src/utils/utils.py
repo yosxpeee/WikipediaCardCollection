@@ -1,4 +1,5 @@
 import requests
+import time
 
 HEADER = {
     "Content-Type":"application/json", 
@@ -6,6 +7,14 @@ HEADER = {
 }
 
 def doApi(url):
-    response = requests.get(url, headers=HEADER)
-    response.raise_for_status()  # エラー時にすぐ分かる
+    while True:
+        try:
+            print(url)
+            response = requests.get(url, headers=HEADER)
+            response.raise_for_status()  # エラー時にすぐ分かる
+            break
+        except Exception as e:
+            print(e)
+            print("5秒待機してリトライします。")
+            time.sleep(5)
     return response

@@ -30,11 +30,25 @@ def main(page: ft.Page):
     # ページの設定
     page.window.width=768
     page.window.height=1024
-
+    page.window.resizable = False
+    # ローディングオーバーレイ
+    loading_overlay = ft.Container(
+        visible=False,
+        expand=True,
+        bgcolor=ft.Colors.with_opacity(0.88, ft.Colors.BLACK),
+        alignment=ft.Alignment.CENTER,
+        content=ft.Column([
+                ft.Text("結果を取得中…", size=22, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                ft.ProgressRing(width=80, height=80, stroke_width=7, color=ft.Colors.CYAN_400),
+            ], 
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER, 
+            alignment=ft.MainAxisAlignment.CENTER, spacing=24
+        ),
+    )
+    page.overlay.append(loading_overlay)
     # ガチャタブの中身のクラス生成
     gacha = Gacha(page)
-
-    # DBがない場合初期作成する
+    # DBがない場合初期作成する(TBD)
     
     # ページに要素追加
     page.controls.append(
@@ -80,3 +94,4 @@ def main(page: ft.Page):
 
 if __name__ == "__main__":
     ft.run(main, view=ft.AppView.FLET_APP_HIDDEN)
+    #ft.run(main, view=ft.AppView.WEB_BROWSER)
