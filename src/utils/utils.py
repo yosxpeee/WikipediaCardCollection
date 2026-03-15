@@ -7,6 +7,7 @@ HEADER = {
     "User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36",
 }
 RANK_TABLE = {
+    -1: "--",
     0: "C",
     1: "UC",
     2: "R",
@@ -43,8 +44,12 @@ async def fetch_json(url, key_path=None):
     return await asyncio.to_thread(_call)
 
 #rank to rankid
-def rankIdToRank(rankId):
-    return RANK_TABLE[int(rankId)]
+def rankIdToRank(rankId, isSozai):
+    print(rankId, isSozai)
+    if isSozai == "1":
+        return RANK_TABLE[-1]
+    else:
+        return RANK_TABLE[int(rankId)]
 
 #rankid to rank
 def rankToRankId(rank):

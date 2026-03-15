@@ -87,7 +87,7 @@ class Gacha:
             if data["isSozai"]:
                 title = ft.Row(
                     controls=[
-                        ft.Text(f"★"),
+                        ft.Text(f"--"),
                         linkText,
                     ]
                 )
@@ -363,7 +363,7 @@ class Gacha:
                     # ↓デバッグ用にしばらく残す
                     print("#########################################################")
                     if isSozai:
-                        print(f"{pageid}: {title} [{rank}] ({q}) ★")
+                        print(f"{pageid}: {title} [{rank}] ({q}) (素材)")
                     else:
                         print(f"{pageid}: {title} [{rank}] ({q})")
                     print(f"Page URL: {fullUrl}")

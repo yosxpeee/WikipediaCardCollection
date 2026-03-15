@@ -67,7 +67,8 @@ class Zukan:
             end = min(start + PAGE_PER_CARDS, total_items)
             for idx in range(start, end):
                 row_data = data[idx]
-                rank = rankIdToRank(row_data[5])
+                #print(row_data[7])
+                rank = rankIdToRank(row_data[5], row_data[7])
                 num_text = str(row_data[0]).ljust(8, " ")
                 pageid_text = str(row_data[1]).ljust(8, " ")
                 rank_text = str(rank).ljust(4, " ")
@@ -145,11 +146,6 @@ class Zukan:
         page_label = ft.Text(f"{current_page} / {total_pages} ({total_items})")
         # 初期ページを構築
         build_page(current_page)
-        #ページ送り、検索UI
-        #<- 現在/総 ->
-        #検索[キーワード]
-        #フィルタ[C～LR]
-        #現在をテキストぼっくスにして
         zukan_tab = ft.Column(
             controls=[
                 ft.Row(
