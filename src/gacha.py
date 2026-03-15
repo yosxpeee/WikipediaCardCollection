@@ -299,11 +299,12 @@ class Gacha:
                 p_str = str(pageid)
                 # 素材判定
                 isAimai   = any("曖昧さ回避" in category.get("title", "") for category in infoData["query"]["pages"][p_str]["categories"])
-                isList    = any(category.get("title", "").endswith("一覧") for category in infoData["query"]["pages"][p_str]["categories"])
-                isHikaku  = any("の比較" in category.get("title", "") for category in infoData["query"]["pages"][p_str]["categories"])
-                isHistory = any("年表" in category.get("title", "") for category in infoData["query"]["pages"][p_str]["categories"])
+                #isList    = any(category.get("title", "").endswith("一覧") for category in infoData["query"]["pages"][p_str]["categories"])
+                #isHikaku  = any("の比較" in category.get("title", "") for category in infoData["query"]["pages"][p_str]["categories"])
+                #isHistory = any("年表" in category.get("title", "") for category in infoData["query"]["pages"][p_str]["categories"])
                 #print(isAimai, isList, isHikaku, isHistory)
-                if isAimai or isList or isHikaku or isHistory:
+                #if isAimai or isList or isHikaku or isHistory:
+                if isAimai:
                     #print(infoData["query"]["pages"][p_str]["categories"])
                     isSozai = True
                 else:

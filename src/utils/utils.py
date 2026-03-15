@@ -44,7 +44,7 @@ async def fetch_json(url, key_path=None):
 
 #rank to rankid
 def rankIdToRank(rankId):
-    return RANK_TABLE[rankId]
+    return RANK_TABLE[int(rankId)]
 
 #rankid to rank
 def rankToRankId(rank):

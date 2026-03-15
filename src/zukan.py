@@ -1,7 +1,7 @@
 import flet as ft
 from bs4 import BeautifulSoup
 
-from utils.utils import doApi
+from utils.utils import doApi, rankIdToRank
 from utils.db import get_all_cards
 
 PAGE_PER_CARDS = 40
@@ -57,17 +57,18 @@ class Zukan:
 
         #40ぐらいでちょうどよさげ。これをスタックで積む・・・と多分数万単位になったら困るので
         #nextとかprevで送ったときのそのページを都度都度作って更新しないといけないんだろうな
-        for n in range(PAGE_PER_CARDS): 
+        for n in range(PAGE_PER_CARDS):
+            rank = rankIdToRank(data[n][5])
             table.controls.append(
                 ft.Row(
                     controls=[
-                        ft.Text(data[n][0]), #通し番号
-                        ft.Text(data[n][1]), #pageId
-                        ft.Text(data[n][2]), #カード名
-                        ft.Text(data[n][5]), #RANK
-                        ft.Text(data[n][9]),
-                        ft.Text(data[n][10]),
-                        ft.Text(data[n][11]),
+                        ft.Text(data[n][0]),  #通し番号
+                        ft.Text(data[n][1]),  #pageId
+                        ft.Text(rank),  #RANK
+                        ft.Text(data[n][2]),  #カード名
+                        ft.Text(data[n][9]),  #HP
+                        ft.Text(data[n][10]), #ATK
+                        ft.Text(data[n][11]), #DEF
                     ],
                 ),
             )
