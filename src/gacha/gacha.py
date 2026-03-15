@@ -2,7 +2,6 @@ import flet as ft
 import urllib.parse
 import asyncio
 import webbrowser
-import re
 
 from utils.utils import doApi, fetch_json
 

@@ -1,5 +1,5 @@
 import flet as ft
-
+import asyncio
 from zukan.zukan import Zukan
 from gacha.gacha import Gacha
 
@@ -18,14 +18,32 @@ def main(page: ft.Page):
             tab_bar_view.update()
         # 図鑑タブに切り替えたとき
         if e.control.selected_index == 1:
-            # 図鑑タブの内容を更新
-            zukan = Zukan()
+            # 図鑑タブの内容を非同期で読み込む
+            zukan = Zukan(page)
             tab_bar_view = e.control.content.controls[1]
+            # 一旦プレースホルダを入れてから非同期で差し替え
             tab_bar_view.controls[1] = ft.Container(
-                content=zukan.create(),
+                content=ft.Text("読み込み中...", size=18),
                 alignment=ft.Alignment.CENTER,
             )
             tab_bar_view.update()
+
+            async def load_and_set():
+                try:
+                    content = await zukan.create()
+                    tab_bar_view.controls[1] = ft.Container(
+                        content=content,
+                        alignment=ft.Alignment.CENTER,
+                    )
+                    tab_bar_view.update()
+                except Exception as ex:
+                    tab_bar_view.controls[1] = ft.Column([
+                        ft.Text("読み込みに失敗しました。"),
+                        ft.Text(str(ex))
+                    ])
+                    tab_bar_view.update()
+
+            asyncio.create_task(load_and_set())
 
     # ページの設定
     page.window.width=768
