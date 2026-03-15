@@ -26,8 +26,13 @@ class Gacha:
             return j.get("query", {}).get("random", [])
         # ランク取得
         async def getRankData(t_quote):
-            rankUrl = f"https://api.wikirank.net/api.php?name={t_quote}&lang=ja"
-            j = await fetch_json(rankUrl)
+            while True:
+                try:
+                    rankUrl = f"https://api.wikirank.net/api.php?name={t_quote}&lang=ja"
+                    j = await fetch_json(rankUrl)
+                    break
+                except:
+                    print("エラー。リトライします。")
             return j
         # 記事の情報取得
         async def getInfoData(t_quote):
@@ -353,21 +358,23 @@ class Gacha:
                     else:
                         imageUrl = ""
                     fullUrl = infoData["query"]["pages"][p_str]["fullurl"]
+                    # ↓デバッグ用にしばらく残す
                     print("#########################################################")
                     if isSozai:
                         print(f"{pageid}: {title} [{rank}] ({q}) ★")
                     else:
                         print(f"{pageid}: {title} [{rank}] ({q})")
-                    print(f"URL: {fullUrl}")
+                    print(f"Page URL: {fullUrl}")
                     if extract == "":
-                        print("")
+                        print("概要: なし")
                     else:
-                        print(extract)
-                    print(imageUrl)
+                        print(f"概要: {extract}")
+                    print(f"画像URL: {imageUrl}")
                     print(f"HP :{hitPoint}")
                     print(f"ATK:{atk}")
                     print(f"DEF:{defence}")
-                    # ↑はデバッグコードにして、dictに結果を収める
+                    print("#########################################################")
+                    # ↑デバッグ用にしばらく残す
                     getCardList.append({
                         "pageId": pageid,
                         "title": title,

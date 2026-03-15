@@ -1,10 +1,11 @@
 import sqlite3
+from utils.utils import rankToRankId
 
 def initialize_db():
     conn = sqlite3.connect('cards.db')
     cursor = conn.cursor()
     # ファイルがない、ファイルがあってもテーブルがない場合は新規作成する
-    # count＝保有枚数
+    # IDは数値、それ以外は全部文字列    
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS gacha_cards (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -31,18 +32,18 @@ def save_cards(cards):
     for card in cards:
         cursor.execute('''
             INSERT INTO gacha_cards (pageId, title, pageUrl, imageUrl, rank, quality, isSozai, extract, HP, ATK, DEF) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (card['pageId'], card['title'], card['pageUrl'], card['imageUrl'], card['rank'], card['quality'], card['isSozai'], card['extract'], card['HP'], card['ATK'], card['DEF']))
+        ''', (card['pageId'], card['title'], card['pageUrl'], card['imageUrl'], rankToRankId(card['rank']), card['quality'], card['isSozai'], card['extract'], card['HP'], card['ATK'], card['DEF']))
     # 断片化云々を防ぎたいのでバキュームする（毎回でなくてもいいか？）
     conn.commit()
     conn.close()
 
-def get_card_count(pageId):
+def get_all_cards():
     conn = sqlite3.connect('cards.db')
     cursor = conn.cursor()
-    sql = f"""SELECT count FROM gacha_cards WHERE pageid = {pageId}"""
+    data = []
+    sql = f"""SELECT * FROM gacha_cards"""
     cursor.execute(sql)
     for item in cursor:
-        ret = item
-        break
+        data.append(item)
     conn.close()
-    return ret
+    return data

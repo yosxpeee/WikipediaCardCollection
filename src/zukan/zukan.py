@@ -2,6 +2,9 @@ import flet as ft
 from bs4 import BeautifulSoup
 
 from utils.utils import doApi
+from utils.db import get_all_cards
+
+PAGE_PER_CARDS = 40
 
 class Zukan:
     # 初期化
@@ -33,31 +36,49 @@ class Zukan:
         # ローディングオーバーレイを表示
         self.loading_overlay.visible = True
         self.page.update()
-        #要素数決めたいので中身空でstaticに作ってみる
-        table = ft.ListView(
-            expand=True,
-            spacing=0,
-            controls=[],
-        )
-        #あとはどうやってページ送りを実装するか
-        for n in range(40): #40ぐらいでちょうどよさげ
-            table.controls.append(
-                ft.Row(
-                    controls=[
-                        ft.Text(str(n)),
-                        ft.Text("PageId"),
-                        ft.Text("RANK"),
-                        ft.Text("HP"),
-                        ft.Text("ATK"),
-                        ft.Text("DEF"),
-                    ],
-                ),
-            )
         # 総記事数はブロッキングなのでバックグラウンドで取得
         try:
             count = await __import__("asyncio").to_thread(self.getAllTargetCount)
         except Exception:
             count = -1
+
+        #DBからデータを持ってくる
+        data = get_all_cards()
+        for card in data:
+            print(card)
+
+        table = ft.ListView(
+            expand=True,
+            spacing=0,
+            controls=[],
+        )
+        #総カウント数÷1ページの分の枚数
+        #(余りがあれば+1)
+
+        #40ぐらいでちょうどよさげ。これをスタックで積む・・・と多分数万単位になったら困るので
+        #nextとかprevで送ったときのそのページを都度都度作って更新しないといけないんだろうな
+        for n in range(PAGE_PER_CARDS): 
+            table.controls.append(
+                ft.Row(
+                    controls=[
+                        ft.Text(data[n][0]), #通し番号
+                        ft.Text(data[n][1]), #pageId
+                        ft.Text(data[n][2]), #カード名
+                        ft.Text(data[n][5]), #RANK
+                        ft.Text(data[n][9]),
+                        ft.Text(data[n][10]),
+                        ft.Text(data[n][11]),
+                    ],
+                ),
+            )
+
+        #ページ送り、検索UI
+        #<- 現在/総 ->
+        #検索[キーワード]
+        #フィルタ[C～LR]
+
+        #現在をテキストぼっくスにして
+        #あとはどうやってページ送りを実装するか
 
         zukan_tab = ft.Column(
             controls=[
