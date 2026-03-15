@@ -33,6 +33,93 @@ class Zukan:
             return -1
     # 画面作成
     async def create(self):
+        def build_page(page):
+            table.controls.clear()
+            # ヘッダを作成
+            header = ft.Row(
+                spacing=12,
+                controls=[
+                    ft.Text("ID".ljust(8, " "), font_family="Consolas"),
+                    ft.Text("Page ID".ljust(8, " "), font_family="Consolas"),
+                    ft.Text("RANK".ljust(4, " "), font_family="Consolas"),
+                    ft.Container(
+                        width=370,
+                        content=ft.Text(
+                            "カード名",
+                            max_lines=1,
+                            overflow=ft.TextOverflow.ELLIPSIS,
+                        ),
+                    ),
+                    ft.Text("HP".ljust(5, " "), font_family="Consolas"),
+                    ft.Text("ATK".ljust(5, " "), font_family="Consolas"),
+                    ft.Text("DEF".ljust(5, " "), font_family="Consolas"),
+                ],
+            )
+            table.controls.append(header)
+            table.controls.append(ft.Divider(
+                color=ft.Colors.BLACK,
+                height=1,
+            ))
+            if total_items == 0:
+                #table.controls.append(ft.Text("データがありません"))
+                return
+            start = (page - 1) * PAGE_PER_CARDS
+            end = min(start + PAGE_PER_CARDS, total_items)
+            for idx in range(start, end):
+                row_data = data[idx]
+                rank = rankIdToRank(row_data[5])
+                num_text = str(row_data[0]).ljust(8, " ")
+                pageid_text = str(row_data[1]).ljust(8, " ")
+                rank_text = str(rank).ljust(4, " ")
+                name_text = row_data[2] if row_data[2] is not None else ""
+                if row_data[9] == "-1":
+                    hp_text = "-".ljust(5, " ") if row_data[9] is not None else "".ljust(5, " ")
+                else:
+                    hp_text = str(row_data[9]).ljust(5, " ") if row_data[9] is not None else "".ljust(5, " ")
+                if row_data[10] == "-1":
+                    atk_text = "-".ljust(5, " ") if row_data[10] is not None else "".ljust(5, " ")
+                else:
+                    atk_text = str(row_data[10]).ljust(5, " ") if row_data[10] is not None else "".ljust(5, " ")
+                if row_data[11] == "-1":
+                    def_text = "-".ljust(5, " ") if row_data[11] is not None else "".ljust(5, " ")
+                else:
+                    def_text = str(row_data[11]).ljust(5, " ") if row_data[11] is not None else "".ljust(5, " ")
+                table.controls.append(
+                    ft.Row(
+                        spacing=12,
+                        controls=[
+                            ft.Text(num_text, font_family="Consolas"),
+                            ft.Text(pageid_text, font_family="Consolas"),
+                            ft.Text(rank_text, font_family="Consolas"),
+                            ft.Container(
+                                width=370,
+                                content=ft.Text(
+                                    name_text,
+                                    max_lines=1,
+                                    overflow=ft.TextOverflow.ELLIPSIS,
+                                ),
+                            ),
+                            ft.Text(hp_text, font_family="Consolas"),
+                            ft.Text(atk_text, font_family="Consolas"),
+                            ft.Text(def_text, font_family="Consolas"),
+                        ],
+                    )
+                )
+        def refresh_page_label():
+            page_label.value = f"{current_page} / {total_pages} ({total_items})"
+        # ページ操作
+        def on_prev(e):
+            nonlocal current_page
+            if current_page > 1:
+                current_page -= 1
+                build_page(current_page)
+                self.page.update()
+        def on_next(e):
+            nonlocal current_page
+            if current_page < total_pages:
+                current_page += 1
+                build_page(current_page)
+                self.page.update()
         # ローディングオーバーレイを表示
         self.loading_overlay.visible = True
         self.page.update()
@@ -41,54 +128,42 @@ class Zukan:
             count = await __import__("asyncio").to_thread(self.getAllTargetCount)
         except Exception:
             count = -1
-
         #DBからデータを持ってくる
         data = get_all_cards()
-        for card in data:
-            print(card)
-
+        #for card in data:
+        #    print(card)
         table = ft.ListView(
             expand=True,
             spacing=0,
             controls=[],
         )
-        #総カウント数÷1ページの分の枚数
-        #(余りがあれば+1)
-
-        #データが少ない時の特別措置
-        if len(data) < 30:
-            dataNum = len(data)
-        else:
-            dataNum = PAGE_PER_CARDS
-        #30ぐらいでちょうどよさげ。これをスタックで積む・・・と多分数万単位になったら困るので
-        #nextとかprevで送ったときのそのページを都度都度作って更新しないといけないんだろうな
-        for n in range(dataNum):
-            rank = rankIdToRank(data[n][5])
-            table.controls.append(
-                ft.Row(
-                    controls=[
-                        ft.Text(data[n][0]),  #通し番号
-                        ft.Text(data[n][1]),  #pageId
-                        ft.Text(rank),  #RANK
-                        ft.Text(data[n][2]),  #カード名
-                        ft.Text(data[n][9]),  #HP
-                        ft.Text(data[n][10]), #ATK
-                        ft.Text(data[n][11]), #DEF
-                    ],
-                ),
-            )
-
+        # ページネーション設定
+        total_items = len(data)
+        total_pages = (total_items + PAGE_PER_CARDS - 1) // PAGE_PER_CARDS if total_items > 0 else 1
+        current_page = 1
+        # ページ表示ラベル（更新は build_page 後に page.update で）
+        page_label = ft.Text(f"{current_page} / {total_pages} ({total_items})")
+        # 初期ページを構築
+        build_page(current_page)
         #ページ送り、検索UI
         #<- 現在/総 ->
         #検索[キーワード]
         #フィルタ[C～LR]
-
         #現在をテキストぼっくスにして
-        #あとはどうやってページ送りを実装するか
-
         zukan_tab = ft.Column(
             controls=[
-                ft.Text(f"総記事数：{count}"),
+                ft.Row(
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    controls=[ft.Text(f"Wikipedia 日本語版 取得対象総記事数：{count}")],
+                ),
+                ft.Row(
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    controls=[
+                        ft.IconButton(icon=ft.Icons.ARROW_BACK, on_click=lambda e: (on_prev(e), refresh_page_label())),
+                        page_label,
+                        ft.IconButton(icon=ft.Icons.ARROW_FORWARD, on_click=lambda e: (on_next(e), refresh_page_label())),
+                    ],
+                ),
                 table,
             ]
         )

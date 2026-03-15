@@ -14,9 +14,6 @@ class Gacha:
         self.loading_overlay = page.overlay[0]
     # ガチャを引く
     async def draw(self, num):
-        # ローディングオーバーレイを表示
-        self.loading_overlay.visible = True
-        self.page.update()
         # ランダム記事取得
         async def getRandom(n):
             randomUrl = f"https://ja.wikipedia.org/w/api.php?format=json&action=query&list=random&rnnamespace=0&rnlimit={n}"
@@ -79,6 +76,7 @@ class Gacha:
                             style=ft.TextStyle(
                                 color=ft.Colors.BLUE,
                                 decoration=ft.TextDecoration.UNDERLINE,
+                                overflow=ft.TextOverflow.ELLIPSIS,
                             ),
                         ),
                     ],
@@ -219,6 +217,9 @@ class Gacha:
         ####################
         # 処理開始
         ####################
+        # ローディングオーバーレイを表示
+        self.loading_overlay.visible = True
+        self.page.update()
         count = 0
         getCardList = []
         while True:
@@ -226,10 +227,10 @@ class Gacha:
                 break
             # デバッグ：テスト用にdata固定
             #if count == 0:
-            #      rand_list = [{"id":"94872", "title":"アイヌの一覧"}]
-            #    rand_list = [{"id":"7219",    "title":"UTC (曖昧さ回避)"}] #素材
+            #    rand_list = [{"id":"94872",  "title":"アイヌの一覧"}]
+            #    rand_list = [{"id":"7219",   "title":"UTC (曖昧さ回避)"}] #素材
             #elif count == 1:
-            #    rand_list = [{"id":"296076",    "title":"菊水町"}] #素材
+            #    rand_list = [{"id":"296076",  "title":"菊水町"}] #素材
             #    rand_list = [{"id":"4690122", "title":"2024年アメリカ合衆国選挙"}] #C (svg画像)
             #elif count == 2:
             #    rand_list = [{"id":"673688",  "title":"カール9世 (スウェーデン王)"}] #C（tif画像）
