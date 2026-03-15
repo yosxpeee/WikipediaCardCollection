@@ -3,7 +3,8 @@ import urllib.parse
 import asyncio
 import webbrowser
 
-from utils.utils import doApi, fetch_json
+from utils.utils import fetch_json
+from utils.db import save_cards
 
 class Gacha:
     # 初期化
@@ -184,6 +185,32 @@ class Gacha:
                 ),
             )
             return view
+        # サムネイルのコンテンツを生成するヘルパー
+        def make_thumb_content(idx, selected):
+            color = getCardColor(getCardList[idx]["rank"], getCardList[idx]["isSozai"])
+            if selected:
+                # 選択時の黒い枠(内側は白)をContainerで表現
+                return ft.Container(
+                    padding=ft.Padding.all(3),
+                    bgcolor=ft.Colors.BLACK,
+                    content=ft.Container(
+                        padding=ft.Padding.all(3),
+                        bgcolor=ft.Colors.WHITE,
+                        content=ft.Container(
+                            width=120,
+                            height=120,
+                            bgcolor=color,
+                            border_radius=6,
+                        ),
+                    ),
+                )
+            else:
+                return ft.Container(
+                    width=120,
+                    height=120,
+                    bgcolor=color,
+                    border_radius=8,
+                )
         ####################
         # 処理開始
         ####################
@@ -355,6 +382,8 @@ class Gacha:
                         "DEF": defence,
                     })
                     count = count + 1
+        # DBに保存する
+        save_cards(getCardList)
         # ローディングオーバーレイを非表示
         self.loading_overlay.visible = False
         self.page.update()
@@ -362,32 +391,6 @@ class Gacha:
         self.close_btn = ft.TextButton("Close", on_click=lambda e: self.page.pop_dialog())
         # 選択インデックス（初期は0）
         selected_index = 0
-        # サムネイルのコンテンツを生成するヘルパー
-        def make_thumb_content(idx, selected):
-            color = getCardColor(getCardList[idx]["rank"], getCardList[idx]["isSozai"])
-            if selected:
-                # 選択時の黒い枠(内側は白)をContainerで表現
-                return ft.Container(
-                    padding=ft.Padding.all(3),
-                    bgcolor=ft.Colors.BLACK,
-                    content=ft.Container(
-                        padding=ft.Padding.all(3),
-                        bgcolor=ft.Colors.WHITE,
-                        content=ft.Container(
-                            width=120,
-                            height=120,
-                            bgcolor=color,
-                            border_radius=6,
-                        ),
-                    ),
-                )
-            else:
-                return ft.Container(
-                    width=120,
-                    height=120,
-                    bgcolor=color,
-                    border_radius=8,
-                )
         # Grid のサムネイルコントロール群を作る
         grid_controls = []
         for i in range(10):

@@ -1,7 +1,9 @@
 import flet as ft
 import asyncio
+
 from zukan.zukan import Zukan
 from gacha.gacha import Gacha
+from utils.db import initialize_db
 
 def main(page: ft.Page):
     # event: タブ切り替え
@@ -66,8 +68,8 @@ def main(page: ft.Page):
     page.overlay.append(loading_overlay)
     # ガチャタブの中身のクラス生成
     gacha = Gacha(page)
-    # DBがない場合初期作成する(TBD)
-    
+    # DBがない場合初期作成する
+    initialize_db()
     # ページに要素追加
     page.controls.append(
         ft.Tabs(

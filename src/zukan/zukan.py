@@ -1,5 +1,6 @@
 import flet as ft
 from bs4 import BeautifulSoup
+
 from utils.utils import doApi
 
 class Zukan:
@@ -38,7 +39,8 @@ class Zukan:
             spacing=0,
             controls=[],
         )
-        for n in range(40):
+        #あとはどうやってページ送りを実装するか
+        for n in range(40): #40ぐらいでちょうどよさげ
             table.controls.append(
                 ft.Row(
                     controls=[
