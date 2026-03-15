@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from utils.utils import doApi, rankIdToRank
 from utils.db import get_all_cards
 
-PAGE_PER_CARDS = 40
+PAGE_PER_CARDS = 30
 
 class Zukan:
     # 初期化
@@ -55,9 +55,14 @@ class Zukan:
         #総カウント数÷1ページの分の枚数
         #(余りがあれば+1)
 
-        #40ぐらいでちょうどよさげ。これをスタックで積む・・・と多分数万単位になったら困るので
+        #データが少ない時の特別措置
+        if len(data) < 30:
+            dataNum = len(data)
+        else:
+            dataNum = PAGE_PER_CARDS
+        #30ぐらいでちょうどよさげ。これをスタックで積む・・・と多分数万単位になったら困るので
         #nextとかprevで送ったときのそのページを都度都度作って更新しないといけないんだろうな
-        for n in range(PAGE_PER_CARDS):
+        for n in range(dataNum):
             rank = rankIdToRank(data[n][5])
             table.controls.append(
                 ft.Row(
