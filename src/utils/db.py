@@ -1,7 +1,7 @@
 import sqlite3
 from utils.utils import rankToRankId
 
-def initialize_db():
+def initializeDB():
     conn = sqlite3.connect('cards.db')
     cursor = conn.cursor()
     # ファイルがない、ファイルがあってもテーブルがない場合は新規作成する
@@ -25,7 +25,7 @@ def initialize_db():
     conn.commit()
     conn.close()
 
-def save_cards(cards):
+def saveCards(cards):
     conn = sqlite3.connect('cards.db')
     cursor = conn.cursor()
     # カードがかぶっても関係なく新しく追加していく
@@ -37,7 +37,7 @@ def save_cards(cards):
     conn.commit()
     conn.close()
 
-def get_all_cards():
+def getAllCards():
     conn = sqlite3.connect('cards.db')
     cursor = conn.cursor()
     data = []

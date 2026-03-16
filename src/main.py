@@ -3,7 +3,7 @@ import asyncio
 
 from zukan import Zukan
 from gacha import Gacha
-from utils.db import initialize_db
+from utils.db import initializeDB
 
 def main(page: ft.Page):
     # event: タブ切り替え
@@ -12,39 +12,39 @@ def main(page: ft.Page):
         # ガチャのタブに切り替えたとき
         if e.control.selected_index == 0:
             # 図鑑タブの中身をクリアしておく
-            tab_bar_view = e.control.content.controls[1]
-            tab_bar_view.controls[1] = ft.Container(
+            tabBarView = e.control.content.controls[1]
+            tabBarView.controls[1] = ft.Container(
                 content=None,
                 alignment=ft.Alignment.CENTER,
             )
-            tab_bar_view.update()
+            tabBarView.update()
         # 図鑑タブに切り替えたとき
         if e.control.selected_index == 1:
-            tab_bar_view = e.control.content.controls[1]
-            if tab_bar_view.controls[1].content == None:
+            tabBarView = e.control.content.controls[1]
+            if tabBarView.controls[1].content == None:
                 # 図鑑タブの内容を非同期で読み込む
                 zukan = Zukan(page)
-                #tab_bar_view = e.control.content.controls[1]
+                #tabBarView = e.control.content.controls[1]
                 # 一旦プレースホルダを入れてから非同期で差し替え
-                tab_bar_view.controls[1] = ft.Container(
+                tabBarView.controls[1] = ft.Container(
                     content=ft.Text("読み込み中...", size=18),
                     alignment=ft.Alignment.CENTER,
                 )
-                tab_bar_view.update()
+                tabBarView.update()
                 async def load_and_set():
                     try:
                         content = await zukan.create()
-                        tab_bar_view.controls[1] = ft.Container(
+                        tabBarView.controls[1] = ft.Container(
                             content=content,
                             alignment=ft.Alignment.CENTER,
                         )
-                        tab_bar_view.update()
+                        tabBarView.update()
                     except Exception as ex:
-                        tab_bar_view.controls[1] = ft.Column([
+                        tabBarView.controls[1] = ft.Column([
                             ft.Text("読み込みに失敗しました。"),
                             ft.Text(str(ex))
                         ])
-                        tab_bar_view.update()
+                        tabBarView.update()
                 asyncio.create_task(load_and_set())
 
     # ページの設定
@@ -52,7 +52,7 @@ def main(page: ft.Page):
     page.window.height=1024
     page.window.resizable = False
     # ローディングオーバーレイ
-    loading_overlay = ft.Container(
+    loadingOverlay = ft.Container(
         visible=False,
         expand=True,
         bgcolor=ft.Colors.with_opacity(0.88, ft.Colors.BLACK),
@@ -65,11 +65,11 @@ def main(page: ft.Page):
             alignment=ft.MainAxisAlignment.CENTER, spacing=24
         ),
     )
-    page.overlay.append(loading_overlay)
+    page.overlay.append(loadingOverlay)
     # ガチャタブの中身のクラス生成
     gacha = Gacha(page)
     # DBがない場合初期作成する
-    initialize_db()
+    initializeDB()
     # ページに要素追加
     page.controls.append(
         ft.Tabs(

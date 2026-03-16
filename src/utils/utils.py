@@ -31,7 +31,7 @@ def doApi(url):
     return response
 
 # 非同期でブロッキングなHTTP呼び出しをスレッドで実行するヘルパー
-async def fetch_json(url, key_path=None):
+async def fetchJson(url, key_path=None):
     def _call():
         r = doApi(url)
         j = r.json()
@@ -45,7 +45,7 @@ async def fetch_json(url, key_path=None):
 
 #rank to rankid
 def rankIdToRank(rankId, isSozai):
-    print(rankId, isSozai)
+    #print(rankId, isSozai)
     if isSozai == "1":
         return RANK_TABLE[-1]
     else:
