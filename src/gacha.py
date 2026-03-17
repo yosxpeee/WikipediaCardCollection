@@ -90,8 +90,18 @@ class Gacha:
         ####################
         # 処理開始
         ####################
-        # ローディングオーバーレイを表示
+        # ローディングオーバーレイ（進捗）を表示
+        # overlay[0] は gacha のオーバーレイ（counter + progress）
         self.loadingOverlay.visible = True
+        # 初期化：counter と progress を 0 にする
+        try:
+            col = self.loadingOverlay.content
+            # content is Column; controls[0]=counter text, controls[1]=progress bar
+            if hasattr(col, 'controls') and len(col.controls) >= 2:
+                col.controls[0].value = f"ガチャを回しています... 0/{num}"
+                col.controls[1].value = 0
+        except Exception:
+            pass
         self.page.update()
         count = 0
         getCardList = []
@@ -265,6 +275,18 @@ class Gacha:
                         "DEF": defence,
                     })
                     count = count + 1
+                    # 更新：プログレスとカウンタ
+                    try:
+                        col = self.loadingOverlay.content
+                        if hasattr(col, 'controls') and len(col.controls) >= 2:
+                            col.controls[0].value = f"ガチャを回しています... {count}/{num}"
+                            # progress value between 0..1
+                            col.controls[1].value = count / float(num)
+                            col.controls[0].update()
+                            col.controls[1].update()
+                    except Exception:
+                        pass
+                    self.page.update()
         # DBに保存する
         saveCards(getCardList)
         # ローディングオーバーレイを非表示
@@ -320,8 +342,8 @@ class Gacha:
             alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             controls=[
-               ft.Text("ガチャをひく",size=24),
-               ft.IconButton(icon=ft.Icons.TOKEN, icon_size=75, on_click=lambda: asyncio.create_task(self.draw(10))),
+               ft.Text("ガチャを回す",size=36),
+               ft.IconButton(icon=ft.Icons.TOKEN, icon_size=100, on_click=lambda: asyncio.create_task(self.draw(10))),
             ],
         )
         return gachaContainer

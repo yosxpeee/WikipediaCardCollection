@@ -55,21 +55,49 @@ def main(page: ft.Page):
     page.window.height = 1024
     page.window.visible = True
     page.update()
-    # ローディングオーバーレイ
-    loadingOverlay = ft.Container(
+    # もしリサイズされていなかったらWin32APIでやり直す
+    if page.window.width != 768:
+        FindWindowW = ctypes.windll.user32.FindWindowW
+        SetWindowPos = ctypes.windll.user32.SetWindowPos
+        SWP_NOZORDER = 0x0004
+        SWP_SHOWWINDOW = 0x0040
+        title = page.title
+        hwnd = FindWindowW(None, title)
+        SetWindowPos(hwnd, 0, 0, 0, 768, 1024, SWP_NOZORDER | SWP_SHOWWINDOW)
+        page.update()
+    # ガチャ用ローディングオーバーレイ（進捗バー＋カウンタ）
+    gacha_overlay_counter = ft.Text("0/0", size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE)
+    gacha_overlay_progress = ft.ProgressBar(width=300, height=12, value=0)
+    gachaOverlay = ft.Container(
         visible=False,
         expand=True,
         bgcolor=ft.Colors.with_opacity(0.88, ft.Colors.BLACK),
         alignment=ft.Alignment.CENTER,
         content=ft.Column([
-                ft.Text("結果を取得中…", size=22, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                gacha_overlay_counter,
+                gacha_overlay_progress,
+                ft.ProgressRing(width=80, height=80, stroke_width=7, color=ft.Colors.CYAN_400),
+            ], 
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER, 
+            alignment=ft.MainAxisAlignment.CENTER, spacing=12
+        ),
+    )
+    page.overlay.append(gachaOverlay)
+    # 図鑑用ローディングオーバーレイ（従来のもの）
+    zukanOverlay = ft.Container(
+        visible=False,
+        expand=True,
+        bgcolor=ft.Colors.with_opacity(0.88, ft.Colors.BLACK),
+        alignment=ft.Alignment.CENTER,
+        content=ft.Column([
+                ft.Text("データを取得中…", size=22, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
                 ft.ProgressRing(width=80, height=80, stroke_width=7, color=ft.Colors.CYAN_400),
             ], 
             horizontal_alignment=ft.CrossAxisAlignment.CENTER, 
             alignment=ft.MainAxisAlignment.CENTER, spacing=24
         ),
     )
-    page.overlay.append(loadingOverlay)
+    page.overlay.append(zukanOverlay)
     # ガチャタブの中身のクラス生成
     gacha = Gacha(page)
     # DBがない場合初期作成する

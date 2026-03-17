@@ -12,7 +12,8 @@ class Zukan:
     def __init__(self, page):
         self.page = page
         # ローディングオーバーレイの参照を保持
-        self.loadingOverlay = page.overlay[0]
+        # page.overlay[0] はガチャ用、図鑑は後ろに追加しているため index 1 を使う
+        self.loadingOverlay = page.overlay[1]
     # 総数を取得する
     def getAllTargetCount(self):
         url = "https://ja.wikipedia.org/wiki/Special:Statistics"
