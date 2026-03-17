@@ -48,9 +48,20 @@ def main(page: ft.Page):
                 asyncio.create_task(load_and_set())
 
     # ページの設定
-    page.window.width=768
-    page.window.height=1024
+    # ウィンドウサイズが起動時に反映されないことがあるため
+    # 起動後に短い遅延を置いて確実に再適用するタスクを作成する
     page.window.resizable = False
+    async def ensure_window_size():
+        await asyncio.sleep(0.08)
+        try:
+            page.window.width = 768
+            page.window.height = 1024
+            page.window.resizable = False
+            page.window.visible = True
+            page.update()
+        except Exception:
+            pass
+    asyncio.create_task(ensure_window_size())
     # ローディングオーバーレイ
     loadingOverlay = ft.Container(
         visible=False,
@@ -109,7 +120,8 @@ def main(page: ft.Page):
             ),
         )
     )
-    page.window.visible = True
+    # ウィンドウ表示と更新は ensure_window_size タスクで行うが
+    # 念のためここでも更新を掛ける
     page.update()
 
 if __name__ == "__main__":

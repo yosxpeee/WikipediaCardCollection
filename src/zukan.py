@@ -150,20 +150,27 @@ class Zukan:
                         ],
                     )
                 )
-        def refresh_pageLabel():
-            pageLabel.value = f"{currentPage} / {totalPages} ({totalItems})"
+        def refreshPageLabel():
+            # pageInput を現在ページに合わせて更新
+            try:
+                pageInput.value = str(currentPage)
+                pageInput.update()
+            except Exception:
+                pass
         # ページ操作
-        def on_prev(e):
+        def onPrev(e):
             nonlocal currentPage
             if currentPage > 1:
                 currentPage -= 1
                 buildPage(currentPage)
+                refreshPageLabel()
                 self.page.update()
-        def on_next(e):
+        def onNext(e):
             nonlocal currentPage
             if currentPage < totalPages:
                 currentPage += 1
                 buildPage(currentPage)
+                refreshPageLabel()
                 self.page.update()
         # ローディングオーバーレイを表示
         self.loadingOverlay.visible = True
@@ -186,11 +193,43 @@ class Zukan:
         totalItems = len(data)
         totalPages = (totalItems + PAGE_PER_CARDS - 1) // PAGE_PER_CARDS if totalItems > 0 else 1
         currentPage = 1
-        # ページ表示ラベル（更新は buildPage 後に page.update で）
-        pageLabel = ft.Text(f"{currentPage} / {totalPages} ({totalItems})")
+        # ページ入力（現在ページを入力してジャンプできる）
+        pageInput = ft.TextField(
+            value=str(currentPage), 
+            min_lines=1, 
+            max_lines=1, 
+            height=24,
+            width=80,
+            margin=0,
+            text_size=13,
+            text_align=ft.TextAlign.CENTER,
+            text_vertical_align=ft.VerticalAlignment.CENTER,
+            content_padding=ft.Padding.all(0),
+        )
+        pageInfo = ft.Text(f"/ {totalPages} ({totalItems})")
+        def jumpToPage(e):
+            nonlocal currentPage
+            # e.control は TextField
+            v = str(e.control.value).strip()
+            try:
+                n = int(v)
+            except Exception:
+                e.control.value = str(currentPage)
+                e.control.update()
+                return
+            if n < 1 or n > totalPages:
+                e.control.value = str(currentPage)
+                e.control.update()
+                return
+            currentPage = n
+            buildPage(currentPage)
+            refreshPageLabel()
+            self.page.update()
+        # on_submit をセット（Enterでジャンプ）
+        pageInput.on_submit = jumpToPage
         # 初期ページを構築
         buildPage(currentPage)
-        zukan_tab = ft.Column(
+        zukanTab = ft.Column(
             controls=[
                 ft.Row(
                     alignment=ft.MainAxisAlignment.CENTER,
@@ -199,9 +238,10 @@ class Zukan:
                 ft.Row(
                     alignment=ft.MainAxisAlignment.CENTER,
                     controls=[
-                        ft.IconButton(icon=ft.Icons.ARROW_BACK, on_click=lambda e: (on_prev(e), refresh_pageLabel())),
-                        pageLabel,
-                        ft.IconButton(icon=ft.Icons.ARROW_FORWARD, on_click=lambda e: (on_next(e), refresh_pageLabel())),
+                        ft.IconButton(icon=ft.Icons.ARROW_BACK, on_click=onPrev),
+                        pageInput,
+                        pageInfo,
+                        ft.IconButton(icon=ft.Icons.ARROW_FORWARD, on_click=onNext),
                     ],
                 ),
                 table,
@@ -210,4 +250,4 @@ class Zukan:
         # ローディングオーバーレイを非表示
         self.loadingOverlay.visible = False
         self.page.update()
-        return zukan_tab
+        return zukanTab
