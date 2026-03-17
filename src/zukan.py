@@ -87,7 +87,7 @@ class Zukan:
             start = (page - 1) * PAGE_PER_CARDS
             end = min(start + PAGE_PER_CARDS, totalItems)
             for idx in range(start, end):
-                row_data = data[idx]
+                row_data = filteredData[idx]
                 # ランクを先に計算
                 rank = rankIdToRank(row_data[5], row_data[7])
                 row_data_for_image = {
@@ -155,6 +155,8 @@ class Zukan:
             try:
                 pageInput.value = str(currentPage)
                 pageInput.update()
+                pageInfo.value = f"/ {totalPages} ({totalItems})"
+                pageInfo.update()
             except Exception:
                 pass
         # ページ操作
@@ -172,41 +174,6 @@ class Zukan:
                 buildPage(currentPage)
                 refreshPageLabel()
                 self.page.update()
-        # ローディングオーバーレイを表示
-        self.loadingOverlay.visible = True
-        self.page.update()
-        # 総記事数はブロッキングなのでバックグラウンドで取得
-        try:
-            count = await __import__("asyncio").to_thread(self.getAllTargetCount)
-        except Exception:
-            count = -1
-        #DBからデータを持ってくる
-        data = getAllCards()
-        #for card in data:
-        #    print(card)
-        table = ft.ListView(
-            expand=True,
-            spacing=0,
-            controls=[],
-        )
-        # ページネーション設定
-        totalItems = len(data)
-        totalPages = (totalItems + PAGE_PER_CARDS - 1) // PAGE_PER_CARDS if totalItems > 0 else 1
-        currentPage = 1
-        # ページ入力（現在ページを入力してジャンプできる）
-        pageInput = ft.TextField(
-            value=str(currentPage), 
-            min_lines=1, 
-            max_lines=1, 
-            height=24,
-            width=80,
-            margin=0,
-            text_size=13,
-            text_align=ft.TextAlign.CENTER,
-            text_vertical_align=ft.VerticalAlignment.CENTER,
-            content_padding=ft.Padding.all(0),
-        )
-        pageInfo = ft.Text(f"/ {totalPages} ({totalItems})")
         def jumpToPage(e):
             nonlocal currentPage
             # e.control は TextField
@@ -225,29 +192,122 @@ class Zukan:
             buildPage(currentPage)
             refreshPageLabel()
             self.page.update()
-        # on_submit をセット（Enterでジャンプ）
-        pageInput.on_submit = jumpToPage
-        # 初期ページを構築
-        buildPage(currentPage)
-        zukanTab = ft.Column(
-            controls=[
-                ft.Row(
-                    alignment=ft.MainAxisAlignment.CENTER,
-                    controls=[ft.Text(f"Wikipedia 日本語版 取得対象総記事数：{count}")],
-                ),
-                ft.Row(
-                    alignment=ft.MainAxisAlignment.CENTER,
+        # ローディングオーバーレイを表示
+        self.loadingOverlay.visible = True
+        self.page.update()
+        try:
+            # 総記事数はブロッキングなのでバックグラウンドで取得
+            try:
+                count = await __import__("asyncio").to_thread(self.getAllTargetCount)
+            except Exception:
+                count = -1
+            #DBからデータを持ってくる
+            data = getAllCards()
+            # フィルタ設定（初期は全選択）
+            rankOrder = ["--", "C", "UC", "R", "SR", "SSR", "UR", "LR"]
+            selectedRanks = set(rankOrder)
+            def apply_filters():
+                filtered = []
+                for row in data:
+                    r = rankIdToRank(row[5], row[7])
+                    if r in selectedRanks:
+                        filtered.append(row)
+                return filtered
+            filteredData = apply_filters()
+            #for card in data:
+            #    print(card)
+            table = ft.ListView(
+                expand=True,
+                spacing=0,
+                controls=[],
+            )
+            # ページネーション設定（filteredData に基づく）
+            totalItems = len(filteredData)
+            totalPages = (totalItems + PAGE_PER_CARDS - 1) // PAGE_PER_CARDS if totalItems > 0 else 1
+            currentPage = 1
+            # ページ入力（現在ページを入力してジャンプできる）
+            pageInput = ft.TextField(
+                value=str(currentPage), 
+                min_lines=1, 
+                max_lines=1, 
+                height=24,
+                width=80,
+                margin=0,
+                text_size=13,
+                text_align=ft.TextAlign.CENTER,
+                text_vertical_align=ft.VerticalAlignment.CENTER,
+                content_padding=ft.Padding.all(0),
+            )
+            pageInfo = ft.Text(f"/ {totalPages} ({totalItems})")
+            # on_submit をセット（Enterでジャンプ）
+            pageInput.on_submit = jumpToPage
+            # 初期ページを構築
+            buildPage(currentPage)
+            # フィルタ用チェックボックスを作成（素材→C→... の順）
+            def makeFilterCheckbox(rk):
+                # 表示用のラベル（素材は見やすくする）
+                displayLabel = "素材" if rk == "--" else rk
+                cb = ft.Checkbox(label=displayLabel, label_position=ft.LabelPosition.LEFT, value=True)
+                def _on_change(e):
+                    nonlocal filteredData, totalItems, totalPages, currentPage
+                    if e.control.value:
+                        selectedRanks.add(rk)
+                    else:
+                        selectedRanks.discard(rk)
+                    filteredData = apply_filters()
+                    totalItems = len(filteredData)
+                    totalPages = (totalItems + PAGE_PER_CARDS - 1) // PAGE_PER_CARDS if totalItems > 0 else 1
+                    if currentPage > totalPages:
+                        currentPage = 1
+                    buildPage(currentPage)
+                    refreshPageLabel()
+                    self.page.update()
+                cb.on_change = _on_change
+                return cb
+            filterControls = [makeFilterCheckbox(r) for r in rankOrder]
+            # フィルタを2段の丸角ボックスにまとめる
+            filterBox = ft.Container(
+                bgcolor=ft.Colors.GREY_200,
+                border_radius=8,
+                padding=ft.Padding.all(8),
+                content=ft.Column(
                     controls=[
-                        ft.IconButton(icon=ft.Icons.ARROW_BACK, on_click=onPrev),
-                        pageInput,
-                        pageInfo,
-                        ft.IconButton(icon=ft.Icons.ARROW_FORWARD, on_click=onNext),
+                        ft.Row(controls=filterControls[0:6], spacing=1),
+                        ft.Row(controls=filterControls[6:8], spacing=1),
                     ],
                 ),
-                table,
-            ]
-        )
-        # ローディングオーバーレイを非表示
-        self.loadingOverlay.visible = False
-        self.page.update()
+            )
+            zukanTab = ft.Column(
+                controls=[
+                    ft.Row(
+                        alignment=ft.MainAxisAlignment.CENTER,
+                        controls=[ft.Text(f"Wikipedia 日本語版 取得対象総記事数：{count}")],
+                    ),
+                    ft.Row(
+                        alignment=ft.MainAxisAlignment.CENTER,
+                        spacing=0,
+                        controls=[
+                            ft.Row(
+                                spacing=4,
+                                controls=[
+                                    ft.IconButton(icon=ft.Icons.ARROW_BACK, on_click=onPrev),
+                                    pageInput,
+                                    pageInfo,
+                                    ft.IconButton(icon=ft.Icons.ARROW_FORWARD, on_click=onNext),
+                                    ft.Container(width=20),
+                                ],
+                            ),
+                            filterBox,
+                        ],
+                    ),
+                    table,
+                ]
+            )
+        finally:
+            # ローディングオーバーレイを非表示（例外が起きても必ず閉じる）
+            try:
+                self.loadingOverlay.visible = False
+                self.page.update()
+            except Exception:
+                pass
         return zukanTab
