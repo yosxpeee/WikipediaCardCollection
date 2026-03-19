@@ -1,13 +1,11 @@
 import flet as ft
 import asyncio
-import ctypes
-from ctypes import wintypes
 
 from zukan import Zukan
 from gacha import Gacha
 from utils.db import initializeDB
 
-def main(page: ft.Page):
+async def main(page: ft.Page):
     # event: タブ切り替え
     def changeTabs(e):
         async def loadAndSet():
@@ -46,31 +44,18 @@ def main(page: ft.Page):
                 )
                 tabBarView.update()
                 asyncio.create_task(loadAndSet())
-    # ページの初期設定
-    def initialize_page(title):
-        page.title = "Wikipedia Card Collection"
-        #page.theme_mode = ft.ThemeMode.DARK
-        page.window.resizable = False
-        page.window.width = 768
-        page.window.height = 1024
-        page.window.maximizable = False
-        page.window.visible = True
-        page.update()
-        # もしリサイズされていなかったらWin32APIでやり直す
-        if page.window.width != 768:
-            FindWindowW = ctypes.windll.user32.FindWindowW
-            SetWindowPos = ctypes.windll.user32.SetWindowPos
-            SWP_NOZORDER = 0x0004
-            SWP_SHOWWINDOW = 0x0040
-            title = page.title
-            hwnd = FindWindowW(None, title)
-            SetWindowPos(hwnd, 0, 0, 0, 768, 1024, SWP_NOZORDER | SWP_SHOWWINDOW)
-            page.update()
     ####################
     # 処理開始
     ####################
     # ページの設定
-    initialize_page("Wikipedia Card Collection")
+    page.window.width = 768
+    page.window.height = 1024
+    page.window.resizable = False
+    page.window.maximizable = False
+    page.window.visible = True
+    page.title = "Wikipedia Card Collection"
+    #page.theme_mode = ft.ThemeMode.DARK
+    page.update()
     # ガチャ用ローディングオーバーレイ（進捗バー＋カウンタ）
     gacha_overlayCounter = ft.Text("0/0", size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE)
     gacha_overlay_progress = ft.ProgressBar(width=300, height=12, value=0)
@@ -149,7 +134,6 @@ def main(page: ft.Page):
     )
     # 念のためここでも更新を掛ける
     page.update()
-    initialize_page("Wikipedia Card Collection")
 if __name__ == "__main__":
     ft.run(main, view=ft.AppView.FLET_APP_HIDDEN, assets_dir="assets")
     #ft.run(main, view=ft.AppView.WEB_BROWSER)

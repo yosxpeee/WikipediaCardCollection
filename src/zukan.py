@@ -316,6 +316,39 @@ class Zukan:
             buildZukanList(current_page)
             refreshPageLabel()
             self.page.update()
+        #検索適用
+        def applySearch():
+            nonlocal filtered_data, total_items, total_pages, current_page
+            q = ""
+            try:
+                q = str(search_field.value).strip()
+            except Exception:
+                q = ""
+            # ベースはランクフィルタを通したデータ
+            base = apply_filters()
+            if q == "":
+                filtered_data = base
+            else:
+                qlow = q.lower()
+                results = []
+                for row in base:
+                    title = (row[2] or "")
+                    matched = False
+                    # タイトル部分一致（大文字小文字無視）
+                    if qlow in title.lower():
+                        matched = True
+                    if matched:
+                        results.append(row)
+                filtered_data = results
+            # ソート・ページ再計算
+            apply_sort()
+            total_items = len(filtered_data)
+            total_pages = (total_items + PAGE_PER_CARDS - 1) // PAGE_PER_CARDS if total_items > 0 else 1
+            if current_page > total_pages:
+                current_page = 1
+            buildZukanList(current_page)
+            refreshPageLabel()
+            self.page.update()
         ####################
         # 処理開始
         ####################
@@ -425,6 +458,26 @@ class Zukan:
                     ],
                 ),
             )
+            # 検索UI
+            search_field = ft.TextField(
+                value="",
+                label="カード名検索",
+                label_style=ft.TextStyle(
+                    size=14,
+                ),
+                min_lines=1, 
+                max_lines=1, 
+                height=36,
+                text_size=13,
+                expand=True,
+            )
+            search_field.on_submit = applySearch
+            search_ui = ft.Row(
+                alignment=ft.MainAxisAlignment.CENTER,
+                controls=[
+                    search_field,
+                ],
+            )
             zukan_tab = ft.Column(
                 controls=[
                     ft.Row(
@@ -471,6 +524,7 @@ class Zukan:
                             filter_box,
                         ],
                     ),
+                    search_ui,
                     table,
                 ]
             )
