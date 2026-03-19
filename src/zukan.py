@@ -151,6 +151,7 @@ class Zukan:
                         ],
                     )
                 )
+        # ページラベルの更新
         def refreshPageLabel():
             # pageInput を現在ページに合わせて更新
             try:
@@ -193,6 +194,9 @@ class Zukan:
             buildPage(currentPage)
             refreshPageLabel()
             self.page.update()
+        ####################
+        # 処理開始
+        ####################
         # ローディングオーバーレイを表示
         self.loadingOverlay.visible = True
         self.page.update()
@@ -229,6 +233,10 @@ class Zukan:
             # ページ入力（現在ページを入力してジャンプできる）
             pageInput = ft.TextField(
                 value=str(currentPage), 
+                label="No.",
+                label_style=ft.TextStyle(
+                    size=12,
+                ),
                 min_lines=1, 
                 max_lines=1, 
                 height=24,
@@ -242,13 +250,93 @@ class Zukan:
             pageInfo = ft.Text(f"/ {totalPages} ({totalItems})")
             # on_submit をセット（Enterでジャンプ）
             pageInput.on_submit = jumpToPage
-            # 初期ページを構築
+            # --- ソート設定 ---
+            sort_field = "id"  # default: 入手順(ID順)
+            sort_ascending = True
+            def name_sort_key(name):
+                if not name:
+                    return (3, "")
+                first = name[0]
+                # category: symbol/punct=0, digit=1, ascii alpha=2, others=3
+                if first.isdigit():
+                    cat = 1
+                elif ('A' <= first <= 'Z') or ('a' <= first <= 'z'):
+                    cat = 2
+                elif ord(first) < 128 and not first.isalnum():
+                    cat = 0
+                else:
+                    cat = 3
+                return (cat, name)
+            def apply_sort():
+                nonlocal filteredData
+                key = None
+                if sort_field == "id":
+                    key = lambda r: int(r[0]) if str(r[0]).isdigit() else 0
+                elif sort_field == "pageid":
+                    key = lambda r: int(r[1]) if str(r[1]).isdigit() else 0
+                elif sort_field == "rank":
+                    key = lambda r: rankOrder.index(rankIdToRank(r[5], r[7])) if rankIdToRank(r[5], r[7]) in rankOrder else 0
+                elif sort_field == "name":
+                    key = lambda r: name_sort_key(r[2] or "")
+                elif sort_field == "HP":
+                    key = lambda r: int(r[9]) if str(r[9]).lstrip("-+").isdigit() else (-999999 if r[9] == "-1" else 0)
+                elif sort_field == "ATK":
+                    key = lambda r: int(r[10]) if str(r[10]).lstrip("-+").isdigit() else (-999999 if r[10] == "-1" else 0)
+                elif sort_field == "DEF":
+                    key = lambda r: int(r[11]) if str(r[11]).lstrip("-+").isdigit() else (-999999 if r[11] == "-1" else 0)
+                try:
+                    filteredData = sorted(filteredData, key=key, reverse=(not sort_ascending))
+                except Exception:
+                    pass
+            # 初期ソートとページを構築
+            apply_sort()
             buildPage(currentPage)
+            # --- ソートUI: ドロップダウン + ラジオ（昇順/降順） ---
+            dropdown = ft.Dropdown(
+                width=160,
+                value="id",
+                label="ソート",
+                options=[
+                    ft.DropdownOption(key="id", text="入手順(ID順)"),
+                    ft.DropdownOption(key="pageid", text="PageID順"),
+                    ft.DropdownOption(key="rank", text="ランク順"),
+                    ft.DropdownOption(key="name", text="名前順"),
+                    ft.DropdownOption(key="HP", text="HP順"),
+                    ft.DropdownOption(key="ATK", text="ATK順"),
+                    ft.DropdownOption(key="DEF", text="DEF順"),
+                ],
+                editable=False,
+            )
+            def on_dropdown_select(e):
+                nonlocal sort_field
+                sort_field = e.control.value
+                apply_sort()
+                buildPage(currentPage)
+                refreshPageLabel()
+                self.page.update()
+            dropdown.on_select = on_dropdown_select
+            radio_group = ft.RadioGroup(
+                content=ft.Column(
+                    spacing=0,
+                    controls=[
+                        ft.Radio(label="昇順", value="asc"), 
+                        ft.Radio(label="降順", value="desc")]
+                    ),
+                value="asc",
+            )
+            def on_radio_change(e):
+                nonlocal sort_ascending
+                sort_ascending = (e.control.value == "asc")
+                apply_sort()
+                buildPage(currentPage)
+                refreshPageLabel()
+                self.page.update()
+            radio_group.on_change = on_radio_change
             # フィルタ用チェックボックスを作成（素材→C→... の順）
             def makeFilterCheckbox(rk):
                 # 表示用のラベル（素材は見やすくする）
                 displayLabel = "素材" if rk == "--" else rk
-                cb = ft.Checkbox(label=displayLabel, label_position=ft.LabelPosition.LEFT, value=True)
+                cb = ft.Checkbox(label=displayLabel, label_position=ft.LabelPosition.RIGHT, value=True)
                 def _on_change(e):
                     nonlocal filteredData, totalItems, totalPages, currentPage
                     if e.control.value:
@@ -265,16 +353,69 @@ class Zukan:
                     self.page.update()
                 cb.on_change = _on_change
                 return cb
+            def filterAllSelect():
+                nonlocal filteredData, totalItems, totalPages, currentPage, selectedRanks
+                # すべて選択にする
+                selectedRanks = set(rankOrder)
+                # 各チェックボックスを更新（filterControls にはチェックボックスとボタンが混在）
+                for ctrl in filterControls:
+                    try:
+                        if isinstance(ctrl, ft.Checkbox):
+                            ctrl.value = True
+                            ctrl.update()
+                    except Exception:
+                        pass
+                # フィルタ反映・ページ再計算
+                filteredData = apply_filters()
+                totalItems = len(filteredData)
+                totalPages = (totalItems + PAGE_PER_CARDS - 1) // PAGE_PER_CARDS if totalItems > 0 else 1
+                currentPage = 1
+                buildPage(currentPage)
+                refreshPageLabel()
+                self.page.update()
+            def filterAllUnselect():
+                nonlocal filteredData, totalItems, totalPages, currentPage, selectedRanks
+                # すべて解除
+                selectedRanks = set()
+                for ctrl in filterControls:
+                    try:
+                        if isinstance(ctrl, ft.Checkbox):
+                            ctrl.value = False
+                            ctrl.update()
+                    except Exception:
+                        pass
+                filteredData = apply_filters()
+                totalItems = len(filteredData)
+                totalPages = (totalItems + PAGE_PER_CARDS - 1) // PAGE_PER_CARDS if totalItems > 0 else 1
+                if currentPage > totalPages:
+                    currentPage = 1
+                buildPage(currentPage)
+                refreshPageLabel()
+                self.page.update()
             filterControls = [makeFilterCheckbox(r) for r in rankOrder]
+            filterControls.append(
+                ft.TextButton(
+                    content=ft.Text("全選択"),
+                    on_click=filterAllSelect
+                )
+            )
+            filterControls.append(
+                ft.TextButton(
+                    content=ft.Text("全解除"),
+                    on_click=filterAllUnselect
+                )
+            )
             # フィルタを2段の丸角ボックスにまとめる
             filterBox = ft.Container(
-                bgcolor=ft.Colors.GREY_200,
+                #bgcolor=ft.Colors.GREY_200,
+                border=ft.Border.all(width=1, color=ft.Colors.GREY),
                 border_radius=8,
                 padding=ft.Padding.all(8),
                 content=ft.Column(
+                    spacing=0,
                     controls=[
-                        ft.Row(controls=filterControls[0:6], spacing=1),
-                        ft.Row(controls=filterControls[6:8], spacing=1),
+                        ft.Row(controls=filterControls[0:6],  spacing=1),
+                        ft.Row(controls=filterControls[6:10], spacing=1),
                     ],
                 ),
             )
@@ -288,14 +429,37 @@ class Zukan:
                         alignment=ft.MainAxisAlignment.CENTER,
                         spacing=0,
                         controls=[
-                            ft.Row(
-                                spacing=4,
+                            ft.Column(
+                                spacing=0,
                                 controls=[
-                                    ft.IconButton(icon=ft.Icons.ARROW_BACK, on_click=onPrev),
-                                    pageInput,
-                                    pageInfo,
-                                    ft.IconButton(icon=ft.Icons.ARROW_FORWARD, on_click=onNext),
-                                    ft.Container(width=20),
+                                    ft.Row(
+                                        spacing=4,
+                                        margin=4,
+                                        controls=[
+                                            dropdown,
+                                            radio_group,
+                                        ],
+                                    ),
+                                    ft.Row(
+                                        spacing=4,
+                                        controls=[
+                                            ft.IconButton(
+                                                icon=ft.Icons.ARROW_BACK, 
+                                                scale=ft.Scale(scale_x=0.8, scale_y=0.8), 
+                                                on_click=onPrev
+                                            ),
+                                            pageInput,
+                                            pageInfo,
+                                            ft.IconButton(
+                                                icon=ft.Icons.ARROW_FORWARD, 
+                                                scale=ft.Scale(scale_x=0.8, scale_y=0.8), 
+                                                on_click=onNext
+                                            ),
+                                            ft.Container(
+                                                width=20
+                                            ),
+                                        ],
+                                    ),
                                 ],
                             ),
                             filterBox,

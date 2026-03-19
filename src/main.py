@@ -10,7 +10,20 @@ from utils.db import initializeDB
 def main(page: ft.Page):
     # event: タブ切り替え
     def changeTabs(e):
-        #print(e)
+        async def loadAndSet():
+            try:
+                content = await zukan.create()
+                tabBarView.controls[1] = ft.Container(
+                    content=content,
+                    alignment=ft.Alignment.CENTER,
+                )
+                tabBarView.update()
+            except Exception as ex:
+                tabBarView.controls[1] = ft.Column([
+                    ft.Text("読み込みに失敗しました。"),
+                    ft.Text(str(ex))
+                ])
+                tabBarView.update()
         # ガチャのタブに切り替えたとき
         if e.control.selected_index == 0:
             # 図鑑タブの中身をクリアしておく
@@ -26,33 +39,23 @@ def main(page: ft.Page):
             if tabBarView.controls[1].content == None:
                 # 図鑑タブの内容を非同期で読み込む
                 zukan = Zukan(page)
-                #tabBarView = e.control.content.controls[1]
                 # 一旦プレースホルダを入れてから非同期で差し替え
                 tabBarView.controls[1] = ft.Container(
                     content=ft.Text("読み込み中...", size=18),
                     alignment=ft.Alignment.CENTER,
                 )
                 tabBarView.update()
-                async def load_and_set():
-                    try:
-                        content = await zukan.create()
-                        tabBarView.controls[1] = ft.Container(
-                            content=content,
-                            alignment=ft.Alignment.CENTER,
-                        )
-                        tabBarView.update()
-                    except Exception as ex:
-                        tabBarView.controls[1] = ft.Column([
-                            ft.Text("読み込みに失敗しました。"),
-                            ft.Text(str(ex))
-                        ])
-                        tabBarView.update()
-                asyncio.create_task(load_and_set())
+                asyncio.create_task(loadAndSet())
+    ####################
+    # 処理開始
+    ####################
     # ページの設定
-    page.title = "WikipediaCardCollection"
+    page.title = "Wikipedia Card Collection"
+    #page.theme_mode = ft.ThemeMode.DARK
     page.window.resizable = False
     page.window.width = 768
     page.window.height = 1024
+    page.window.maximizable = False
     page.window.visible = True
     page.update()
     # もしリサイズされていなかったらWin32APIでやり直す
@@ -66,16 +69,16 @@ def main(page: ft.Page):
         SetWindowPos(hwnd, 0, 0, 0, 768, 1024, SWP_NOZORDER | SWP_SHOWWINDOW)
         page.update()
     # ガチャ用ローディングオーバーレイ（進捗バー＋カウンタ）
-    gacha_overlay_counter = ft.Text("0/0", size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE)
-    gacha_overlay_progress = ft.ProgressBar(width=300, height=12, value=0)
+    gachaOverlayCounter = ft.Text("0/0", size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE)
+    gacha_OerlayProgress = ft.ProgressBar(width=300, height=12, value=0)
     gachaOverlay = ft.Container(
         visible=False,
         expand=True,
         bgcolor=ft.Colors.with_opacity(0.88, ft.Colors.BLACK),
         alignment=ft.Alignment.CENTER,
         content=ft.Column([
-                gacha_overlay_counter,
-                gacha_overlay_progress,
+                gachaOverlayCounter,
+                gacha_OerlayProgress,
                 ft.ProgressRing(width=80, height=80, stroke_width=7, color=ft.Colors.CYAN_400),
             ], 
             horizontal_alignment=ft.CrossAxisAlignment.CENTER, 
@@ -141,10 +144,8 @@ def main(page: ft.Page):
             ),
         )
     )
-    # ウィンドウ表示と更新は ensure_window_size タスクで行うが
     # 念のためここでも更新を掛ける
     page.update()
-
 if __name__ == "__main__":
-    ft.run(main, view=ft.AppView.FLET_APP_HIDDEN)
+    ft.run(main, view=ft.AppView.FLET_APP_HIDDEN, assets_dir="assets")
     #ft.run(main, view=ft.AppView.WEB_BROWSER)
