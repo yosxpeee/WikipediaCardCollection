@@ -162,7 +162,7 @@ class Zukan:
                 page_info.update()
             except Exception:
                 pass
-        # ページ操作
+        # ページ操作(前)
         def on_prev(e):
             nonlocal current_page
             if current_page > 1:
@@ -170,6 +170,7 @@ class Zukan:
                 build_zukan_list(current_page)
                 refresh_page_label()
                 self.page.update()
+        # ページ操作(後ろ)
         def on_next(e):
             nonlocal current_page
             if current_page < total_pages:
@@ -177,6 +178,7 @@ class Zukan:
                 build_zukan_list(current_page)
                 refresh_page_label()
                 self.page.update()
+        # ページジャンプ
         def jump_to_page(e):
             nonlocal current_page
             # e.control は TextField
@@ -316,7 +318,7 @@ class Zukan:
             build_zukan_list(current_page)
             refresh_page_label()
             self.page.update()
-        #検索適用
+        # 検索適用
         def apply_search():
             nonlocal filtered_data, total_items, total_pages, current_page
             q = ""
@@ -361,14 +363,13 @@ class Zukan:
                 count = await __import__("asyncio").to_thread(self.get_all_target_count)
             except Exception:
                 count = -1
-            #DBからデータを持ってくる
+            # DBからデータを持ってくる
             data = get_all_cards()
             # フィルタ設定（初期は全選択）
             rank_order = ["--", "C", "UC", "R", "SR", "SSR", "UR", "LR"]
             selected_ranks = set(rank_order)
             filtered_data = apply_filters()
-            #for card in data:
-            #    print(card)
+            # 図鑑本体を作っておく
             table = ft.ListView(
                 expand=True,
                 spacing=0,
@@ -379,6 +380,7 @@ class Zukan:
             total_pages = (total_items + PAGE_PER_CARDS - 1) // PAGE_PER_CARDS if total_items > 0 else 1
             current_page = 1
             # ページ入力（現在ページを入力してジャンプできる）
+            page_info = ft.Text(f"/ {total_pages} ({total_items})")
             page_input = ft.TextField(
                 value=str(current_page), 
                 label="No.",
@@ -395,16 +397,14 @@ class Zukan:
                 text_vertical_align=ft.VerticalAlignment.CENTER,
                 content_padding=ft.Padding.all(0),
             )
-            page_info = ft.Text(f"/ {total_pages} ({total_items})")
-            # on_submit をセット（Enterでジャンプ）
             page_input.on_submit = jump_to_page
-            # --- ソート設定 ---
+            # ソート設定
             sort_field = "id"  # default: 入手順(ID順)
             sort_ascending = True
             # 初期ソートとページを構築
             apply_sort()
             build_zukan_list(current_page)
-            # --- ソートUI: ドロップダウン + ラジオ（昇順/降順） ---
+            # ソートUI: ドロップダウン + ラジオ（昇順/降順）
             dropdown = ft.Dropdown(
                 width=160,
                 value="id",
@@ -444,9 +444,7 @@ class Zukan:
                     on_click=filter_all_unselect
                 )
             )
-            # フィルタを2段の丸角ボックスにまとめる
             filter_box = ft.Container(
-                #bgcolor=ft.Colors.GREY_200,
                 border=ft.Border.all(width=1, color=ft.Colors.GREY),
                 border_radius=8,
                 padding=ft.Padding.all(8),
@@ -478,6 +476,7 @@ class Zukan:
                     search_field,
                 ],
             )
+            # 図鑑タブ全体
             zukan_tab = ft.Column(
                 controls=[
                     ft.Row(
@@ -491,7 +490,7 @@ class Zukan:
                             ft.Column(
                                 spacing=0,
                                 controls=[
-                                    ft.Row(
+                                    ft.Row(         #フィルタ
                                         spacing=4,
                                         margin=4,
                                         controls=[
@@ -499,7 +498,7 @@ class Zukan:
                                             radio_group,
                                         ],
                                     ),
-                                    ft.Row(
+                                    ft.Row(         #ページ送り
                                         spacing=4,
                                         controls=[
                                             ft.IconButton(
@@ -521,11 +520,11 @@ class Zukan:
                                     ),
                                 ],
                             ),
-                            filter_box,
+                            filter_box,             #フィルタ
                         ],
                     ),
-                    search_ui,
-                    table,
+                    search_ui,                      #検索ボックス
+                    table,                          #図鑑本体
                 ]
             )
         finally:
