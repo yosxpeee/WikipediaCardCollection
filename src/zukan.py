@@ -1,9 +1,9 @@
 import flet as ft
 from bs4 import BeautifulSoup
 
-from utils.utils import doApi, rankIdToRank
-from utils.db import getAllCards
-from utils.ui import createCardImage
+from utils.utils import do_api, rankid_to_rank
+from utils.db import get_all_cards
+from utils.ui import create_card_image
 
 PAGE_PER_CARDS = 30
 
@@ -15,9 +15,9 @@ class Zukan:
         # page.overlay[0] はガチャ用、図鑑は後ろに追加しているため index 1 を使う
         self.loading_overlay = page.overlay[1]
     # 総数を取得する
-    def getAllTargetCount(self):
+    def get_all_target_count(self):
         url = "https://ja.wikipedia.org/wiki/Special:Statistics"
-        response = doApi(url)
+        response = do_api(url)
         soup = BeautifulSoup(response.text, "html.parser")
         # コンテンツページ数の部分を探す（class名で特定）
         stats = soup.find("table", class_="mw-statistics-table")
@@ -34,7 +34,7 @@ class Zukan:
         else:
             return -1
     # カードイメージ表示
-    def openCardImage(self, data):
+    def open_card_image(self, data):
         self.close_button = ft.TextButton("Close", on_click=lambda e: self.page.pop_dialog())
         self.dialog = ft.AlertDialog(
             modal=True,
@@ -46,7 +46,7 @@ class Zukan:
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                     expand=True,
                     controls=[
-                        createCardImage(data, True),
+                        create_card_image(data, True),
                     ],
                 ),
                 bgcolor=ft.Colors.GREY_100, border_radius=5,
@@ -60,7 +60,7 @@ class Zukan:
     # 画面作成
     async def create(self):
         # 図鑑リスト作成
-        def buildZukanList(page):
+        def build_zukan_list(page):
             table.controls.clear()
             # ヘッダを作成
             header = ft.Row(
@@ -91,7 +91,7 @@ class Zukan:
             for idx in range(start, end):
                 row_data = filtered_data[idx]
                 # ランクを先に計算
-                rank = rankIdToRank(row_data[5], row_data[7])
+                rank = rankid_to_rank(row_data[5], row_data[7])
                 row_data_for_image = {
                     "pageId": row_data[1],
                     "title": row_data[2],
@@ -132,7 +132,7 @@ class Zukan:
                                 width=370,
                                 content=ft.GestureDetector(
                                     mouse_cursor=ft.MouseCursor.CLICK,
-                                    on_tap=(lambda e, r=row_data_for_image: self.openCardImage(r)),
+                                    on_tap=(lambda e, r=row_data_for_image: self.open_card_image(r)),
                                     content=ft.Text(
                                         nameText,
                                         tooltip=nameText,
@@ -153,7 +153,7 @@ class Zukan:
                     )
                 )
         # ページラベルの更新
-        def refreshPageLabel():
+        def refresh_page_label():
             # page_input を現在ページに合わせて更新
             try:
                 page_input.value = str(current_page)
@@ -163,21 +163,21 @@ class Zukan:
             except Exception:
                 pass
         # ページ操作
-        def onPrev(e):
+        def on_prev(e):
             nonlocal current_page
             if current_page > 1:
                 current_page -= 1
-                buildZukanList(current_page)
-                refreshPageLabel()
+                build_zukan_list(current_page)
+                refresh_page_label()
                 self.page.update()
-        def onNext(e):
+        def on_next(e):
             nonlocal current_page
             if current_page < total_pages:
                 current_page += 1
-                buildZukanList(current_page)
-                refreshPageLabel()
+                build_zukan_list(current_page)
+                refresh_page_label()
                 self.page.update()
-        def jumpToPage(e):
+        def jump_to_page(e):
             nonlocal current_page
             # e.control は TextField
             v = str(e.control.value).strip()
@@ -192,14 +192,14 @@ class Zukan:
                 e.control.update()
                 return
             current_page = n
-            buildZukanList(current_page)
-            refreshPageLabel()
+            build_zukan_list(current_page)
+            refresh_page_label()
             self.page.update()
         # フィルタ適用
         def apply_filters():
             filtered = []
             for row in data:
-                r = rankIdToRank(row[5], row[7])
+                r = rankid_to_rank(row[5], row[7])
                 if r in selected_ranks:
                     filtered.append(row)
             return filtered
@@ -227,7 +227,7 @@ class Zukan:
             elif sort_field == "pageid":
                 key = lambda r: int(r[1]) if str(r[1]).isdigit() else 0
             elif sort_field == "rank":
-                key = lambda r: rank_order.index(rankIdToRank(r[5], r[7])) if rankIdToRank(r[5], r[7]) in rank_order else 0
+                key = lambda r: rank_order.index(rankid_to_rank(r[5], r[7])) if rankid_to_rank(r[5], r[7]) in rank_order else 0
             elif sort_field == "name":
                 key = lambda r: name_sort_key(r[2] or "")
             elif sort_field == "HP":
@@ -245,19 +245,19 @@ class Zukan:
             nonlocal sort_field
             sort_field = e.control.value
             apply_sort()
-            buildZukanList(current_page)
-            refreshPageLabel()
+            build_zukan_list(current_page)
+            refresh_page_label()
             self.page.update()
         # ラジオボタン切り替え
         def on_radio_change(e):
             nonlocal sort_ascending
             sort_ascending = (e.control.value == "asc")
             apply_sort()
-            buildZukanList(current_page)
-            refreshPageLabel()
+            build_zukan_list(current_page)
+            refresh_page_label()
             self.page.update()
         # フィルタ用チェックボックス作成（素材→C→... の順）
-        def makeFilterCheckbox(rk):
+        def make_filter_checkbox(rk):
             # 表示用のラベル（素材は見やすくする）
             display_label = "素材" if rk == "--" else rk
             cb = ft.Checkbox(label=display_label, label_position=ft.LabelPosition.RIGHT, value=True)
@@ -272,13 +272,13 @@ class Zukan:
                 total_pages = (total_items + PAGE_PER_CARDS - 1) // PAGE_PER_CARDS if total_items > 0 else 1
                 if current_page > total_pages:
                     current_page = 1
-                buildZukanList(current_page)
-                refreshPageLabel()
+                build_zukan_list(current_page)
+                refresh_page_label()
                 self.page.update()
             cb.on_change = _on_change
             return cb
         # すべて選択にする
-        def filterAllSelect():
+        def filter_all_select():
             nonlocal filtered_data, total_items, total_pages, current_page, selected_ranks
             selected_ranks = set(rank_order)
             # 各チェックボックスを更新（filter_controls にはチェックボックスとボタンが混在）
@@ -294,11 +294,11 @@ class Zukan:
             total_items = len(filtered_data)
             total_pages = (total_items + PAGE_PER_CARDS - 1) // PAGE_PER_CARDS if total_items > 0 else 1
             current_page = 1
-            buildZukanList(current_page)
-            refreshPageLabel()
+            build_zukan_list(current_page)
+            refresh_page_label()
             self.page.update()
         # すべて解除にする
-        def filterAllUnselect():
+        def filter_all_unselect():
             nonlocal filtered_data, total_items, total_pages, current_page, selected_ranks
             selected_ranks = set()
             for ctrl in filter_controls:
@@ -313,11 +313,11 @@ class Zukan:
             total_pages = (total_items + PAGE_PER_CARDS - 1) // PAGE_PER_CARDS if total_items > 0 else 1
             if current_page > total_pages:
                 current_page = 1
-            buildZukanList(current_page)
-            refreshPageLabel()
+            build_zukan_list(current_page)
+            refresh_page_label()
             self.page.update()
         #検索適用
-        def applySearch():
+        def apply_search():
             nonlocal filtered_data, total_items, total_pages, current_page
             q = ""
             try:
@@ -346,8 +346,8 @@ class Zukan:
             total_pages = (total_items + PAGE_PER_CARDS - 1) // PAGE_PER_CARDS if total_items > 0 else 1
             if current_page > total_pages:
                 current_page = 1
-            buildZukanList(current_page)
-            refreshPageLabel()
+            build_zukan_list(current_page)
+            refresh_page_label()
             self.page.update()
         ####################
         # 処理開始
@@ -358,11 +358,11 @@ class Zukan:
         try:
             # 総記事数はブロッキングなのでバックグラウンドで取得
             try:
-                count = await __import__("asyncio").to_thread(self.getAllTargetCount)
+                count = await __import__("asyncio").to_thread(self.get_all_target_count)
             except Exception:
                 count = -1
             #DBからデータを持ってくる
-            data = getAllCards()
+            data = get_all_cards()
             # フィルタ設定（初期は全選択）
             rank_order = ["--", "C", "UC", "R", "SR", "SSR", "UR", "LR"]
             selected_ranks = set(rank_order)
@@ -397,13 +397,13 @@ class Zukan:
             )
             page_info = ft.Text(f"/ {total_pages} ({total_items})")
             # on_submit をセット（Enterでジャンプ）
-            page_input.on_submit = jumpToPage
+            page_input.on_submit = jump_to_page
             # --- ソート設定 ---
             sort_field = "id"  # default: 入手順(ID順)
             sort_ascending = True
             # 初期ソートとページを構築
             apply_sort()
-            buildZukanList(current_page)
+            build_zukan_list(current_page)
             # --- ソートUI: ドロップダウン + ラジオ（昇順/降順） ---
             dropdown = ft.Dropdown(
                 width=160,
@@ -431,17 +431,17 @@ class Zukan:
                 value="asc",
             )
             radio_group.on_change = on_radio_change
-            filter_controls = [makeFilterCheckbox(r) for r in rank_order]
+            filter_controls = [make_filter_checkbox(r) for r in rank_order]
             filter_controls.append(
                 ft.TextButton(
                     content=ft.Text("全選択"),
-                    on_click=filterAllSelect
+                    on_click=filter_all_select
                 )
             )
             filter_controls.append(
                 ft.TextButton(
                     content=ft.Text("全解除"),
-                    on_click=filterAllUnselect
+                    on_click=filter_all_unselect
                 )
             )
             # フィルタを2段の丸角ボックスにまとめる
@@ -471,7 +471,7 @@ class Zukan:
                 text_size=13,
                 expand=True,
             )
-            search_field.on_submit = applySearch
+            search_field.on_submit = apply_search
             search_ui = ft.Row(
                 alignment=ft.MainAxisAlignment.CENTER,
                 controls=[
@@ -505,14 +505,14 @@ class Zukan:
                                             ft.IconButton(
                                                 icon=ft.Icons.ARROW_BACK, 
                                                 scale=ft.Scale(scale_x=0.8, scale_y=0.8), 
-                                                on_click=onPrev
+                                                on_click=on_prev
                                             ),
                                             page_input,
                                             page_info,
                                             ft.IconButton(
                                                 icon=ft.Icons.ARROW_FORWARD, 
                                                 scale=ft.Scale(scale_x=0.8, scale_y=0.8), 
-                                                on_click=onNext
+                                                on_click=on_next
                                             ),
                                             ft.Container(
                                                 width=20

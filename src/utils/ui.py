@@ -2,8 +2,8 @@ import flet as ft
 import webbrowser
 
 # ランクからカードの色を決める
-def getCardColor(rank, is_sozai):
-    if is_sozai:
+def get_card_color(rank, isSozai):
+    if isSozai:
         color = ft.Colors.ORANGE
     else:
         if rank == "LR":
@@ -22,7 +22,7 @@ def getCardColor(rank, is_sozai):
             color = ft.Colors.LIME_900
     return color
 # カードイメージの作成
-def createCardImage(data, isShow):
+def create_card_image(data, isShow):
     # ランクとカードタイトル
     link_text =  ft.GestureDetector(
         mouse_cursor=ft.MouseCursor.CLICK,
@@ -69,7 +69,7 @@ def createCardImage(data, isShow):
                 ft.Container(
                     width=310,
                     height=310,
-                    bgcolor=getCardColor(data["rank"], data["isSozai"]),
+                    bgcolor=get_card_color(data["rank"], data["isSozai"]),
                     alignment=ft.Alignment.CENTER,
                     content=ft.Container(
                         width=300,
@@ -89,7 +89,7 @@ def createCardImage(data, isShow):
         image = ft.Container(
             width=310,
             height=310,
-            bgcolor=getCardColor(data["rank"], data["isSozai"]),
+            bgcolor=get_card_color(data["rank"], data["isSozai"]),
             alignment=ft.Alignment.CENTER,
             content=ft.Container(
                 width=300,

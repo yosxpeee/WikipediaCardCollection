@@ -3,9 +3,9 @@ import urllib.parse
 import asyncio
 import time
 
-from utils.utils import fetchJson
-from utils.db import saveCards
-from utils.ui import getCardColor, createCardImage
+from utils.utils import fetch_json
+from utils.db import save_cards
+from utils.ui import get_card_color, create_card_image
 
 class Gacha:
     # 初期化
@@ -16,20 +16,20 @@ class Gacha:
     # ガチャを引く
     async def draw(self, num):
         # ランダム記事取得
-        async def getRandom(n):
+        async def get_random(n):
             random_url = f"https://ja.wikipedia.org/w/api.php?format=json&action=query&list=random&rnnamespace=0&rnlimit={n}"
-            j = await fetchJson(random_url)
+            j = await fetch_json(random_url)
             if "error" in j:
                 return []
             return j.get("query", {}).get("random", [])
         # ランク取得
-        async def getRankData(tQuote):
+        async def get_rank_data(t_quote):
             n = 0
             j = {"result":"not found"}
             while n <= 5:
                 try:
-                    rank_url = f"https://api.wikirank.net/api.php?name={tQuote}&lang=ja"
-                    j = await fetchJson(rank_url)
+                    rank_url = f"https://api.wikirank.net/api.php?name={t_quote}&lang=ja"
+                    j = await fetch_json(rank_url)
                     break
                 except Exception as e:
                     print("エラー。5秒後にリトライします。")
@@ -37,22 +37,22 @@ class Gacha:
                     n+=1
             return j
         # 記事の情報取得
-        async def getInfoData(tQuote):
-            info_url = f"https://ja.wikipedia.org/w/api.php?format=json&action=query&titles={tQuote}&prop=info%7Cpageimages%7Cpageprops%7Cpageviews%7Ccategories&inprop=url%7Ctalkid&pithumbsize=600"
-            j = await fetchJson(info_url)
+        async def get_info_data(t_quote):
+            info_url = f"https://ja.wikipedia.org/w/api.php?format=json&action=query&titles={t_quote}&prop=info%7Cpageimages%7Cpageprops%7Cpageviews%7Ccategories&inprop=url%7Ctalkid&pithumbsize=600"
+            j = await fetch_json(info_url)
             if "error" in j:
                 return {}
             return j
         # 記事の概要取得
-        async def getSummary(tQuote):
-            summary_url = f"https://ja.wikipedia.org/api/rest_v1/page/summary/{tQuote}"
-            j = await fetchJson(summary_url)
+        async def get_summary(t_quote):
+            summary_url = f"https://ja.wikipedia.org/api/rest_v1/page/summary/{t_quote}"
+            j = await fetch_json(summary_url)
             if "status" in j:
                 return "ERROR"
             return j.get("extract", "")
         # サムネイルのコンテンツを生成するヘルパー
-        def makeThumbContent(idx, selected):
-            color = getCardColor(get_card_list[idx]["rank"], get_card_list[idx]["isSozai"])
+        def make_thumb_content(idx, selected):
+            color = get_card_color(get_card_list[idx]["rank"], get_card_list[idx]["isSozai"])
             if selected:
                 # 選択時の黒い枠(内側は白)をContainerで表現
                 return ft.Container(
@@ -77,7 +77,7 @@ class Gacha:
                     border_radius=8,
                 )
         # 選択処理の更新（外側の変数を変更するため nonlocal）
-        def selectGachaResult(n):
+        def select_gacha_result(n):
             nonlocal selected_index, grid_controls, stack_controls
             selected_index = n
             # スタックの表示切替
@@ -85,7 +85,7 @@ class Gacha:
                 v.visible = (idx == n)
             # サムネイルの再構築（選択枠を変更）
             for idx, c in enumerate(grid_controls):
-                c.content = makeThumbContent(idx, idx == selected_index)
+                c.content = make_thumb_content(idx, idx == selected_index)
             self.dialog.update()
         ####################
         # 処理開始
@@ -98,8 +98,8 @@ class Gacha:
             col = self.loading_overlay.content
             # content is Column; controls[0]=counter text, controls[1]=progress bar
             if hasattr(col, 'controls') and len(col.controls) >= 2:
-                col.controls[0].value = f"ガチャを回しています... 0/{num}"
-                col.controls[1].value = 0
+                col.controls[1].controls[0].value = f"ガチャを回しています... 0/{num}"
+                col.controls[1].controls[1].value = 0
         except Exception:
             pass
         self.page.update()
@@ -131,28 +131,28 @@ class Gacha:
             #elif count == 8:
             #    randList = [{"id":"228773",  "title":"ディープインパクト (競走馬)"}] #LR
             #else:
-            randList = await getRandom(1)
+            randList = await get_random(1)
             for r in randList:
                 pageid = r["id"]
                 title = r["title"]
-                tQuote = urllib.parse.quote(title)
-                rankData = await getRankData(tQuote) #Rank
-                infoData = await getInfoData(tQuote) #info
-                if infoData == {}:
+                t_quote = urllib.parse.quote(title)
+                rank_data = await get_rank_data(t_quote) #Rank
+                info_data = await get_info_data(t_quote) #info
+                if info_data == {}:
                     print("記事情報取得失敗。リトライ")
                     break
-                extract  = await getSummary(tQuote) #概要
+                extract  = await get_summary(t_quote) #概要
                 if extract == "ERROR":
                     print("記事概要取得失敗。リトライ")
                     break
-                if rankData["result"] == "not found" :
+                if rank_data["result"] == "not found" :
                     #評価されていない場合はCとみなす
                     q = 0
                     rank = "C"
                     atk_multi = 1
                     def_multi = 1
                 else:
-                    q = float(rankData["result"]["ja"]["quality"])
+                    q = float(rank_data["result"]["ja"]["quality"])
                     if q == 100:
                         rank = "LR"
                         atk_multi = 25
@@ -183,19 +183,19 @@ class Gacha:
                         def_multi = 1
                 p_str = str(pageid)
                 # 素材判定
-                isAimai   = any("曖昧さ回避" in category.get("title", "") for category in infoData["query"]["pages"][p_str]["categories"])
-                #isList    = any(category.get("title", "").endswith("一覧") for category in infoData["query"]["pages"][p_str]["categories"])
-                #isHikaku  = any("の比較" in category.get("title", "") for category in infoData["query"]["pages"][p_str]["categories"])
-                #isHistory = any("年表" in category.get("title", "") for category in infoData["query"]["pages"][p_str]["categories"])
+                isAimai   = any("曖昧さ回避" in category.get("title", "") for category in info_data["query"]["pages"][p_str]["categories"])
+                #isList    = any(category.get("title", "").endswith("一覧") for category in info_data["query"]["pages"][p_str]["categories"])
+                #isHikaku  = any("の比較" in category.get("title", "") for category in info_data["query"]["pages"][p_str]["categories"])
+                #isHistory = any("年表" in category.get("title", "") for category in info_data["query"]["pages"][p_str]["categories"])
                 #print(isAimai, isList, isHikaku, isHistory)
                 #if isAimai or isList or isHikaku or isHistory:
                 if isAimai:
-                    #print(infoData["query"]["pages"][p_str]["categories"])
+                    #print(info_data["query"]["pages"][p_str]["categories"])
                     isSozai = True
                 else:
                     isSozai = False
                 try:
-                    d_resource = infoData["query"]["pages"][p_str]["length"]
+                    d_resource = info_data["query"]["pages"][p_str]["length"]
                     query = True
                 except:
                     #最新すぎる記事は情報取得できないケースがある。
@@ -205,9 +205,9 @@ class Gacha:
                 if query:
                     if isSozai == False:
                         a_resource = 0
-                        for dayView in infoData["query"]["pages"][p_str]["pageviews"]:
-                            if infoData["query"]["pages"][p_str]["pageviews"][dayView] != None:
-                                a_resource = a_resource + infoData["query"]["pages"][p_str]["pageviews"][dayView]
+                        for dayView in info_data["query"]["pages"][p_str]["pageviews"]:
+                            if info_data["query"]["pages"][p_str]["pageviews"][dayView] != None:
+                                a_resource = a_resource + info_data["query"]["pages"][p_str]["pageviews"][dayView]
                         #defリソースに対する補正
                         if d_resource > 500000:
                             d_hosei = 0.6
@@ -239,23 +239,23 @@ class Gacha:
                         defence = -1
                         atk = -1
                         hitPoint = -1
-                    if "thumbnail" in infoData["query"]["pages"][p_str]:
-                        imageUrl = infoData["query"]["pages"][p_str]["thumbnail"]["source"]
+                    if "thumbnail" in info_data["query"]["pages"][p_str]:
+                        image_url = info_data["query"]["pages"][p_str]["thumbnail"]["source"]
                     else:
-                        imageUrl = ""
-                    fullUrl = infoData["query"]["pages"][p_str]["fullurl"]
+                        image_url = ""
+                    full_url = info_data["query"]["pages"][p_str]["fullurl"]
                     # ↓デバッグ用にしばらく残す
                     print("#########################################################")
                     if isSozai:
                         print(f"{pageid}: {title} [{rank}] ({q}) (素材)")
                     else:
                         print(f"{pageid}: {title} [{rank}] ({q})")
-                    print(f"Page URL: {fullUrl}")
+                    print(f"Page URL: {full_url}")
                     if extract == "":
                         print("概要: なし")
                     else:
                         print(f"概要: {extract}")
-                    print(f"画像URL: {imageUrl}")
+                    print(f"画像URL: {image_url}")
                     print(f"HP :{hitPoint}")
                     print(f"ATK:{atk}")
                     print(f"DEF:{defence}")
@@ -264,8 +264,8 @@ class Gacha:
                     get_card_list.append({
                         "pageId": pageid,
                         "title": title,
-                        "pageUrl": fullUrl,
-                        "imageUrl": imageUrl,
+                        "pageUrl": full_url,
+                        "imageUrl": image_url,
                         "rank": rank,
                         "quality": q,
                         "isSozai": isSozai,
@@ -279,16 +279,16 @@ class Gacha:
                     try:
                         col = self.loading_overlay.content
                         if hasattr(col, 'controls') and len(col.controls) >= 2:
-                            col.controls[0].value = f"ガチャを回しています... {count}/{num}"
+                            col.controls[1].controls[0].value = f"ガチャを回しています... {count}/{num}"
                             # progress value between 0..1
-                            col.controls[1].value = count / float(num)
-                            col.controls[0].update()
-                            col.controls[1].update()
+                            col.controls[1].controls[1].value = count / float(num)
+                            col.controls[1].controls[0].update()
+                            col.controls[1].controls[1].update()
                     except Exception:
                         pass
                     self.page.update()
         # DBに保存する
-        saveCards(get_card_list)
+        save_cards(get_card_list)
         # ローディングオーバーレイを非表示
         self.loading_overlay.visible = False
         self.page.update()
@@ -300,12 +300,12 @@ class Gacha:
         grid_controls = []
         for i in range(10):
             c = ft.Container(
-                content=makeThumbContent(i, i == selected_index),
-                on_click=(lambda e, idx=i: selectGachaResult(idx)),
+                content=make_thumb_content(i, i == selected_index),
+                on_click=(lambda e, idx=i: select_gacha_result(idx)),
             )
             grid_controls.append(c)
         # Stack の表示用コントロール群
-        stack_controls = [createCardImage(get_card_list[i], i == selected_index) for i in range(10)]
+        stack_controls = [create_card_image(get_card_list[i], i == selected_index) for i in range(10)]
         self.dialog = ft.AlertDialog(
             modal=True,
             title=ft.Text("ガチャ結果"),

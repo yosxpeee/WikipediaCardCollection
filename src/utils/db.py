@@ -1,7 +1,7 @@
 import sqlite3
-from utils.utils import rankToRankId
+from utils.utils import rank_to_rankid
 
-def initializeDB():
+def initialize_db():
     conn = sqlite3.connect('cards.db')
     cursor = conn.cursor()
     # ファイルがない、ファイルがあってもテーブルがない場合は新規作成する
@@ -25,19 +25,19 @@ def initializeDB():
     conn.commit()
     conn.close()
 
-def saveCards(cards):
+def save_cards(cards):
     conn = sqlite3.connect('cards.db')
     cursor = conn.cursor()
     # カードがかぶっても関係なく新しく追加していく
     for card in cards:
         cursor.execute('''
             INSERT INTO gacha_cards (pageId, title, pageUrl, imageUrl, rank, quality, isSozai, extract, HP, ATK, DEF) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (card['pageId'], card['title'], card['pageUrl'], card['imageUrl'], rankToRankId(card['rank']), card['quality'], card['isSozai'], card['extract'], card['HP'], card['ATK'], card['DEF']))
+        ''', (card['pageId'], card['title'], card['pageUrl'], card['imageUrl'], rank_to_rankid(card['rank']), card['quality'], card['isSozai'], card['extract'], card['HP'], card['ATK'], card['DEF']))
     # 断片化云々を防ぎたいのでバキュームする（毎回でなくてもいいか？）
     conn.commit()
     conn.close()
 
-def getAllCards():
+def get_all_cards():
     conn = sqlite3.connect('cards.db')
     cursor = conn.cursor()
     data = []

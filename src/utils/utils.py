@@ -18,7 +18,7 @@ RANK_TABLE = {
 }
 
 # HTTPリクエスト(API)
-def doApi(url):
+def do_api(url):
     while True:
         try:
             #print(url)
@@ -31,9 +31,9 @@ def doApi(url):
     return response
 
 # 非同期でブロッキングなHTTP呼び出しをスレッドで実行するヘルパー
-async def fetchJson(url, key_path=None):
+async def fetch_json(url, key_path=None):
     def _call():
-        r = doApi(url)
+        r = do_api(url)
         j = r.json()
         if key_path is None:
             return j
@@ -44,13 +44,13 @@ async def fetchJson(url, key_path=None):
     return await asyncio.to_thread(_call)
 
 #rank to rankid
-def rankIdToRank(rankId, is_sozai):
-    if is_sozai == "1":
+def rankid_to_rank(rankId, isSozai):
+    if isSozai == "1":
         return RANK_TABLE[-1]
     else:
         return RANK_TABLE[int(rankId)]
 
 #rankid to rank
-def rankToRankId(rank):
+def rank_to_rankid(rank):
     key = next((k for k, v in RANK_TABLE.items() if v == rank), None)
     return key
