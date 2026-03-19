@@ -12,13 +12,13 @@ class Gacha:
     def __init__(self, page):
         self.page = page
         # ローディングオーバーレイの参照を保持
-        self.loadingOverlay = page.overlay[0]
+        self.loading_overlay = page.overlay[0]
     # ガチャを引く
     async def draw(self, num):
         # ランダム記事取得
         async def getRandom(n):
-            randomUrl = f"https://ja.wikipedia.org/w/api.php?format=json&action=query&list=random&rnnamespace=0&rnlimit={n}"
-            j = await fetchJson(randomUrl)
+            random_url = f"https://ja.wikipedia.org/w/api.php?format=json&action=query&list=random&rnnamespace=0&rnlimit={n}"
+            j = await fetchJson(random_url)
             if "error" in j:
                 return []
             return j.get("query", {}).get("random", [])
@@ -28,8 +28,8 @@ class Gacha:
             j = {"result":"not found"}
             while n <= 5:
                 try:
-                    rankUrl = f"https://api.wikirank.net/api.php?name={tQuote}&lang=ja"
-                    j = await fetchJson(rankUrl)
+                    rank_url = f"https://api.wikirank.net/api.php?name={tQuote}&lang=ja"
+                    j = await fetchJson(rank_url)
                     break
                 except Exception as e:
                     print("エラー。5秒後にリトライします。")
@@ -38,21 +38,21 @@ class Gacha:
             return j
         # 記事の情報取得
         async def getInfoData(tQuote):
-            infoUrl = f"https://ja.wikipedia.org/w/api.php?format=json&action=query&titles={tQuote}&prop=info%7Cpageimages%7Cpageprops%7Cpageviews%7Ccategories&inprop=url%7Ctalkid&pithumbsize=600"
-            j = await fetchJson(infoUrl)
+            info_url = f"https://ja.wikipedia.org/w/api.php?format=json&action=query&titles={tQuote}&prop=info%7Cpageimages%7Cpageprops%7Cpageviews%7Ccategories&inprop=url%7Ctalkid&pithumbsize=600"
+            j = await fetchJson(info_url)
             if "error" in j:
                 return {}
             return j
         # 記事の概要取得
         async def getSummary(tQuote):
-            summaryUrl = f"https://ja.wikipedia.org/api/rest_v1/page/summary/{tQuote}"
-            j = await fetchJson(summaryUrl)
+            summary_url = f"https://ja.wikipedia.org/api/rest_v1/page/summary/{tQuote}"
+            j = await fetchJson(summary_url)
             if "status" in j:
                 return "ERROR"
             return j.get("extract", "")
         # サムネイルのコンテンツを生成するヘルパー
         def makeThumbContent(idx, selected):
-            color = getCardColor(getCardList[idx]["rank"], getCardList[idx]["isSozai"])
+            color = getCardColor(get_card_list[idx]["rank"], get_card_list[idx]["isSozai"])
             if selected:
                 # 選択時の黒い枠(内側は白)をContainerで表現
                 return ft.Container(
@@ -78,24 +78,24 @@ class Gacha:
                 )
         # 選択処理の更新（外側の変数を変更するため nonlocal）
         def selectGachaResult(n):
-            nonlocal selectedIndex, gridControls, stackControls
-            selectedIndex = n
+            nonlocal selected_index, grid_controls, stack_controls
+            selected_index = n
             # スタックの表示切替
             for idx, v in enumerate(self.dialog.content.controls[1].content.controls):
                 v.visible = (idx == n)
             # サムネイルの再構築（選択枠を変更）
-            for idx, c in enumerate(gridControls):
-                c.content = makeThumbContent(idx, idx == selectedIndex)
+            for idx, c in enumerate(grid_controls):
+                c.content = makeThumbContent(idx, idx == selected_index)
             self.dialog.update()
         ####################
         # 処理開始
         ####################
         # ローディングオーバーレイ（進捗）を表示
         # overlay[0] は gacha のオーバーレイ（counter + progress）
-        self.loadingOverlay.visible = True
+        self.loading_overlay.visible = True
         # 初期化：counter と progress を 0 にする
         try:
-            col = self.loadingOverlay.content
+            col = self.loading_overlay.content
             # content is Column; controls[0]=counter text, controls[1]=progress bar
             if hasattr(col, 'controls') and len(col.controls) >= 2:
                 col.controls[0].value = f"ガチャを回しています... 0/{num}"
@@ -104,7 +104,7 @@ class Gacha:
             pass
         self.page.update()
         count = 0
-        getCardList = []
+        get_card_list = []
         while True:
             if count >= num:
                 break
@@ -261,7 +261,7 @@ class Gacha:
                     print(f"DEF:{defence}")
                     print("#########################################################")
                     # ↑デバッグ用にしばらく残す
-                    getCardList.append({
+                    get_card_list.append({
                         "pageId": pageid,
                         "title": title,
                         "pageUrl": fullUrl,
@@ -277,7 +277,7 @@ class Gacha:
                     count = count + 1
                     # 更新：プログレスとカウンタ
                     try:
-                        col = self.loadingOverlay.content
+                        col = self.loading_overlay.content
                         if hasattr(col, 'controls') and len(col.controls) >= 2:
                             col.controls[0].value = f"ガチャを回しています... {count}/{num}"
                             # progress value between 0..1
@@ -288,24 +288,24 @@ class Gacha:
                         pass
                     self.page.update()
         # DBに保存する
-        saveCards(getCardList)
+        saveCards(get_card_list)
         # ローディングオーバーレイを非表示
-        self.loadingOverlay.visible = False
+        self.loading_overlay.visible = False
         self.page.update()
         # 結果を閉じるボタンの準備
-        self.closeButton = ft.TextButton("Close", on_click=lambda e: self.page.pop_dialog())
+        self.close_button = ft.TextButton("Close", on_click=lambda e: self.page.pop_dialog())
         # 選択インデックス（初期は0）
-        selectedIndex = 0
+        selected_index = 0
         # Grid のサムネイルコントロール群を作る
-        gridControls = []
+        grid_controls = []
         for i in range(10):
             c = ft.Container(
-                content=makeThumbContent(i, i == selectedIndex),
+                content=makeThumbContent(i, i == selected_index),
                 on_click=(lambda e, idx=i: selectGachaResult(idx)),
             )
-            gridControls.append(c)
+            grid_controls.append(c)
         # Stack の表示用コントロール群
-        stackControls = [createCardImage(getCardList[i], i == selectedIndex) for i in range(10)]
+        stack_controls = [createCardImage(get_card_list[i], i == selected_index) for i in range(10)]
         self.dialog = ft.AlertDialog(
             modal=True,
             title=ft.Text("ガチャ結果"),
@@ -318,27 +318,27 @@ class Gacha:
                         runs_count=5,
                         spacing=8,
                         child_aspect_ratio=0.8,
-                        controls=gridControls,
+                        controls=grid_controls,
                     ),
                     ft.Container(
                         width=320,
                         height=480,
                         content=ft.Stack(
-                            controls=stackControls,
+                            controls=stack_controls,
                         ),
                         bgcolor=ft.Colors.GREY_100, border_radius=5,
                         padding=ft.Padding.all(5),
                     )
                 ],
             ),
-            actions=[self.closeButton],
+            actions=[self.close_button],
             actions_alignment=ft.MainAxisAlignment.END,
             title_padding=ft.Padding.all(10),
         )
         self.page.show_dialog(self.dialog)
     # 画面作成
     def create(self):
-        gachaContainer=ft.Column(
+        gacha_container=ft.Column(
             alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             controls=[
@@ -346,4 +346,4 @@ class Gacha:
                ft.IconButton(icon=ft.Icons.TOKEN, icon_size=100, on_click=lambda: asyncio.create_task(self.draw(10))),
             ],
         )
-        return gachaContainer
+        return gacha_container

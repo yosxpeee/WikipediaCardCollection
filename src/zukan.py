@@ -13,7 +13,7 @@ class Zukan:
         self.page = page
         # ローディングオーバーレイの参照を保持
         # page.overlay[0] はガチャ用、図鑑は後ろに追加しているため index 1 を使う
-        self.loadingOverlay = page.overlay[1]
+        self.loading_overlay = page.overlay[1]
     # 総数を取得する
     def getAllTargetCount(self):
         url = "https://ja.wikipedia.org/wiki/Special:Statistics"
@@ -35,7 +35,7 @@ class Zukan:
             return -1
     # カードイメージ表示
     def openCardImage(self, data):
-        self.closeButton = ft.TextButton("Close", on_click=lambda e: self.page.pop_dialog())
+        self.close_button = ft.TextButton("Close", on_click=lambda e: self.page.pop_dialog())
         self.dialog = ft.AlertDialog(
             modal=True,
             title=ft.Text("カードイメージ"),
@@ -52,14 +52,15 @@ class Zukan:
                 bgcolor=ft.Colors.GREY_100, border_radius=5,
                 padding=ft.Padding.all(5),
             ),
-            actions=[self.closeButton],
+            actions=[self.close_button],
             actions_alignment=ft.MainAxisAlignment.END,
             title_padding=ft.Padding.all(10),
         )
         self.page.show_dialog(self.dialog)
     # 画面作成
     async def create(self):
-        def buildPage(page):
+        # 図鑑リスト作成
+        def buildZukanList(page):
             table.controls.clear()
             # ヘッダを作成
             header = ft.Row(
@@ -82,13 +83,13 @@ class Zukan:
                 color=ft.Colors.BLACK,
                 height=1,
             ))
-            if totalItems == 0:
+            if total_items == 0:
                 #table.controls.append(ft.Text("データがありません"))
                 return
             start = (page - 1) * PAGE_PER_CARDS
-            end = min(start + PAGE_PER_CARDS, totalItems)
+            end = min(start + PAGE_PER_CARDS, total_items)
             for idx in range(start, end):
-                row_data = filteredData[idx]
+                row_data = filtered_data[idx]
                 # ランクを先に計算
                 rank = rankIdToRank(row_data[5], row_data[7])
                 row_data_for_image = {
@@ -104,29 +105,29 @@ class Zukan:
                     "ATK": row_data[10],
                     "DEF": row_data[11],
                 }
-                numText = str(row_data[0]).ljust(8, " ")
-                pageidText = str(row_data[1]).ljust(8, " ")
-                rankText = str(rank).ljust(4, " ")
+                num_text = str(row_data[0]).ljust(8, " ")
+                pageid_text = str(row_data[1]).ljust(8, " ")
+                rank_text = str(rank).ljust(4, " ")
                 nameText = row_data[2] if row_data[2] is not None else ""
                 if row_data[9] == "-1":
-                    hpText = "-".ljust(5, " ") if row_data[9] is not None else "".ljust(5, " ")
+                    hp_text = "-".ljust(5, " ") if row_data[9] is not None else "".ljust(5, " ")
                 else:
-                    hpText = str(row_data[9]).ljust(5, " ") if row_data[9] is not None else "".ljust(5, " ")
+                    hp_text = str(row_data[9]).ljust(5, " ") if row_data[9] is not None else "".ljust(5, " ")
                 if row_data[10] == "-1":
-                    atkText = "-".ljust(5, " ") if row_data[10] is not None else "".ljust(5, " ")
+                    atk_text = "-".ljust(5, " ") if row_data[10] is not None else "".ljust(5, " ")
                 else:
-                    atkText = str(row_data[10]).ljust(5, " ") if row_data[10] is not None else "".ljust(5, " ")
+                    atk_text = str(row_data[10]).ljust(5, " ") if row_data[10] is not None else "".ljust(5, " ")
                 if row_data[11] == "-1":
-                    defText = "-".ljust(5, " ") if row_data[11] is not None else "".ljust(5, " ")
+                    def_text = "-".ljust(5, " ") if row_data[11] is not None else "".ljust(5, " ")
                 else:
-                    defText = str(row_data[11]).ljust(5, " ") if row_data[11] is not None else "".ljust(5, " ")
+                    def_text = str(row_data[11]).ljust(5, " ") if row_data[11] is not None else "".ljust(5, " ")
                 table.controls.append(
                     ft.Row(
                         spacing=12,
                         controls=[
-                            ft.Text(numText, font_family="Consolas"),
-                            ft.Text(pageidText, font_family="Consolas"),
-                            ft.Text(rankText, font_family="Consolas"),
+                            ft.Text(num_text, font_family="Consolas"),
+                            ft.Text(pageid_text, font_family="Consolas"),
+                            ft.Text(rank_text, font_family="Consolas"),
                             ft.Container(
                                 width=370,
                                 content=ft.GestureDetector(
@@ -145,60 +146,181 @@ class Zukan:
                                     ),
                                 ),
                             ),
-                            ft.Text(hpText, font_family="Consolas"),
-                            ft.Text(atkText, font_family="Consolas"),
-                            ft.Text(defText, font_family="Consolas"),
+                            ft.Text(hp_text, font_family="Consolas"),
+                            ft.Text(atk_text, font_family="Consolas"),
+                            ft.Text(def_text, font_family="Consolas"),
                         ],
                     )
                 )
         # ページラベルの更新
         def refreshPageLabel():
-            # pageInput を現在ページに合わせて更新
+            # page_input を現在ページに合わせて更新
             try:
-                pageInput.value = str(currentPage)
-                pageInput.update()
-                pageInfo.value = f"/ {totalPages} ({totalItems})"
-                pageInfo.update()
+                page_input.value = str(current_page)
+                page_input.update()
+                page_info.value = f"/ {total_pages} ({total_items})"
+                page_info.update()
             except Exception:
                 pass
         # ページ操作
         def onPrev(e):
-            nonlocal currentPage
-            if currentPage > 1:
-                currentPage -= 1
-                buildPage(currentPage)
+            nonlocal current_page
+            if current_page > 1:
+                current_page -= 1
+                buildZukanList(current_page)
                 refreshPageLabel()
                 self.page.update()
         def onNext(e):
-            nonlocal currentPage
-            if currentPage < totalPages:
-                currentPage += 1
-                buildPage(currentPage)
+            nonlocal current_page
+            if current_page < total_pages:
+                current_page += 1
+                buildZukanList(current_page)
                 refreshPageLabel()
                 self.page.update()
         def jumpToPage(e):
-            nonlocal currentPage
+            nonlocal current_page
             # e.control は TextField
             v = str(e.control.value).strip()
             try:
                 n = int(v)
             except Exception:
-                e.control.value = str(currentPage)
+                e.control.value = str(current_page)
                 e.control.update()
                 return
-            if n < 1 or n > totalPages:
-                e.control.value = str(currentPage)
+            if n < 1 or n > total_pages:
+                e.control.value = str(current_page)
                 e.control.update()
                 return
-            currentPage = n
-            buildPage(currentPage)
+            current_page = n
+            buildZukanList(current_page)
+            refreshPageLabel()
+            self.page.update()
+        # フィルタ適用
+        def apply_filters():
+            filtered = []
+            for row in data:
+                r = rankIdToRank(row[5], row[7])
+                if r in selected_ranks:
+                    filtered.append(row)
+            return filtered
+        # ソートの順序定義
+        def name_sort_key(name):
+            if not name:
+                return (3, "")
+            first = name[0]
+            # category: symbol/punct=0, digit=1, ascii alpha=2, others=3
+            if first.isdigit():
+                cat = 1
+            elif ('A' <= first <= 'Z') or ('a' <= first <= 'z'):
+                cat = 2
+            elif ord(first) < 128 and not first.isalnum():
+                cat = 0
+            else:
+                cat = 3
+            return (cat, name)
+        # ソート適用
+        def apply_sort():
+            nonlocal filtered_data
+            key = None
+            if sort_field == "id":
+                key = lambda r: int(r[0]) if str(r[0]).isdigit() else 0
+            elif sort_field == "pageid":
+                key = lambda r: int(r[1]) if str(r[1]).isdigit() else 0
+            elif sort_field == "rank":
+                key = lambda r: rank_order.index(rankIdToRank(r[5], r[7])) if rankIdToRank(r[5], r[7]) in rank_order else 0
+            elif sort_field == "name":
+                key = lambda r: name_sort_key(r[2] or "")
+            elif sort_field == "HP":
+                key = lambda r: int(r[9]) if str(r[9]).lstrip("-+").isdigit() else (-999999 if r[9] == "-1" else 0)
+            elif sort_field == "ATK":
+                key = lambda r: int(r[10]) if str(r[10]).lstrip("-+").isdigit() else (-999999 if r[10] == "-1" else 0)
+            elif sort_field == "DEF":
+                key = lambda r: int(r[11]) if str(r[11]).lstrip("-+").isdigit() else (-999999 if r[11] == "-1" else 0)
+            try:
+                filtered_data = sorted(filtered_data, key=key, reverse=(not sort_ascending))
+            except Exception:
+                pass
+        # ドロップダウン選択
+        def on_dropdown_select(e):
+            nonlocal sort_field
+            sort_field = e.control.value
+            apply_sort()
+            buildZukanList(current_page)
+            refreshPageLabel()
+            self.page.update()
+        # ラジオボタン切り替え
+        def on_radio_change(e):
+            nonlocal sort_ascending
+            sort_ascending = (e.control.value == "asc")
+            apply_sort()
+            buildZukanList(current_page)
+            refreshPageLabel()
+            self.page.update()
+        # フィルタ用チェックボックス作成（素材→C→... の順）
+        def makeFilterCheckbox(rk):
+            # 表示用のラベル（素材は見やすくする）
+            display_label = "素材" if rk == "--" else rk
+            cb = ft.Checkbox(label=display_label, label_position=ft.LabelPosition.RIGHT, value=True)
+            def _on_change(e):
+                nonlocal filtered_data, total_items, total_pages, current_page
+                if e.control.value:
+                    selected_ranks.add(rk)
+                else:
+                    selected_ranks.discard(rk)
+                filtered_data = apply_filters()
+                total_items = len(filtered_data)
+                total_pages = (total_items + PAGE_PER_CARDS - 1) // PAGE_PER_CARDS if total_items > 0 else 1
+                if current_page > total_pages:
+                    current_page = 1
+                buildZukanList(current_page)
+                refreshPageLabel()
+                self.page.update()
+            cb.on_change = _on_change
+            return cb
+        # すべて選択にする
+        def filterAllSelect():
+            nonlocal filtered_data, total_items, total_pages, current_page, selected_ranks
+            selected_ranks = set(rank_order)
+            # 各チェックボックスを更新（filter_controls にはチェックボックスとボタンが混在）
+            for ctrl in filter_controls:
+                try:
+                    if isinstance(ctrl, ft.Checkbox):
+                        ctrl.value = True
+                        ctrl.update()
+                except Exception:
+                    pass
+            # フィルタ反映・ページ再計算
+            filtered_data = apply_filters()
+            total_items = len(filtered_data)
+            total_pages = (total_items + PAGE_PER_CARDS - 1) // PAGE_PER_CARDS if total_items > 0 else 1
+            current_page = 1
+            buildZukanList(current_page)
+            refreshPageLabel()
+            self.page.update()
+        # すべて解除にする
+        def filterAllUnselect():
+            nonlocal filtered_data, total_items, total_pages, current_page, selected_ranks
+            selected_ranks = set()
+            for ctrl in filter_controls:
+                try:
+                    if isinstance(ctrl, ft.Checkbox):
+                        ctrl.value = False
+                        ctrl.update()
+                except Exception:
+                    pass
+            filtered_data = apply_filters()
+            total_items = len(filtered_data)
+            total_pages = (total_items + PAGE_PER_CARDS - 1) // PAGE_PER_CARDS if total_items > 0 else 1
+            if current_page > total_pages:
+                current_page = 1
+            buildZukanList(current_page)
             refreshPageLabel()
             self.page.update()
         ####################
         # 処理開始
         ####################
         # ローディングオーバーレイを表示
-        self.loadingOverlay.visible = True
+        self.loading_overlay.visible = True
         self.page.update()
         try:
             # 総記事数はブロッキングなのでバックグラウンドで取得
@@ -209,16 +331,9 @@ class Zukan:
             #DBからデータを持ってくる
             data = getAllCards()
             # フィルタ設定（初期は全選択）
-            rankOrder = ["--", "C", "UC", "R", "SR", "SSR", "UR", "LR"]
-            selectedRanks = set(rankOrder)
-            def apply_filters():
-                filtered = []
-                for row in data:
-                    r = rankIdToRank(row[5], row[7])
-                    if r in selectedRanks:
-                        filtered.append(row)
-                return filtered
-            filteredData = apply_filters()
+            rank_order = ["--", "C", "UC", "R", "SR", "SSR", "UR", "LR"]
+            selected_ranks = set(rank_order)
+            filtered_data = apply_filters()
             #for card in data:
             #    print(card)
             table = ft.ListView(
@@ -226,13 +341,13 @@ class Zukan:
                 spacing=0,
                 controls=[],
             )
-            # ページネーション設定（filteredData に基づく）
-            totalItems = len(filteredData)
-            totalPages = (totalItems + PAGE_PER_CARDS - 1) // PAGE_PER_CARDS if totalItems > 0 else 1
-            currentPage = 1
+            # ページネーション設定（filtered_data に基づく）
+            total_items = len(filtered_data)
+            total_pages = (total_items + PAGE_PER_CARDS - 1) // PAGE_PER_CARDS if total_items > 0 else 1
+            current_page = 1
             # ページ入力（現在ページを入力してジャンプできる）
-            pageInput = ft.TextField(
-                value=str(currentPage), 
+            page_input = ft.TextField(
+                value=str(current_page), 
                 label="No.",
                 label_style=ft.TextStyle(
                     size=12,
@@ -247,50 +362,15 @@ class Zukan:
                 text_vertical_align=ft.VerticalAlignment.CENTER,
                 content_padding=ft.Padding.all(0),
             )
-            pageInfo = ft.Text(f"/ {totalPages} ({totalItems})")
+            page_info = ft.Text(f"/ {total_pages} ({total_items})")
             # on_submit をセット（Enterでジャンプ）
-            pageInput.on_submit = jumpToPage
+            page_input.on_submit = jumpToPage
             # --- ソート設定 ---
             sort_field = "id"  # default: 入手順(ID順)
             sort_ascending = True
-            def name_sort_key(name):
-                if not name:
-                    return (3, "")
-                first = name[0]
-                # category: symbol/punct=0, digit=1, ascii alpha=2, others=3
-                if first.isdigit():
-                    cat = 1
-                elif ('A' <= first <= 'Z') or ('a' <= first <= 'z'):
-                    cat = 2
-                elif ord(first) < 128 and not first.isalnum():
-                    cat = 0
-                else:
-                    cat = 3
-                return (cat, name)
-            def apply_sort():
-                nonlocal filteredData
-                key = None
-                if sort_field == "id":
-                    key = lambda r: int(r[0]) if str(r[0]).isdigit() else 0
-                elif sort_field == "pageid":
-                    key = lambda r: int(r[1]) if str(r[1]).isdigit() else 0
-                elif sort_field == "rank":
-                    key = lambda r: rankOrder.index(rankIdToRank(r[5], r[7])) if rankIdToRank(r[5], r[7]) in rankOrder else 0
-                elif sort_field == "name":
-                    key = lambda r: name_sort_key(r[2] or "")
-                elif sort_field == "HP":
-                    key = lambda r: int(r[9]) if str(r[9]).lstrip("-+").isdigit() else (-999999 if r[9] == "-1" else 0)
-                elif sort_field == "ATK":
-                    key = lambda r: int(r[10]) if str(r[10]).lstrip("-+").isdigit() else (-999999 if r[10] == "-1" else 0)
-                elif sort_field == "DEF":
-                    key = lambda r: int(r[11]) if str(r[11]).lstrip("-+").isdigit() else (-999999 if r[11] == "-1" else 0)
-                try:
-                    filteredData = sorted(filteredData, key=key, reverse=(not sort_ascending))
-                except Exception:
-                    pass
             # 初期ソートとページを構築
             apply_sort()
-            buildPage(currentPage)
+            buildZukanList(current_page)
             # --- ソートUI: ドロップダウン + ラジオ（昇順/降順） ---
             dropdown = ft.Dropdown(
                 width=160,
@@ -307,13 +387,6 @@ class Zukan:
                 ],
                 editable=False,
             )
-            def on_dropdown_select(e):
-                nonlocal sort_field
-                sort_field = e.control.value
-                apply_sort()
-                buildPage(currentPage)
-                refreshPageLabel()
-                self.page.update()
             dropdown.on_select = on_dropdown_select
             radio_group = ft.RadioGroup(
                 content=ft.Column(
@@ -324,89 +397,22 @@ class Zukan:
                     ),
                 value="asc",
             )
-            def on_radio_change(e):
-                nonlocal sort_ascending
-                sort_ascending = (e.control.value == "asc")
-                apply_sort()
-                buildPage(currentPage)
-                refreshPageLabel()
-                self.page.update()
             radio_group.on_change = on_radio_change
-            # フィルタ用チェックボックスを作成（素材→C→... の順）
-            def makeFilterCheckbox(rk):
-                # 表示用のラベル（素材は見やすくする）
-                displayLabel = "素材" if rk == "--" else rk
-                cb = ft.Checkbox(label=displayLabel, label_position=ft.LabelPosition.RIGHT, value=True)
-                def _on_change(e):
-                    nonlocal filteredData, totalItems, totalPages, currentPage
-                    if e.control.value:
-                        selectedRanks.add(rk)
-                    else:
-                        selectedRanks.discard(rk)
-                    filteredData = apply_filters()
-                    totalItems = len(filteredData)
-                    totalPages = (totalItems + PAGE_PER_CARDS - 1) // PAGE_PER_CARDS if totalItems > 0 else 1
-                    if currentPage > totalPages:
-                        currentPage = 1
-                    buildPage(currentPage)
-                    refreshPageLabel()
-                    self.page.update()
-                cb.on_change = _on_change
-                return cb
-            def filterAllSelect():
-                nonlocal filteredData, totalItems, totalPages, currentPage, selectedRanks
-                # すべて選択にする
-                selectedRanks = set(rankOrder)
-                # 各チェックボックスを更新（filterControls にはチェックボックスとボタンが混在）
-                for ctrl in filterControls:
-                    try:
-                        if isinstance(ctrl, ft.Checkbox):
-                            ctrl.value = True
-                            ctrl.update()
-                    except Exception:
-                        pass
-                # フィルタ反映・ページ再計算
-                filteredData = apply_filters()
-                totalItems = len(filteredData)
-                totalPages = (totalItems + PAGE_PER_CARDS - 1) // PAGE_PER_CARDS if totalItems > 0 else 1
-                currentPage = 1
-                buildPage(currentPage)
-                refreshPageLabel()
-                self.page.update()
-            def filterAllUnselect():
-                nonlocal filteredData, totalItems, totalPages, currentPage, selectedRanks
-                # すべて解除
-                selectedRanks = set()
-                for ctrl in filterControls:
-                    try:
-                        if isinstance(ctrl, ft.Checkbox):
-                            ctrl.value = False
-                            ctrl.update()
-                    except Exception:
-                        pass
-                filteredData = apply_filters()
-                totalItems = len(filteredData)
-                totalPages = (totalItems + PAGE_PER_CARDS - 1) // PAGE_PER_CARDS if totalItems > 0 else 1
-                if currentPage > totalPages:
-                    currentPage = 1
-                buildPage(currentPage)
-                refreshPageLabel()
-                self.page.update()
-            filterControls = [makeFilterCheckbox(r) for r in rankOrder]
-            filterControls.append(
+            filter_controls = [makeFilterCheckbox(r) for r in rank_order]
+            filter_controls.append(
                 ft.TextButton(
                     content=ft.Text("全選択"),
                     on_click=filterAllSelect
                 )
             )
-            filterControls.append(
+            filter_controls.append(
                 ft.TextButton(
                     content=ft.Text("全解除"),
                     on_click=filterAllUnselect
                 )
             )
             # フィルタを2段の丸角ボックスにまとめる
-            filterBox = ft.Container(
+            filter_box = ft.Container(
                 #bgcolor=ft.Colors.GREY_200,
                 border=ft.Border.all(width=1, color=ft.Colors.GREY),
                 border_radius=8,
@@ -414,12 +420,12 @@ class Zukan:
                 content=ft.Column(
                     spacing=0,
                     controls=[
-                        ft.Row(controls=filterControls[0:6],  spacing=1),
-                        ft.Row(controls=filterControls[6:10], spacing=1),
+                        ft.Row(controls=filter_controls[0:6],  spacing=1),
+                        ft.Row(controls=filter_controls[6:10], spacing=1),
                     ],
                 ),
             )
-            zukanTab = ft.Column(
+            zukan_tab = ft.Column(
                 controls=[
                     ft.Row(
                         alignment=ft.MainAxisAlignment.CENTER,
@@ -448,8 +454,8 @@ class Zukan:
                                                 scale=ft.Scale(scale_x=0.8, scale_y=0.8), 
                                                 on_click=onPrev
                                             ),
-                                            pageInput,
-                                            pageInfo,
+                                            page_input,
+                                            page_info,
                                             ft.IconButton(
                                                 icon=ft.Icons.ARROW_FORWARD, 
                                                 scale=ft.Scale(scale_x=0.8, scale_y=0.8), 
@@ -462,7 +468,7 @@ class Zukan:
                                     ),
                                 ],
                             ),
-                            filterBox,
+                            filter_box,
                         ],
                     ),
                     table,
@@ -471,8 +477,8 @@ class Zukan:
         finally:
             # ローディングオーバーレイを非表示（例外が起きても必ず閉じる）
             try:
-                self.loadingOverlay.visible = False
+                self.loading_overlay.visible = False
                 self.page.update()
             except Exception:
                 pass
-        return zukanTab
+        return zukan_tab

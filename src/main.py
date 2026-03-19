@@ -46,48 +46,51 @@ def main(page: ft.Page):
                 )
                 tabBarView.update()
                 asyncio.create_task(loadAndSet())
+    # ページの初期設定
+    def initialize_page(title):
+        page.title = "Wikipedia Card Collection"
+        #page.theme_mode = ft.ThemeMode.DARK
+        page.window.resizable = False
+        page.window.width = 768
+        page.window.height = 1024
+        page.window.maximizable = False
+        page.window.visible = True
+        page.update()
+        # もしリサイズされていなかったらWin32APIでやり直す
+        if page.window.width != 768:
+            FindWindowW = ctypes.windll.user32.FindWindowW
+            SetWindowPos = ctypes.windll.user32.SetWindowPos
+            SWP_NOZORDER = 0x0004
+            SWP_SHOWWINDOW = 0x0040
+            title = page.title
+            hwnd = FindWindowW(None, title)
+            SetWindowPos(hwnd, 0, 0, 0, 768, 1024, SWP_NOZORDER | SWP_SHOWWINDOW)
+            page.update()
     ####################
     # 処理開始
     ####################
     # ページの設定
-    page.title = "Wikipedia Card Collection"
-    #page.theme_mode = ft.ThemeMode.DARK
-    page.window.resizable = False
-    page.window.width = 768
-    page.window.height = 1024
-    page.window.maximizable = False
-    page.window.visible = True
-    page.update()
-    # もしリサイズされていなかったらWin32APIでやり直す
-    if page.window.width != 768:
-        FindWindowW = ctypes.windll.user32.FindWindowW
-        SetWindowPos = ctypes.windll.user32.SetWindowPos
-        SWP_NOZORDER = 0x0004
-        SWP_SHOWWINDOW = 0x0040
-        title = page.title
-        hwnd = FindWindowW(None, title)
-        SetWindowPos(hwnd, 0, 0, 0, 768, 1024, SWP_NOZORDER | SWP_SHOWWINDOW)
-        page.update()
+    initialize_page("Wikipedia Card Collection")
     # ガチャ用ローディングオーバーレイ（進捗バー＋カウンタ）
-    gachaOverlayCounter = ft.Text("0/0", size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE)
-    gacha_OerlayProgress = ft.ProgressBar(width=300, height=12, value=0)
-    gachaOverlay = ft.Container(
+    gacha_overlayCounter = ft.Text("0/0", size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE)
+    gacha_overlay_progress = ft.ProgressBar(width=300, height=12, value=0)
+    gacha_overlay = ft.Container(
         visible=False,
         expand=True,
         bgcolor=ft.Colors.with_opacity(0.88, ft.Colors.BLACK),
         alignment=ft.Alignment.CENTER,
         content=ft.Column([
-                gachaOverlayCounter,
-                gacha_OerlayProgress,
+                gacha_overlayCounter,
+                gacha_overlay_progress,
                 ft.ProgressRing(width=80, height=80, stroke_width=7, color=ft.Colors.CYAN_400),
             ], 
             horizontal_alignment=ft.CrossAxisAlignment.CENTER, 
             alignment=ft.MainAxisAlignment.CENTER, spacing=12
         ),
     )
-    page.overlay.append(gachaOverlay)
+    page.overlay.append(gacha_overlay)
     # 図鑑用ローディングオーバーレイ（従来のもの）
-    zukanOverlay = ft.Container(
+    zukan_overlay = ft.Container(
         visible=False,
         expand=True,
         bgcolor=ft.Colors.with_opacity(0.88, ft.Colors.BLACK),
@@ -100,7 +103,7 @@ def main(page: ft.Page):
             alignment=ft.MainAxisAlignment.CENTER, spacing=24
         ),
     )
-    page.overlay.append(zukanOverlay)
+    page.overlay.append(zukan_overlay)
     # ガチャタブの中身のクラス生成
     gacha = Gacha(page)
     # DBがない場合初期作成する
@@ -146,6 +149,7 @@ def main(page: ft.Page):
     )
     # 念のためここでも更新を掛ける
     page.update()
+    initialize_page("Wikipedia Card Collection")
 if __name__ == "__main__":
     ft.run(main, view=ft.AppView.FLET_APP_HIDDEN, assets_dir="assets")
     #ft.run(main, view=ft.AppView.WEB_BROWSER)

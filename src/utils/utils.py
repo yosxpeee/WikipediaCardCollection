@@ -44,9 +44,8 @@ async def fetchJson(url, key_path=None):
     return await asyncio.to_thread(_call)
 
 #rank to rankid
-def rankIdToRank(rankId, isSozai):
-    #print(rankId, isSozai)
-    if isSozai == "1":
+def rankIdToRank(rankId, is_sozai):
+    if is_sozai == "1":
         return RANK_TABLE[-1]
     else:
         return RANK_TABLE[int(rankId)]
