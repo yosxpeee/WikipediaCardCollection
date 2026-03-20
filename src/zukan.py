@@ -34,7 +34,7 @@ class Zukan:
         else:
             return -1
     # カードイメージ表示
-    def open_card_image(self, data):
+    def open_card_image(self, data, on_fav_changed=None):
         self.close_button = ft.TextButton("Close", on_click=lambda e: self.page.pop_dialog())
         self.dialog = ft.AlertDialog(
             modal=True,
@@ -46,7 +46,7 @@ class Zukan:
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                     expand=True,
                     controls=[
-                        create_card_image(data, True),
+                        create_card_image(data, True, on_fav_changed),
                     ],
                 ),
                 bgcolor=ft.Colors.GREY_100, border_radius=5,
@@ -100,6 +100,7 @@ class Zukan:
                 # ランクを先に計算
                 rank = rankid_to_rank(row_data[5], row_data[7])
                 row_data_for_image = {
+                    "id": row_data[0],
                     "pageId": row_data[1],
                     "title": row_data[2],
                     "pageUrl": row_data[3],
@@ -141,7 +142,7 @@ class Zukan:
                                 width=370,
                                 content=ft.GestureDetector(
                                     mouse_cursor=ft.MouseCursor.CLICK,
-                                    on_tap=(lambda e, r=row_data_for_image: self.open_card_image(r)),
+                                    on_tap=(lambda e, r=row_data_for_image: self.open_card_image(r, toggle_favorite)),
                                     content=ft.Text(
                                         nameText,
                                         tooltip=nameText,
@@ -399,16 +400,23 @@ class Zukan:
             refresh_page_label()
             self.page.update()
         # お気に入り切替ハンドラ（DB更新して再読み込み）
-        def toggle_favorite(card_id, current_fav):
+        def toggle_favorite(card_id, current_fav, external_update=False):
             nonlocal data, filtered_data, total_items, total_pages, current_page
-            try:
-                new_val = 0 if int(current_fav) == 1 else 1
-            except Exception:
-                new_val = 1
-            try:
-                update_favorite(card_id, new_val)
-            except Exception:
-                pass
+            # external_update=True の場合は既に DB が更新済みなので再更新しない
+            if external_update:
+                try:
+                    new_val = int(current_fav)
+                except Exception:
+                    new_val = 1
+            else:
+                try:
+                    new_val = 0 if int(current_fav) == 1 else 1
+                except Exception:
+                    new_val = 1
+                try:
+                    update_favorite(card_id, new_val)
+                except Exception:
+                    pass
             try:
                 data = get_all_cards()
                 filtered_data = apply_filters()

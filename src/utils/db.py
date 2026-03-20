@@ -34,7 +34,9 @@ def save_cards(cards):
         cursor.execute('''
             INSERT INTO gacha_cards (pageId, title, pageUrl, imageUrl, rank, quality, isSozai, extract, HP, ATK, DEF, favorite) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (card['pageId'], card['title'], card['pageUrl'], card['imageUrl'], rank_to_rankid(card['rank']), card['quality'], card['isSozai'], card['extract'], card['HP'], card['ATK'], card['DEF'], 0))
-    # 断片化云々を防ぎたいのでバキュームする（毎回でなくてもいいか？）
+    conn.commit()
+    # 断片化を防ぎたいのでバキュームする
+    cursor.execute('''VACUUM''')
     conn.commit()
     conn.close()
 
