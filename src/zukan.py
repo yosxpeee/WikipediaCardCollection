@@ -91,7 +91,7 @@ class Zukan:
                 )
             )
             if total_items == 0:
-                #table.controls.append(ft.Text("データがありません"))
+                #対象データがない場合即終了
                 return
             start = (page - 1) * PAGE_PER_CARDS
             end = min(start + PAGE_PER_CARDS, total_items)

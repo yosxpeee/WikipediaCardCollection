@@ -117,7 +117,6 @@ class Gacha:
         # 初期化：counter と progress を 0 にする
         try:
             col = self.loading_overlay.content
-            # content is Column; controls[0]=counter text, controls[1]=progress bar
             if hasattr(col, 'controls') and len(col.controls) >= 2:
                 col.controls[1].controls[0].value = f"ガチャを回しています... 0/{num}"
                 col.controls[1].controls[1].value = 0
@@ -134,7 +133,7 @@ class Gacha:
             #    randList = [{"id":"2717179", "title":"印象"}] #素材(ソフトリダイレクト)
             #    randList = [{"id":"4059891", "title":"コニャ"}] #素材(500エラーになる)
             #    randList = [{"id":"1610365", "title":"1-(5-ホスホリボシル)-5-((5-ホスホリボシルアミノ)メチリデンアミノ)イミダゾール-4-カルボキサミドイソメラーゼ"}] #素材(バカ長い名前)
-            #    randList = [{"id":"1662965",    "title":"鎌倉山 (曖昧さ回避)"}] #素材
+            #    randList = [{"id":"1662965", "title":"鎌倉山 (曖昧さ回避)"}] #素材
             #    randList = [{"id":"296076",  "title":"菊水町"}] #素材
             #    randList = [{"id":"4690122", "title":"2024年アメリカ合衆国選挙"}] #C (svg画像)
             #    randList = [{"id":"673688",  "title":"カール9世 (スウェーデン王)"}] #C（tif画像）
@@ -199,13 +198,7 @@ class Gacha:
                 # 素材判定
                 isAimai         = any("曖昧さ回避" in category.get("title", "") for category in info_data["query"]["pages"][p_str]["categories"])
                 isSoftRedirect  = any("ソフトリダイレクト" in category.get("title", "") for category in info_data["query"]["pages"][p_str]["categories"])
-                #isList    = any(category.get("title", "").endswith("一覧") for category in info_data["query"]["pages"][p_str]["categories"])
-                #isHikaku  = any("の比較" in category.get("title", "") for category in info_data["query"]["pages"][p_str]["categories"])
-                #isHistory = any("年表" in category.get("title", "") for category in info_data["query"]["pages"][p_str]["categories"])
-                #print(isAimai, isList, isHikaku, isHistory)
-                #if isAimai or isList or isHikaku or isHistory:
                 if isAimai or isSoftRedirect:
-                    #print(info_data["query"]["pages"][p_str]["categories"])
                     isSozai = 1
                 else:
                     isSozai = 0
@@ -245,8 +238,6 @@ class Gacha:
                             a_hosei = 2000
                         else:
                             a_hosei = 5000
-                        #print(def_multi)
-                        #print(atk_multi)
                         defence  = int((d_resource*d_hosei*def_multi)**0.5*7)
                         atk      = int((a_resource*a_hosei*atk_multi)**0.5*7)
                         hitPoint = defence+3000

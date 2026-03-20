@@ -98,40 +98,74 @@ def create_card_image(data, isShow, on_fav_changed=None):
             ],
         )
     else:
-        if data["rank"] == "SSR" or data["rank"] == "UR" or data["rank"] == "LR":
-            title = ft.Row(
-                spacing=0,
-                controls=[
-                    ft.Container(
-                        alignment=ft.Alignment.CENTER,
-                        width=40,
-                        bgcolor=ft.Colors.GREY_200,
-                        content=ft.Text(f"{data['rank']}", weight=ft.FontWeight.BOLD),
-                    ),
-                    ft.Container(
-                        width=270,
-                        bgcolor=ft.Colors.YELLOW,
-                        content=link_text,
-                    ),
-                ]
+        color_gradient = ft.LinearGradient(
+            begin=ft.Alignment.CENTER_LEFT,
+            end=ft.Alignment.CENTER_RIGHT,
+            colors=[
+                ft.Colors.RED,
+                ft.Colors.ORANGE,
+                ft.Colors.YELLOW,
+                ft.Colors.GREEN,
+                ft.Colors.BLUE,
+                ft.Colors.INDIGO,
+                ft.Colors.PURPLE,
+            ],
+        )
+        if data["rank"] == "LR":
+            rank_text = ft.ShaderMask(
+                content=ft.Text(
+                    f"{data['rank']}", 
+                    size=14,
+                    weight=ft.FontWeight.BOLD, 
+                    italic=True
+                ),
+                blend_mode=ft.BlendMode.SRC_IN,
+                shader=color_gradient,
+            )
+        elif data["rank"] == "SSR" or data["rank"] == "UR":
+            color_gradient = ft.LinearGradient(
+                begin=ft.Alignment.CENTER_LEFT,
+                end=ft.Alignment.CENTER_RIGHT,
+                colors=[
+                    ft.Colors.GREY,
+                    ft.Colors.LIGHT_BLUE,
+                    ft.Colors.GREY,
+                ],
+            )
+            rank_text = ft.ShaderMask(
+                content=ft.Text(
+                    f"{data['rank']}", 
+                    size=14,
+                    weight=ft.FontWeight.BOLD, 
+                ),
+                blend_mode=ft.BlendMode.SRC_IN,
+                shader=color_gradient,
+            )
+        elif data["rank"] == "R" or data["rank"] == "SR":
+            rank_text = ft.Text(
+                f"{data['rank']}", 
+                weight=ft.FontWeight.BOLD
             )
         else:
-            title = ft.Row(
-                spacing=0,
-                controls=[
-                    ft.Container(
-                        alignment=ft.Alignment.CENTER,
-                        width=40,
-                        bgcolor=ft.Colors.GREY_200,
-                        content=ft.Text(f"{data['rank']}"),
-                    ),
-                    ft.Container(
-                        width=270,
-                        bgcolor=ft.Colors.YELLOW,
-                        content=link_text,
-                    ),
-                ]
+            rank_text = ft.Text(
+                f"{data['rank']}"
             )
+        title = ft.Row(
+            spacing=0,
+            controls=[
+                ft.Container(
+                    alignment=ft.Alignment.CENTER,
+                    width=40,
+                    bgcolor=ft.Colors.GREY_200,
+                    content=rank_text,
+                ),
+                ft.Container(
+                    width=270,
+                    bgcolor=ft.Colors.YELLOW,
+                    content=link_text,
+                ),
+            ]
+        )
     # 画像
     if data["imageUrl"] != "":
         image = ft.Stack(
@@ -202,29 +236,81 @@ def create_card_image(data, isShow, on_fav_changed=None):
                 ft.Text(f"DEF: {data["DEF"]}".ljust(10," "), size=24,font_family="Consolas"),
             ],
         )
-    view = ft.Container(
-        alignment=ft.Alignment.CENTER,
-        visible=isShow,
-        content=ft.Column(
-            horizontal_alignment=ft.CrossAxisAlignment.START,
-            controls=[
-                title,
-                image_stack,
-                ft.Row(
+    #カードのベース色
+    if data["rank"] == "LR":
+        base_gradient = ft.LinearGradient(
+            begin=ft.Alignment.TOP_LEFT,
+            end=ft.Alignment.BOTTOM_RIGHT,
+            colors=[
+                ft.Colors.with_opacity(0.2, ft.Colors.RED),
+                ft.Colors.with_opacity(0.2, ft.Colors.ORANGE),
+                ft.Colors.with_opacity(0.2, ft.Colors.YELLOW),
+                ft.Colors.with_opacity(0.2, ft.Colors.GREEN),
+                ft.Colors.with_opacity(0.2, ft.Colors.BLUE),
+                ft.Colors.with_opacity(0.2, ft.Colors.INDIGO),
+                ft.Colors.with_opacity(0.2, ft.Colors.PURPLE),
+            ],
+        )
+    elif data["rank"] == "SSR" or data["rank"] == "UR":
+        base_gradient = ft.LinearGradient(
+            begin=ft.Alignment.TOP_RIGHT,
+            end=ft.Alignment.BOTTOM_LEFT,
+            colors=[
+                ft.Colors.with_opacity(0.2, ft.Colors.GREY),
+                ft.Colors.with_opacity(0.2, ft.Colors.GREEN),
+                ft.Colors.with_opacity(0.2, ft.Colors.LIGHT_BLUE),
+                ft.Colors.with_opacity(0.2, ft.Colors.GREEN),
+                ft.Colors.with_opacity(0.2, ft.Colors.GREY),
+            ],
+        )
+    else:
+        base_gradient = ft.LinearGradient(
+            begin=ft.Alignment.TOP_CENTER,
+            end=ft.Alignment.BOTTOM_CENTER,
+            colors=[
+                ft.Colors.with_opacity(0.75, ft.Colors.GREY_100),
+                ft.Colors.with_opacity(0.75, ft.Colors.GREY_300),
+                ft.Colors.with_opacity(0.75, ft.Colors.GREY_600),
+                ft.Colors.with_opacity(0.75, ft.Colors.GREY_300),
+                ft.Colors.with_opacity(0.75, ft.Colors.GREY_100),
+            ],
+        )
+    view = ft.Stack(
+        controls=[
+            ft.ShaderMask(
+                content=ft.Container(
+                    width=310,
+                    height=470,
+                    bgcolor=ft.Colors.WHITE,
+                ),
+                blend_mode=ft.BlendMode.SRC_IN,
+                shader=base_gradient,
+            ),
+            ft.Container(
+                alignment=ft.Alignment.CENTER,
+                visible=isShow,
+                content=ft.Column(
+                    horizontal_alignment=ft.CrossAxisAlignment.START,
                     controls=[
-                        statuses,               # ステータス
-                        ft.Container(           # 概要
-                            expand=True,
-                            content=ft.Text(
-                                data["extract"],
-                                tooltip=data["extract"],
-                                max_lines=5,
-                                overflow=ft.TextOverflow.ELLIPSIS,
-                            ),
+                        title,
+                        image_stack,
+                        ft.Row(
+                            controls=[
+                                statuses,               # ステータス
+                                ft.Container(           # 概要
+                                    expand=True,
+                                    content=ft.Text(
+                                        data["extract"],
+                                        tooltip=data["extract"],
+                                        max_lines=5,
+                                        overflow=ft.TextOverflow.ELLIPSIS,
+                                    ),
+                                ),
+                            ],
                         ),
                     ],
                 ),
-            ],
-        ),
+            ),
+        ],
     )
     return view

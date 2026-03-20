@@ -58,7 +58,6 @@ async def main(page: ft.Page):
     page.window.maximizable = False
     page.window.visible = True
     page.title = "Wikipedia Card Collection"
-    #page.theme_mode = ft.ThemeMode.DARK
     page.update()
     # ガチャ用ローディングオーバーレイ（進捗バー＋カウンタ）
     gacha_overlay_counter = ft.Text("0/0", size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE)
@@ -147,4 +146,3 @@ async def main(page: ft.Page):
     page.update()
 if __name__ == "__main__":
     ft.run(main, view=ft.AppView.FLET_APP_HIDDEN, assets_dir="assets")
-    #ft.run(main, view=ft.AppView.WEB_BROWSER)

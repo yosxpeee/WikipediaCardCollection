@@ -1,6 +1,7 @@
 import sqlite3
 from utils.utils import rank_to_rankid
 
+# DB初期化
 def initialize_db():
     conn = sqlite3.connect('cards.db')
     cursor = conn.cursor()
@@ -26,6 +27,7 @@ def initialize_db():
     conn.commit()
     conn.close()
 
+# カード保存
 def save_cards(cards):
     conn = sqlite3.connect('cards.db')
     cursor = conn.cursor()
@@ -44,6 +46,7 @@ def save_cards(cards):
     conn.commit()
     conn.close()
 
+# 全件取得
 def get_all_cards():
     conn = sqlite3.connect('cards.db')
     cursor = conn.cursor()
@@ -55,6 +58,7 @@ def get_all_cards():
     conn.close()
     return data
 
+# お気に入り状態の更新
 def update_favorite(card_id, value):
     conn = sqlite3.connect('cards.db')
     cursor = conn.cursor()
