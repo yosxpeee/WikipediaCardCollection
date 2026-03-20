@@ -114,6 +114,7 @@ class Zukan:
                     "DEF": row_data[11],
                     "favorite": row_data[12],
                 }
+                print(rank)
                 num_text = str(row_data[0]).ljust(8, " ")
                 pageid_text = str(row_data[1]).ljust(8, " ")
                 rank_text = str(rank).ljust(4, " ")

@@ -45,7 +45,7 @@ async def fetch_json(url, key_path=None):
 
 #rank to rankid
 def rankid_to_rank(rankId, isSozai):
-    if isSozai == "1":
+    if isSozai == 1:
         return RANK_TABLE[-1]
     else:
         return RANK_TABLE[int(rankId)]

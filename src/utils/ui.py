@@ -5,7 +5,7 @@ from utils.db import update_favorite
 
 # ランクからカードの色を決める
 def get_card_color(rank, isSozai):
-    if isSozai:
+    if isSozai == 1:
         color = ft.Colors.ORANGE
     else:
         if rank == "LR":

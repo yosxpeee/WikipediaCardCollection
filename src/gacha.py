@@ -199,7 +199,6 @@ class Gacha:
                 # 素材判定
                 isAimai         = any("曖昧さ回避" in category.get("title", "") for category in info_data["query"]["pages"][p_str]["categories"])
                 isSoftRedirect  = any("ソフトリダイレクト" in category.get("title", "") for category in info_data["query"]["pages"][p_str]["categories"])
-                
                 #isList    = any(category.get("title", "").endswith("一覧") for category in info_data["query"]["pages"][p_str]["categories"])
                 #isHikaku  = any("の比較" in category.get("title", "") for category in info_data["query"]["pages"][p_str]["categories"])
                 #isHistory = any("年表" in category.get("title", "") for category in info_data["query"]["pages"][p_str]["categories"])
@@ -207,9 +206,9 @@ class Gacha:
                 #if isAimai or isList or isHikaku or isHistory:
                 if isAimai or isSoftRedirect:
                     #print(info_data["query"]["pages"][p_str]["categories"])
-                    isSozai = True
+                    isSozai = 1
                 else:
-                    isSozai = False
+                    isSozai = 0
                 try:
                     d_resource = info_data["query"]["pages"][p_str]["length"]
                     query = True
@@ -219,7 +218,7 @@ class Gacha:
                     print("クエリ取得できない記事。リトライします。")
                     query = False
                 if query:
-                    if isSozai == False:
+                    if isSozai == 0:
                         a_resource = 0
                         for dayView in info_data["query"]["pages"][p_str]["pageviews"]:
                             if info_data["query"]["pages"][p_str]["pageviews"][dayView] != None:
@@ -262,7 +261,7 @@ class Gacha:
                     full_url = info_data["query"]["pages"][p_str]["fullurl"]
                     # ↓デバッグ用にしばらく残す
                     print("#########################################################")
-                    if isSozai:
+                    if isSozai == 0:
                         print(f"{pageid}: {title} [{rank}] ({q}) (素材)")
                     else:
                         print(f"{pageid}: {title} [{rank}] ({q})")
