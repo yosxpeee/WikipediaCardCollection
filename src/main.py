@@ -3,6 +3,8 @@ import asyncio
 
 from zukan import Zukan
 from gacha import Gacha
+from powerup import PowerUp
+
 from utils.db import initialize_db
 
 async def main(page: ft.Page):
@@ -44,6 +46,15 @@ async def main(page: ft.Page):
                 )
                 tab_bar_view.update()
                 asyncio.create_task(load_and_set())
+        # 強化タブに切り替えたとき
+        if e.control.selected_index == 2:
+            # 図鑑タブの中身をクリアしておく
+            tab_bar_view = e.control.content.controls[1]
+            tab_bar_view.controls[1] = ft.Container(
+                content=None,
+                alignment=ft.Alignment.CENTER,
+            )
+            tab_bar_view.update()
     ####################
     # 処理開始
     ####################
@@ -101,13 +112,15 @@ async def main(page: ft.Page):
     page.overlay.append(zukan_overlay)
     # ガチャタブの中身のクラス生成
     gacha = Gacha(page)
+    # 強化タブの中身のクラス生成
+    powerup = PowerUp(page)
     # DBがない場合初期作成する
     initialize_db()
     # ページに要素追加
     page.controls.append(
         ft.Tabs(
             selected_index=0,
-            length=3,
+            length=4,
             expand=True,
             on_change=change_tabs,
             content=ft.Column(
@@ -118,23 +131,28 @@ async def main(page: ft.Page):
                         tabs=[
                             ft.Tab(label="ガチャ", icon=ft.Icons.SHOPPING_BAG),
                             ft.Tab(label="図鑑", icon=ft.Icons.ARTICLE),
-                            ft.Tab(label="バトル", icon=ft.Icons.SHIELD),
+                            ft.Tab(label="強化", icon=ft.Icons.ADD_MODERATOR),
+                            ft.Tab(label="バトル", icon=ft.Icons.BATCH_PREDICTION),
                         ],
                     ),
                     ft.TabBarView(
                         expand=True,
                         controls=[
-                            ft.Container(
+                            ft.Container(   #ガチャ
+                                alignment=ft.Alignment.CENTER,
                                 content=gacha.create(),
-                                alignment=ft.Alignment.CENTER,
                             ),
-                            ft.Container(
+                            ft.Container(   #図鑑
+                                alignment=ft.Alignment.CENTER,
                                 content=None, #初期状態は空
-                                alignment=ft.Alignment.CENTER,
                             ),
-                            ft.Container(
-                                content=ft.Text("未実装"),
+                            ft.Container(   #強化
                                 alignment=ft.Alignment.CENTER,
+                                content=powerup.create(),
+                            ),
+                            ft.Container(   #バトル
+                                alignment=ft.Alignment.CENTER,
+                                content=ft.Text("未実装"),
                             ),
                         ],
                     ),

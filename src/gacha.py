@@ -68,6 +68,13 @@ class Gacha:
                                     height=140,
                                     bgcolor=color,
                                     border_radius=6,
+                                    shadow=ft.BoxShadow(
+                                        blur_style=ft.BlurStyle.NORMAL,
+                                        spread_radius=1,
+                                        blur_radius=10,
+                                        color=ft.Colors.BLACK_45,
+                                        offset=ft.Offset(0, 0),
+                                    ),
                                 ),
                                 ft.Container(
                                     width=120,
@@ -87,6 +94,13 @@ class Gacha:
                             height=140,
                             bgcolor=color,
                             border_radius=8,
+                            shadow=ft.BoxShadow(
+                                blur_style=ft.BlurStyle.NORMAL,
+                                spread_radius=1,
+                                blur_radius=10,
+                                color=ft.Colors.BLACK_45,
+                                offset=ft.Offset(0, 0),
+                            ),
                         ),
                         ft.Container(
                             width=120,
