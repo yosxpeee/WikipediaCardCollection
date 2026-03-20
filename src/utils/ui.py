@@ -87,10 +87,12 @@ def create_card_image(data, isShow, on_fav_changed=None):
                 ft.Container(
                     alignment=ft.Alignment.CENTER,
                     width=40,
+                    bgcolor=ft.Colors.GREY_200,
                     content=ft.Text("--"),
                 ),
                 ft.Container(
-                    width=260,
+                    width=270,
+                    bgcolor=ft.Colors.YELLOW,
                     content=link_text,
                 ),
             ],
@@ -103,10 +105,12 @@ def create_card_image(data, isShow, on_fav_changed=None):
                     ft.Container(
                         alignment=ft.Alignment.CENTER,
                         width=40,
+                        bgcolor=ft.Colors.GREY_200,
                         content=ft.Text(f"{data['rank']}", weight=ft.FontWeight.BOLD),
                     ),
                     ft.Container(
-                        width=260,
+                        width=270,
+                        bgcolor=ft.Colors.YELLOW,
                         content=link_text,
                     ),
                 ]
@@ -118,10 +122,12 @@ def create_card_image(data, isShow, on_fav_changed=None):
                     ft.Container(
                         alignment=ft.Alignment.CENTER,
                         width=40,
+                        bgcolor=ft.Colors.GREY_200,
                         content=ft.Text(f"{data['rank']}"),
                     ),
                     ft.Container(
-                        width=260,
+                        width=270,
+                        bgcolor=ft.Colors.YELLOW,
                         content=link_text,
                     ),
                 ]

@@ -78,7 +78,7 @@ class Zukan:
                     ft.Text("ATK".ljust(5, " "), font_family="Consolas"),
                     ft.Text("DEF".ljust(5, " "), font_family="Consolas"),
                     ft.Container(
-                        width=30,
+                        width=14,
                         content=ft.Text("★"),
                     )
                 ],
@@ -160,7 +160,7 @@ class Zukan:
                             ft.Text(atk_text, font_family="Consolas"),
                             ft.Text(def_text, font_family="Consolas"),
                             ft.Container(
-                                width=30,
+                                width=14,
                                 content=ft.GestureDetector(
                                     mouse_cursor=ft.MouseCursor.CLICK,
                                     on_tap=(lambda e, rid=row_data[0], fav=row_data[12]: toggle_favorite(rid, fav)),
