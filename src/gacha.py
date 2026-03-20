@@ -55,27 +55,48 @@ class Gacha:
             color = get_card_color(get_card_list[idx]["rank"], get_card_list[idx]["isSozai"])
             if selected:
                 # 選択時の黒い枠(内側は白)をContainerで表現
-                return ft.Container(
+                thumb = ft.Container(
                     padding=ft.Padding.all(3),
                     bgcolor=ft.Colors.BLACK,
                     content=ft.Container(
                         padding=ft.Padding.all(3),
                         bgcolor=ft.Colors.WHITE,
-                        content=ft.Container(
-                            width=120,
-                            height=120,
-                            bgcolor=color,
-                            border_radius=6,
+                        content=ft.Stack(
+                            controls=[
+                                ft.Container(
+                                    width=120,
+                                    height=140,
+                                    bgcolor=color,
+                                    border_radius=6,
+                                ),
+                                ft.Container(
+                                    width=120,
+                                    height=140,
+                                    alignment=ft.Alignment.CENTER,
+                                    content=ft.Text("✡",size=50, color=ft.Colors.with_opacity(0.8, ft.Colors.BLACK)),
+                                )
+                            ],
                         ),
                     ),
                 )
             else:
-                return ft.Container(
-                    width=120,
-                    height=120,
-                    bgcolor=color,
-                    border_radius=8,
+                thumb = ft.Stack(
+                    controls=[
+                        ft.Container(
+                            width=120,
+                            height=140,
+                            bgcolor=color,
+                            border_radius=8,
+                        ),
+                        ft.Container(
+                            width=120,
+                            height=140,
+                            alignment=ft.Alignment.CENTER,
+                            content=ft.Text("✡",size=50, color=ft.Colors.with_opacity(0.5, ft.Colors.BLACK)),
+                        )
+                    ],
                 )
+            return thumb
         # 選択処理の更新（外側の変数を変更するため nonlocal）
         def select_gacha_result(n):
             nonlocal selected_index, grid_controls, stack_controls
@@ -110,9 +131,10 @@ class Gacha:
                 break
             # デバッグ：テスト用にdata固定
             #if count == 0:
+            #    randList = [{"id":"2717179", "title":"印象"}] #素材(ソフトリダイレクト)
             #    randList = [{"id":"4059891", "title":"コニャ"}] #素材(500エラーになる)
             #    randList = [{"id":"1610365", "title":"1-(5-ホスホリボシル)-5-((5-ホスホリボシルアミノ)メチリデンアミノ)イミダゾール-4-カルボキサミドイソメラーゼ"}] #素材(バカ長い名前)
-            #    randList = [{"id":"7219",    "title":"UTC (曖昧さ回避)"}] #素材
+            #    randList = [{"id":"1662965",    "title":"鎌倉山 (曖昧さ回避)"}] #素材
             #    randList = [{"id":"296076",  "title":"菊水町"}] #素材
             #    randList = [{"id":"4690122", "title":"2024年アメリカ合衆国選挙"}] #C (svg画像)
             #    randList = [{"id":"673688",  "title":"カール9世 (スウェーデン王)"}] #C（tif画像）
@@ -175,13 +197,15 @@ class Gacha:
                         def_multi = 1
                 p_str = str(pageid)
                 # 素材判定
-                isAimai   = any("曖昧さ回避" in category.get("title", "") for category in info_data["query"]["pages"][p_str]["categories"])
+                isAimai         = any("曖昧さ回避" in category.get("title", "") for category in info_data["query"]["pages"][p_str]["categories"])
+                isSoftRedirect  = any("ソフトリダイレクト" in category.get("title", "") for category in info_data["query"]["pages"][p_str]["categories"])
+                
                 #isList    = any(category.get("title", "").endswith("一覧") for category in info_data["query"]["pages"][p_str]["categories"])
                 #isHikaku  = any("の比較" in category.get("title", "") for category in info_data["query"]["pages"][p_str]["categories"])
                 #isHistory = any("年表" in category.get("title", "") for category in info_data["query"]["pages"][p_str]["categories"])
                 #print(isAimai, isList, isHikaku, isHistory)
                 #if isAimai or isList or isHikaku or isHistory:
-                if isAimai:
+                if isAimai or isSoftRedirect:
                     #print(info_data["query"]["pages"][p_str]["categories"])
                     isSozai = True
                 else:

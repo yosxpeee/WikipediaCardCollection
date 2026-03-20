@@ -80,7 +80,7 @@ def create_card_image(data, isShow, on_fav_changed=None):
             ),
         ),
     )
-    if data["isSozai"]:
+    if data["isSozai"] == 1:
         title = ft.Row(
             spacing=0,
             controls=[

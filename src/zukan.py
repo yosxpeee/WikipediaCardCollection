@@ -107,7 +107,7 @@ class Zukan:
                     "imageUrl": row_data[4],
                     "rank": rank,
                     "quality": row_data[6],
-                    "isSozai": True if row_data[7]=="1" else False,
+                    "isSozai": row_data[7],
                     "extract": row_data[8],
                     "HP": row_data[9],
                     "ATK": row_data[10],
