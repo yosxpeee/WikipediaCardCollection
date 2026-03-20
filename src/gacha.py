@@ -252,7 +252,7 @@ class Gacha:
                     full_url = info_data["query"]["pages"][p_str]["fullurl"]
                     # ↓デバッグ用にしばらく残す
                     print("#########################################################")
-                    if isSozai == 0:
+                    if isSozai == 1:
                         print(f"{pageid}: {title} [{rank}] ({q}) (素材)")
                     else:
                         print(f"{pageid}: {title} [{rank}] ({q})")
