@@ -2,7 +2,7 @@ import flet as ft
 from bs4 import BeautifulSoup
 
 from utils.utils import do_api, rankid_to_rank
-from utils.db import get_all_cards
+from utils.db import get_all_cards, update_favorite
 from utils.ui import create_card_image
 
 PAGE_PER_CARDS = 30
@@ -64,7 +64,8 @@ class Zukan:
             table.controls.clear()
             # ヘッダを作成
             header = ft.Row(
-                spacing=12,
+                alignment=ft.MainAxisAlignment.CENTER,
+                spacing=4,
                 controls=[
                     ft.Text("ID".ljust(8, " "), font_family="Consolas"),
                     ft.Text("Page ID".ljust(8, " "), font_family="Consolas"),
@@ -76,13 +77,19 @@ class Zukan:
                     ft.Text("HP".ljust(5, " "), font_family="Consolas"),
                     ft.Text("ATK".ljust(5, " "), font_family="Consolas"),
                     ft.Text("DEF".ljust(5, " "), font_family="Consolas"),
+                    ft.Container(
+                        width=30,
+                        content=ft.Text("★"),
+                    )
                 ],
             )
             table.controls.append(header)
-            table.controls.append(ft.Divider(
-                color=ft.Colors.BLACK,
-                height=1,
-            ))
+            table.controls.append(
+                ft.Divider(
+                    color=ft.Colors.GREY,
+                    height=1,
+                )
+            )
             if total_items == 0:
                 #table.controls.append(ft.Text("データがありません"))
                 return
@@ -104,6 +111,7 @@ class Zukan:
                     "HP": row_data[9],
                     "ATK": row_data[10],
                     "DEF": row_data[11],
+                    "favorite": row_data[12],
                 }
                 num_text = str(row_data[0]).ljust(8, " ")
                 pageid_text = str(row_data[1]).ljust(8, " ")
@@ -123,7 +131,8 @@ class Zukan:
                     def_text = str(row_data[11]).ljust(5, " ") if row_data[11] is not None else "".ljust(5, " ")
                 table.controls.append(
                     ft.Row(
-                        spacing=12,
+                        alignment=ft.MainAxisAlignment.CENTER,
+                        spacing=4,
                         controls=[
                             ft.Text(num_text, font_family="Consolas"),
                             ft.Text(pageid_text, font_family="Consolas"),
@@ -149,9 +158,32 @@ class Zukan:
                             ft.Text(hp_text, font_family="Consolas"),
                             ft.Text(atk_text, font_family="Consolas"),
                             ft.Text(def_text, font_family="Consolas"),
+                            ft.Container(
+                                width=30,
+                                content=ft.GestureDetector(
+                                    mouse_cursor=ft.MouseCursor.CLICK,
+                                    on_tap=(lambda e, rid=row_data[0], fav=row_data[12]: toggle_favorite(rid, fav)),
+                                    content=ft.Text("★") if row_data[12]==1 else ft.Text("☆"),
+                                ),
+                            )
                         ],
                     )
                 )
+                #区切り(10件ごとに濃く)
+                if idx % 10 == 9:
+                    table.controls.append(
+                        ft.Divider(
+                            color=ft.Colors.GREY,
+                            height=1,
+                        )
+                    )
+                else:
+                    table.controls.append(
+                        ft.Divider(
+                            color=ft.Colors.GREY_300,
+                            height=1,
+                        )
+                    )
         # ページラベルの更新
         def refresh_page_label():
             # page_input を現在ページに合わせて更新
@@ -203,6 +235,11 @@ class Zukan:
             for row in data:
                 r = rankid_to_rank(row[5], row[7])
                 if r in selected_ranks:
+                    try:
+                        if favorites_only and int(row[12]) != 1:
+                            continue
+                    except Exception:
+                        pass
                     filtered.append(row)
             return filtered
         # ソートの順序定義
@@ -238,6 +275,8 @@ class Zukan:
                 key = lambda r: int(r[10]) if str(r[10]).lstrip("-+").isdigit() else (-999999 if r[10] == "-1" else 0)
             elif sort_field == "DEF":
                 key = lambda r: int(r[11]) if str(r[11]).lstrip("-+").isdigit() else (-999999 if r[11] == "-1" else 0)
+            elif sort_field == "favorite":
+                key = lambda r: int(r[12]) if str(r[12]).isdigit() else 0
             try:
                 filtered_data = sorted(filtered_data, key=key, reverse=(not sort_ascending))
             except Exception:
@@ -262,7 +301,12 @@ class Zukan:
         def make_filter_checkbox(rk):
             # 表示用のラベル（素材は見やすくする）
             display_label = "素材" if rk == "--" else rk
-            cb = ft.Checkbox(label=display_label, label_position=ft.LabelPosition.RIGHT, value=True)
+            cb = ft.Checkbox(
+                label=display_label, 
+                label_position=ft.LabelPosition.RIGHT, 
+                scale=ft.Scale(scale_x=0.85, scale_y=0.85),
+                value=True
+            )
             def _on_change(e):
                 nonlocal filtered_data, total_items, total_pages, current_page
                 if e.control.value:
@@ -276,6 +320,7 @@ class Zukan:
                     current_page = 1
                 build_zukan_list(current_page)
                 refresh_page_label()
+                apply_search()
                 self.page.update()
             cb.on_change = _on_change
             return cb
@@ -298,6 +343,7 @@ class Zukan:
             current_page = 1
             build_zukan_list(current_page)
             refresh_page_label()
+            apply_search()
             self.page.update()
         # すべて解除にする
         def filter_all_unselect():
@@ -317,6 +363,7 @@ class Zukan:
                 current_page = 1
             build_zukan_list(current_page)
             refresh_page_label()
+            apply_search()
             self.page.update()
         # 検索適用
         def apply_search():
@@ -351,6 +398,30 @@ class Zukan:
             build_zukan_list(current_page)
             refresh_page_label()
             self.page.update()
+        # お気に入り切替ハンドラ（DB更新して再読み込み）
+        def toggle_favorite(card_id, current_fav):
+            nonlocal data, filtered_data, total_items, total_pages, current_page
+            try:
+                new_val = 0 if int(current_fav) == 1 else 1
+            except Exception:
+                new_val = 1
+            try:
+                update_favorite(card_id, new_val)
+            except Exception:
+                pass
+            try:
+                data = get_all_cards()
+                filtered_data = apply_filters()
+                apply_sort()
+                total_items = len(filtered_data)
+                total_pages = (total_items + PAGE_PER_CARDS - 1) // PAGE_PER_CARDS if total_items > 0 else 1
+                if current_page > total_pages:
+                    current_page = 1
+                build_zukan_list(current_page)
+                refresh_page_label()
+                self.page.update()
+            except Exception:
+                pass
         ####################
         # 処理開始
         ####################
@@ -368,6 +439,8 @@ class Zukan:
             # フィルタ設定（初期は全選択）
             rank_order = ["--", "C", "UC", "R", "SR", "SSR", "UR", "LR"]
             selected_ranks = set(rank_order)
+            # お気に入りのみ表示フラグ
+            favorites_only = False
             filtered_data = apply_filters()
             # 図鑑本体を作っておく
             table = ft.ListView(
@@ -417,6 +490,7 @@ class Zukan:
                     ft.DropdownOption(key="HP", text="HP順"),
                     ft.DropdownOption(key="ATK", text="ATK順"),
                     ft.DropdownOption(key="DEF", text="DEF順"),
+                    ft.DropdownOption(key="favorite", text="お気に入り順"),
                 ],
                 editable=False,
             )
@@ -444,15 +518,37 @@ class Zukan:
                     on_click=filter_all_unselect
                 )
             )
+            # お気に入りのみ表示チェックボックス
+            favorite_only_cb = ft.Checkbox(
+                label="★のみ",
+                label_position=ft.LabelPosition.RIGHT,
+                value=False,
+                scale=ft.Scale(scale_x=0.85, scale_y=0.85),
+            )
+            def _on_fav_change(e):
+                nonlocal filtered_data, total_items, total_pages, current_page, favorites_only
+                favorites_only = e.control.value
+                filtered_data = apply_filters()
+                total_items = len(filtered_data)
+                total_pages = (total_items + PAGE_PER_CARDS - 1) // PAGE_PER_CARDS if total_items > 0 else 1
+                if current_page > total_pages:
+                    current_page = 1
+                build_zukan_list(current_page)
+                refresh_page_label()
+                apply_search()
+                self.page.update()
+            favorite_only_cb.on_change = _on_fav_change
             filter_box = ft.Container(
                 border=ft.Border.all(width=1, color=ft.Colors.GREY),
                 border_radius=8,
-                padding=ft.Padding.all(8),
                 content=ft.Column(
                     spacing=0,
                     controls=[
+                        ft.Text("  フィルタ", size=10),
                         ft.Row(controls=filter_controls[0:6],  spacing=1),
                         ft.Row(controls=filter_controls[6:10], spacing=1),
+                        ft.Container(expand=True, height=1, width=360,bgcolor=ft.Colors.GREY_300, margin=ft.Margin.only(top=1, bottom=1)),
+                        ft.Row(controls=[favorite_only_cb], spacing=1),
                     ],
                 ),
             )
@@ -467,6 +563,12 @@ class Zukan:
                 max_lines=1, 
                 height=36,
                 text_size=13,
+                suffix_icon=ft.IconButton(
+                    icon=ft.Icons.BACKSPACE,
+                    scale=ft.Scale(scale=0.75),
+                    opacity=0.5,
+                    on_click=lambda e: {setattr(search_field, "value", ""), apply_search()}
+                ),
                 expand=True,
             )
             search_field.on_submit = apply_search
@@ -490,7 +592,7 @@ class Zukan:
                             ft.Column(
                                 spacing=0,
                                 controls=[
-                                    ft.Row(         #フィルタ
+                                    ft.Row(         #ソート
                                         spacing=4,
                                         margin=4,
                                         controls=[
@@ -500,6 +602,8 @@ class Zukan:
                                     ),
                                     ft.Row(         #ページ送り
                                         spacing=4,
+                                        alignment=ft.MainAxisAlignment.CENTER,
+                                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
                                         controls=[
                                             ft.IconButton(
                                                 icon=ft.Icons.ARROW_BACK, 
@@ -514,8 +618,8 @@ class Zukan:
                                                 on_click=on_next
                                             ),
                                             ft.Container(
-                                                width=20
-                                            ),
+                                                width=20,
+                                            )
                                         ],
                                     ),
                                 ],

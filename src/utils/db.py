@@ -15,11 +15,12 @@ def initialize_db():
             imageUrl TEXT NOT NULL,
             rank TEXT NOT NULL,
             quality TEXT NOT NULL,
-            isSozai TEXT NOT NULL,
-            extract TEXT NOT NULL,
+            isSozai INTEGER NOT NULL,
+            extract REAL NOT NULL,
             HP TEXT NOT NULL,
             ATK TEXT NOT NULL,
-            DEF TEXT NOT NULL
+            DEF TEXT NOT NULL,
+            favorite INTEGER NOT NULL DEFAULT 0
         )
     ''')
     conn.commit()
@@ -31,8 +32,8 @@ def save_cards(cards):
     # カードがかぶっても関係なく新しく追加していく
     for card in cards:
         cursor.execute('''
-            INSERT INTO gacha_cards (pageId, title, pageUrl, imageUrl, rank, quality, isSozai, extract, HP, ATK, DEF) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (card['pageId'], card['title'], card['pageUrl'], card['imageUrl'], rank_to_rankid(card['rank']), card['quality'], card['isSozai'], card['extract'], card['HP'], card['ATK'], card['DEF']))
+            INSERT INTO gacha_cards (pageId, title, pageUrl, imageUrl, rank, quality, isSozai, extract, HP, ATK, DEF, favorite) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (card['pageId'], card['title'], card['pageUrl'], card['imageUrl'], rank_to_rankid(card['rank']), card['quality'], card['isSozai'], card['extract'], card['HP'], card['ATK'], card['DEF'], 0))
     # 断片化云々を防ぎたいのでバキュームする（毎回でなくてもいいか？）
     conn.commit()
     conn.close()
@@ -47,3 +48,14 @@ def get_all_cards():
         data.append(item)
     conn.close()
     return data
+
+def update_favorite(card_id, value):
+    conn = sqlite3.connect('cards.db')
+    cursor = conn.cursor()
+    try:
+        cursor.execute('''UPDATE gacha_cards SET favorite = ? WHERE id = ?''', (int(value), int(card_id)))
+        conn.commit()
+    except Exception:
+        pass
+    finally:
+        conn.close()
