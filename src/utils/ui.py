@@ -24,7 +24,7 @@ def get_card_color(rank, isSozai):
 # カードイメージの作成
 def create_card_image(data, isShow):
     # ランクとカードタイトル
-    link_text =  ft.GestureDetector(
+    link_text = ft.GestureDetector(
         mouse_cursor=ft.MouseCursor.CLICK,
         on_tap=lambda e:webbrowser.open(data["pageUrl"]),
         content=ft.Text(
@@ -41,24 +41,48 @@ def create_card_image(data, isShow):
     )
     if data["isSozai"]:
         title = ft.Row(
+            spacing=0,
             controls=[
-                ft.Text("--"),
-                ft.Container(width=300, content=link_text),
-            ]
+                ft.Container(
+                    alignment=ft.Alignment.CENTER,
+                    width=40,
+                    content=ft.Text("--"),
+                ),
+                ft.Container(
+                    width=260,
+                    content=link_text,
+                ),
+            ],
         )
     else:
         if data["rank"] == "SSR" or data["rank"] == "UR" or data["rank"] == "LR":
             title = ft.Row(
+                spacing=0,
                 controls=[
-                    ft.Text(f"{data['rank']}",weight=ft.FontWeight.BOLD),
-                    ft.Container(width=300, content=link_text),
+                    ft.Container(
+                        alignment=ft.Alignment.CENTER,
+                        width=40,
+                        content=ft.Text(f"{data['rank']}", weight=ft.FontWeight.BOLD),
+                    ),
+                    ft.Container(
+                        width=260,
+                        content=link_text,
+                    ),
                 ]
             )
         else:
             title = ft.Row(
+                spacing=0,
                 controls=[
-                    ft.Text(f"{data['rank']}"),
-                    ft.Container(width=300, content=link_text),
+                    ft.Container(
+                        alignment=ft.Alignment.CENTER,
+                        width=40,
+                        content=ft.Text(f"{data['rank']}"),
+                    ),
+                    ft.Container(
+                        width=260,
+                        content=link_text,
+                    ),
                 ]
             )
     # 画像

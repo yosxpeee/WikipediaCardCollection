@@ -113,22 +113,14 @@ class Gacha:
             #    randList = [{"id":"4059891",  "title":"コニャ"}] #素材(500エラーになる)
             #    randList = [{"id":"1610365",  "title":"1-(5-ホスホリボシル)-5-((5-ホスホリボシルアミノ)メチリデンアミノ)イミダゾール-4-カルボキサミドイソメラーゼ"}] #素材(バカ長い名前)
             #    randList = [{"id":"7219",   "title":"UTC (曖昧さ回避)"}] #素材
-            #elif count == 1:
             #    randList = [{"id":"296076",  "title":"菊水町"}] #素材
             #    randList = [{"id":"4690122", "title":"2024年アメリカ合衆国選挙"}] #C (svg画像)
-            #elif count == 2:
             #    randList = [{"id":"673688",  "title":"カール9世 (スウェーデン王)"}] #C（tif画像）
-            #elif count == 3:
             #    randList = [{"id":"24342",   "title":"ソロモン"}] #UC
-            #elif count == 4:
             #    randList = [{"id":"139036",  "title":"宇宙空母ブルーノア"}] #R
-            #elif count == 5:
             #    randList = [{"id":"371",     "title":"愛媛県"}] #SR
-            #elif count == 6:
             #    randList = [{"id":"1492869", "title":"キンシャサノキセキ"}] #SSR
-            #elif count == 7:
             #    randList = [{"id":"1855047", "title":"新宿駅"}] #UR
-            #elif count == 8:
             #    randList = [{"id":"228773",  "title":"ディープインパクト (競走馬)"}] #LR
             #else:
             randList = await get_random(1)

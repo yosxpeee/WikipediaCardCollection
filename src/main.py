@@ -50,6 +50,10 @@ async def main(page: ft.Page):
     # ページの設定
     page.window.width = 768
     page.window.height = 1024
+    page.window.max_width = 768
+    page.window.max_height = 1024
+    page.window.min_width = 768
+    page.window.min_height = 1024
     page.window.resizable = False
     page.window.maximizable = False
     page.window.visible = True
