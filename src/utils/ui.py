@@ -275,7 +275,9 @@ def create_card_image(data, isShow, on_fav_changed=None):
                 ft.Colors.with_opacity(0.75, ft.Colors.GREY_100),
             ],
         )
+    # 外側の Stack 自体を isShow で切り替えて、非表示要素でも ShaderMask が描画されないようにする
     view = ft.Stack(
+        visible=isShow,
         controls=[
             ft.ShaderMask(
                 content=ft.Container(
@@ -288,7 +290,6 @@ def create_card_image(data, isShow, on_fav_changed=None):
             ),
             ft.Container(
                 alignment=ft.Alignment.CENTER,
-                visible=isShow,
                 content=ft.Column(
                     horizontal_alignment=ft.CrossAxisAlignment.START,
                     controls=[
