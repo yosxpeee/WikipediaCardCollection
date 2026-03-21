@@ -1,4 +1,7 @@
 import flet as ft
+import asyncio
+from utils.db import get_all_cards
+from utils.utils import rankid_to_rank
 
 class PowerUp:
     # 初期化
@@ -6,94 +9,173 @@ class PowerUp:
         self.page = page
         # ローディングオーバーレイの参照を保持(図鑑のものを使いまわし)
         self.loading_overlay = page.overlay[1]
-    def create(self):
+    async def create(self):
         ####################
         # 処理開始
         ####################
         # ローディングオーバーレイを表示
         self.loading_overlay.visible = True
         self.page.update()
+        selected_target_id = -1
+        selected_sozai_id = -1
         try:
+            # DB からカードを非同期で取得（ブロッキング回避）
+            try:
+                all_cards = await asyncio.to_thread(get_all_cards)
+            except Exception:
+                all_cards = []
+            ranks = ["UR", "SSR", "SR", "R", "UC", "C"]
+            # 選択中のIDを保持する変数
+            selected_target_id = None
+            selected_sozai_id = None
+            # 表示用テキスト
+            selected_target_text = ft.Text("選択中の対象: ")
+            selected_sozai_text = ft.Text("選択中の素材: ")
+            # コンテナ参照リスト（ハイライト更新用）
+            target_containers = []
+            sozai_containers = []
+            # 左側：ランク別タブの ListView を作成
+            tab_views = []
+            for rk in ranks:
+                lv = ft.ListView(
+                    expand=True, 
+                    spacing=0, 
+                    auto_scroll=False, 
+                    controls=[]
+                )
+                for row in all_cards:
+                    # row: (id, pageId, title, pageUrl, imageUrl, rank, quality, isSozai, extract, HP, ATK, DEF, ...)
+                    try:
+                        row_rank = rankid_to_rank(row[5], row[7])
+                    except Exception:
+                        row_rank = ""
+                    if row_rank == rk and int(row[7]) == 0:
+                        cid = row[0]
+                        name = row[2] or ""
+                        hp = row[9] if row[9] is not None else "-"
+                        atk = row[10] if row[10] is not None else "-"
+                        deff = row[11] if row[11] is not None else "-"
+                        cont = ft.Container(
+                            padding=ft.Padding.all(6),
+                            bgcolor=None,
+                            content=ft.Row(
+                                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                                controls=[
+                                    ft.Text(str(cid).ljust(8, " "), font_family="Consolas"),
+                                    ft.Container(width=10),
+                                    ft.Text(name, expand=True, tooltip=name, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
+                                    ft.Container(width=10),
+                                    ft.Text(str(hp).ljust(5, " "), font_family="Consolas"),
+                                    ft.Text(str(atk).ljust(5, " "), font_family="Consolas"),
+                                    ft.Text(str(deff).ljust(5, " "), font_family="Consolas"),
+                                ],
+                            ),
+                        )
+                        def _on_target_click(e, cid=cid, name=name, cont=cont):
+                            nonlocal selected_target_id
+                            selected_target_id = cid
+                            try:
+                                selected_target_text.value = f"{cid} : {name}"
+                                selected_target_text.update()
+                            except Exception:
+                                pass
+                            # ハイライト更新
+                            for c in target_containers:
+                                try:
+                                    c.bgcolor = None
+                                    c.update()
+                                except Exception:
+                                    pass
+                            try:
+                                cont.bgcolor = ft.Colors.YELLOW_100
+                                cont.update()
+                            except Exception:
+                                pass
+                        cont.on_click = _on_target_click
+                        lv.controls.append(cont)
+                        target_containers.append(cont)
+                # ヘッダ（ListView の外に置くことでスクロール時に固定される）
+                header = ft.Container(
+                    padding=ft.Padding.all(6),
+                    bgcolor=None,
+                    content=ft.Row(
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                        controls=[
+                            ft.Text("ID".ljust(8, " "), font_family="Consolas"),
+                            ft.Container(width=10),
+                            ft.Text("カード名",expand=True, tooltip="カード名", no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
+                            ft.Container(width=10),
+                            ft.Text("HP".ljust(5, " "), font_family="Consolas"),
+                            ft.Text("ATK".ljust(5, " "), font_family="Consolas"),
+                            ft.Text("DEF".ljust(5, " "), font_family="Consolas"),
+                        ],
+                    )
+                )
+                tab_views.append(ft.Container(content=ft.Column(controls=[header, lv]), alignment=ft.Alignment.CENTER))
+                # 素材一覧が空ならプレースホルダを表示
+                if len(lv.controls) == 0:
+                    lv.controls.append(ft.Container(padding=ft.Padding.all(8), content=ft.Text("対象が見つかりません")))
             target_tab = ft.Tabs(
                 selected_index=0,
-                length=6,
+                length=len(ranks),
                 expand=True,
-                #on_change=change_tabs,
                 content=ft.Column(
                     expand=True,
                     controls=[
-                        ft.TabBar(
-                            tab_alignment=ft.TabAlignment.CENTER,
-                            tabs=[
-                                ft.Tab(label="UR"),
-                                ft.Tab(label="SSR"),
-                                ft.Tab(label="SR"),
-                                ft.Tab(label="R"),
-                                ft.Tab(label="UC"),
-                                ft.Tab(label="C"),
-                            ],
-                        ),
-                        ft.TabBarView(
-                            expand=True,
-                            controls=[
-                                ft.Container(
-                                    alignment=ft.Alignment.CENTER,
-                                    content=ft.RadioGroup(
-                                        content=ft.ListView(
-                                            controls=[]
-                                        )
-                                    )
-                                ),
-                                ft.Container(
-                                    alignment=ft.Alignment.CENTER,
-                                    content=ft.RadioGroup(
-                                        content=ft.ListView(
-                                            controls=[]
-                                        )
-                                    )
-                                ),
-                                ft.Container(
-                                    alignment=ft.Alignment.CENTER,
-                                    content=ft.RadioGroup(
-                                        content=ft.ListView(
-                                            controls=[]
-                                        )
-                                    )
-                                ),
-                                ft.Container(
-                                    alignment=ft.Alignment.CENTER,
-                                    content=ft.RadioGroup(
-                                        content=ft.ListView(
-                                            controls=[]
-                                        )
-                                    )
-                                ),
-                                ft.Container(
-                                    alignment=ft.Alignment.CENTER,
-                                    content=ft.RadioGroup(
-                                        content=ft.ListView(
-                                            controls=[]
-                                        )
-                                    )
-                                ),
-                                ft.Container(
-                                    alignment=ft.Alignment.CENTER,
-                                    content=ft.RadioGroup(
-                                        content=ft.ListView(
-                                            controls=[]
-                                        )
-                                    )
-                                ),
-                            ],
-                        ),
+                        ft.TabBar(tab_alignment=ft.TabAlignment.CENTER, tabs=[ft.Tab(label=r) for r in ranks]),
+                        ft.TabBarView(expand=True, controls=tab_views),
                     ],
                 ),
             )
-            sozai_list = ft.RadioGroup(
-                content=ft.ListView(
-                    controls=[]
-                )
+            # 右側：素材一覧（isSozai == 1）
+            sozai_lv = ft.ListView(
+                expand=True, 
+                spacing=0, 
+                controls=[]
             )
+            for row in all_cards:
+                try:
+                    if int(row[7]) == 1:
+                        cid = row[0]
+                        name = row[2] or ""
+                        cont = ft.Container(
+                            padding=ft.Padding.all(6),
+                            bgcolor=None,
+                            content=ft.Row(
+                                controls=[
+                                    ft.Text(str(cid).ljust(8, " "), font_family="Consolas"), 
+                                    ft.Text(name, expand=True, tooltip=name, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS)
+                                ],
+                            ),
+                        )
+                        def _on_sozai_click(e, cid=cid, name=name, cont=cont):
+                            nonlocal selected_sozai_id
+                            selected_sozai_id = cid
+                            try:
+                                selected_sozai_text.value = f"{cid} : {name}"
+                                selected_sozai_text.update()
+                            except Exception:
+                                pass
+                            for c in sozai_containers:
+                                try:
+                                    c.bgcolor = None
+                                    c.update()
+                                except Exception:
+                                    pass
+                            try:
+                                cont.bgcolor = ft.Colors.YELLOW_100
+                                cont.update()
+                            except Exception:
+                                pass
+                        cont.on_click = _on_sozai_click
+                        sozai_lv.controls.append(cont)
+                        sozai_containers.append(cont)
+                except Exception:
+                    pass
+            # 素材一覧が空ならプレースホルダを表示
+            if len(sozai_lv.controls) == 0:
+                sozai_lv.controls.append(ft.Container(padding=ft.Padding.all(8), content=ft.Text("素材が見つかりません")))
+            # 強化タブ本体
             powerup_tab = ft.Column(
                 controls=[
                     ft.Stack(
@@ -105,16 +187,10 @@ class PowerUp:
                                     height=776,
                                     alignment=ft.Alignment.CENTER,
                                     bgcolor=ft.Colors.ON_PRIMARY,
-                                    content=None
+                                    content=None,
                                 ),
                                 blend_mode=ft.BlendMode.SRC_IN,
-                                shader=ft.RadialGradient(
-                                    center=ft.Alignment.CENTER,
-                                    radius=0.22,
-                                    colors=[ft.Colors.ON_PRIMARY, ft.Colors.PRIMARY_CONTAINER, ft.Colors.ON_PRIMARY],
-                                    stops=[0.2, 0.8, 1.0],
-                                    tile_mode=ft.GradientTileMode.REPEATED,
-                                ),
+                                shader=ft.RadialGradient(center=ft.Alignment.CENTER, radius=0.22, colors=[ft.Colors.ON_PRIMARY, ft.Colors.PRIMARY_CONTAINER, ft.Colors.ON_PRIMARY], stops=[0.2, 0.8, 1.0], tile_mode=ft.GradientTileMode.REPEATED),
                             ),
                             ft.Row(
                                 width=728,
@@ -128,11 +204,7 @@ class PowerUp:
                                         alignment=ft.Alignment.TOP_CENTER,
                                         content=ft.Column(
                                             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                                            controls=[
-                                                ft.Text("対象"),
-                                                ft.Divider(color=ft.Colors.GREY, height=1),
-                                                target_tab
-                                            ],
+                                            controls=[ft.Text("対象"), ft.Divider(color=ft.Colors.GREY, height=1), target_tab],
                                         ),
                                     ),
                                     ft.Container(
@@ -142,9 +214,20 @@ class PowerUp:
                                         content=ft.Column(
                                             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                                             controls=[
-                                                ft.Text("素材"),
+                                                ft.Text(f"素材 ({len(sozai_lv.controls)})"),
                                                 ft.Divider(color=ft.Colors.GREY, height=1),
-                                                sozai_list,
+                                                ft.Container(
+                                                    padding=ft.Padding.all(6),
+                                                    bgcolor=None,
+                                                    content=ft.Row(
+                                                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                                                        controls=[
+                                                            ft.Text("ID".ljust(8," "), font_family="Consolas"),
+                                                            ft.Text("カード名", expand=True, tooltip="カード名", no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
+                                                        ],
+                                                    ),
+                                                ),
+                                                sozai_lv,
                                             ],
                                         ),
                                     ),
@@ -152,12 +235,8 @@ class PowerUp:
                             ),
                         ],
                     ),
-                    ft.Container(
-                        width=728,
-                        height=100,
-                        expand=True,
-                        content=ft.Button("強化する"),
-                    ),
+                    ft.Row(spacing=12, controls=[selected_target_text, selected_sozai_text]),
+                    ft.Container(width=728, height=100, expand=True, content=ft.Button("強化する")),
                 ],
             )
         finally:

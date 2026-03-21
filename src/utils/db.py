@@ -72,15 +72,3 @@ def update_favorite(card_id, value):
         pass
     finally:
         conn.close()
-
-# 特定のrankだけのデータを取得する
-def get_cards_from_rank(rank):
-    conn = sqlite3.connect('cards.db')
-    cursor = conn.cursor()
-    data = []
-    sql = f"""SELECT * FROM gacha_cards WHERE rank = {rank}"""
-    cursor.execute(sql)
-    for item in cursor:
-        data.append(item)
-    conn.close()
-    return data

@@ -8,8 +8,12 @@ from powerup import PowerUp
 from utils.db import initialize_db
 
 async def main(page: ft.Page):
+    # 前回選択したタブ(index)を保持
+    last_tab_index = 0
     # event: タブ切り替え
     def change_tabs(e):
+        nonlocal last_tab_index
+        tabs_widget = e.control
         async def load_and_set():
             try:
                 content = await zukan.create()
@@ -24,22 +28,38 @@ async def main(page: ft.Page):
                     ft.Text(str(ex)),
                 ])
                 tab_bar_view.update()
+            finally:
+                try:
+                    tabs_widget.disabled = False
+                    tabs_widget.update()
+                except Exception:
+                    pass
+        # 共通で参照する TabBarView のコンテナ参照
+        tab_bar_view = e.control.content.controls[1]
         # ガチャのタブに切り替えたとき
         if e.control.selected_index == 0:
-            # 図鑑タブの中身をクリアしておく
-            tab_bar_view = e.control.content.controls[1]
-            tab_bar_view.controls[1] = ft.Container(
-                content=None,
-                alignment=ft.Alignment.CENTER,
-            )
+            # 図鑑・強化の中身をクリアしておく（メモリ節約）
+            try:
+                tab_bar_view.controls[1] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
+            except Exception:
+                pass
+            try:
+                tab_bar_view.controls[2] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
+            except Exception:
+                pass
             tab_bar_view.update()
         # 図鑑タブに切り替えたとき
         if e.control.selected_index == 1:
-            tab_bar_view = e.control.content.controls[1]
-            if tab_bar_view.controls[1].content == None:
+            # 図鑑タブは未設定時 or 強化タブから戻ってきた場合は再読み込みする
+            if tab_bar_view.controls[1].content == None or last_tab_index == 2:
+                # 読み込み中はタブ切替を禁止
+                try:
+                    tabs_widget.disabled = True
+                    tabs_widget.update()
+                except Exception:
+                    pass
                 # 図鑑タブの内容を非同期で読み込む
                 zukan = Zukan(page)
-                # 一旦プレースホルダを入れてから非同期で差し替え
                 tab_bar_view.controls[1] = ft.Container(
                     content=ft.Text("読み込み中...", size=18),
                     alignment=ft.Alignment.CENTER,
@@ -48,13 +68,56 @@ async def main(page: ft.Page):
                 asyncio.create_task(load_and_set())
         # 強化タブに切り替えたとき
         if e.control.selected_index == 2:
-            # 図鑑タブの中身をクリアしておく
-            tab_bar_view = e.control.content.controls[1]
-            tab_bar_view.controls[1] = ft.Container(
-                content=None,
-                alignment=ft.Alignment.CENTER,
-            )
-            tab_bar_view.update()
+            # 図鑑と同じオーバーレイを表示して読み込み中にUIを覆う
+            try:
+                overlay = page.overlay[1]
+                overlay.visible = True
+                page.update()
+            except Exception:
+                overlay = None
+            # 読み込み中はタブ切替を禁止
+            try:
+                tabs_widget.disabled = True
+                tabs_widget.update()
+            except Exception:
+                pass
+            # 非同期で PowerUp.create() を呼んで差し替える
+            try:
+                powerup = PowerUp(page)
+                async def load_and_set_powerup():
+                    try:
+                        content = await powerup.create()
+                        tab_bar_view.controls[2] = ft.Container(
+                            content=content,
+                            alignment=ft.Alignment.CENTER,
+                        )
+                        tab_bar_view.update()
+                    except Exception:
+                        tab_bar_view.controls[2] = ft.Column([
+                            ft.Text("読み込みに失敗しました。"),
+                        ])
+                        tab_bar_view.update()
+                    finally:
+                        try:
+                            tabs_widget.disabled = False
+                            tabs_widget.update()
+                        except Exception:
+                            pass
+                        try:
+                            if overlay is not None:
+                                overlay.visible = False
+                                page.update()
+                        except Exception:
+                            pass
+                asyncio.create_task(load_and_set_powerup())
+            except Exception:
+                try:
+                    tabs_widget.disabled = False
+                    tabs_widget.update()
+                except Exception:
+                    pass
+        # 最後に last_tab_index を更新
+        last_tab_index = e.control.selected_index
     ####################
     # 処理開始
     ####################
@@ -72,6 +135,8 @@ async def main(page: ft.Page):
     page.title = "Wikipedia Card Collection"
     #page.theme_mode = ft.ThemeMode.DARK
     page.update()
+    # 初期 last_tab_index を設定
+    last_tab_index = 0
     # ガチャ用ローディングオーバーレイ（進捗バー＋カウンタ）
     gacha_overlay_counter = ft.Text("0/0", size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE)
     gacha_overlay_progress = ft.ProgressBar(width=300, height=12, value=0)
@@ -151,7 +216,7 @@ async def main(page: ft.Page):
                         controls=[
                             ft.Container(   #ガチャ
                                 alignment=ft.Alignment.CENTER,
-                                content=gacha.create(),
+                                content=gacha.create(), #最初の画面かつこの画面でデータの再読み個の必要はないのでこれでよい。
                             ),
                             ft.Container(   #図鑑
                                 alignment=ft.Alignment.CENTER,
@@ -159,11 +224,11 @@ async def main(page: ft.Page):
                             ),
                             ft.Container(   #強化
                                 alignment=ft.Alignment.CENTER,
-                                content=powerup.create(),
+                                content=None, #初期状態は空
                             ),
                             ft.Container(   #バトル
                                 alignment=ft.Alignment.CENTER,
-                                content=ft.Text("未実装"),
+                                content=ft.Text("未実装"), #まだ未実装なので・・・
                             ),
                         ],
                     ),
