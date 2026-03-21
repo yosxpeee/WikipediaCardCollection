@@ -224,7 +224,12 @@ class Gacha:
                 else:
                     isSozai = 0
                 try:
+                    # リソース取得
                     d_resource = info_data["query"]["pages"][p_str]["length"]
+                    a_resource = 0
+                    for dayView in info_data["query"]["pages"][p_str]["pageviews"]:
+                        if info_data["query"]["pages"][p_str]["pageviews"][dayView] != None:
+                            a_resource = a_resource + info_data["query"]["pages"][p_str]["pageviews"][dayView]
                     query = True
                 except:
                     #最新すぎる記事は情報取得できないケースがある。
@@ -233,10 +238,6 @@ class Gacha:
                     query = False
                 if query:
                     if isSozai == 0:
-                        a_resource = 0
-                        for dayView in info_data["query"]["pages"][p_str]["pageviews"]:
-                            if info_data["query"]["pages"][p_str]["pageviews"][dayView] != None:
-                                a_resource = a_resource + info_data["query"]["pages"][p_str]["pageviews"][dayView]
                         #defリソースに対する補正
                         if d_resource > 500000:
                             d_hosei = 0.6

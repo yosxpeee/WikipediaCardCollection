@@ -75,7 +75,7 @@ class PowerUp:
                             nonlocal selected_target_id
                             selected_target_id = cid
                             try:
-                                selected_target_text.value = f"{cid} : {name}"
+                                selected_target_text.value = f"{cid} [{row_rank}] {name}"
                                 selected_target_text.update()
                             except Exception:
                                 pass
@@ -225,7 +225,7 @@ class PowerUp:
                                         content=ft.Column(
                                             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                                             controls=[
-                                                ft.Text(f"素材 ({len(sozai_lv.controls)})"),
+                                                ft.Text(f"素材"),
                                                 ft.Divider(color=ft.Colors.GREY, height=1),
                                                 ft.Container(
                                                     padding=ft.Padding.all(6),
