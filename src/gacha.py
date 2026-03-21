@@ -284,8 +284,8 @@ class Gacha:
                         print(f"概要: {extract}")
                     print(f"画像URL: {image_url}")
                     print(f"HP :{hitPoint}")
-                    print(f"ATK:{atk}")
-                    print(f"DEF:{defence}")
+                    print(f"ATK:{atk} ({a_resource})")
+                    print(f"DEF:{defence} ({d_resource})")
                     print("#########################################################")
                     # ↑デバッグ用にしばらく残す
                     get_card_list.append({
@@ -300,6 +300,9 @@ class Gacha:
                         "HP": hitPoint,
                         "ATK": atk,
                         "DEF": defence,
+                        "resourceATK": a_resource,
+                        "resourceDEF": d_resource,
+                        "resourceRANK": rank,
                     })
                     count = count + 1
                     # 更新：プログレスとカウンタ

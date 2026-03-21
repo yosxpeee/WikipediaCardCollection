@@ -21,7 +21,10 @@ def initialize_db():
             HP TEXT NOT NULL,
             ATK TEXT NOT NULL,
             DEF TEXT NOT NULL,
-            favorite INTEGER NOT NULL DEFAULT 0
+            favorite INTEGER NOT NULL DEFAULT 0,
+            resourceATK TEXT NOT NULL,
+            resourceDEF TEXT NOT NULL,
+            resourceRANK TEXT NOT NULL
         )
     ''')
     conn.commit()
@@ -34,8 +37,8 @@ def save_cards(cards):
     # カードがかぶっても関係なく新しく追加していく
     for card in cards:
         cursor.execute('''
-            INSERT INTO gacha_cards (pageId, title, pageUrl, imageUrl, rank, quality, isSozai, extract, HP, ATK, DEF, favorite) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (card['pageId'], card['title'], card['pageUrl'], card['imageUrl'], rank_to_rankid(card['rank']), card['quality'], card['isSozai'], card['extract'], card['HP'], card['ATK'], card['DEF'], 0))
+            INSERT INTO gacha_cards (pageId, title, pageUrl, imageUrl, rank, quality, isSozai, extract, HP, ATK, DEF, favorite, resourceATK, resourceDEF, resourceRANK) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (card['pageId'], card['title'], card['pageUrl'], card['imageUrl'], rank_to_rankid(card['rank']), card['quality'], card['isSozai'], card['extract'], card['HP'], card['ATK'], card['DEF'], 0, card['resourceATK'], card['resourceDEF'], rank_to_rankid(card['resourceRANK'])))
         try:
             card['id'] = cursor.lastrowid
         except Exception:
@@ -69,3 +72,15 @@ def update_favorite(card_id, value):
         pass
     finally:
         conn.close()
+
+# 特定のrankだけのデータを取得する
+def get_cards_from_rank(rank):
+    conn = sqlite3.connect('cards.db')
+    cursor = conn.cursor()
+    data = []
+    sql = f"""SELECT * FROM gacha_cards WHERE rank = {rank}"""
+    cursor.execute(sql)
+    for item in cursor:
+        data.append(item)
+    conn.close()
+    return data

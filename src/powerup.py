@@ -38,51 +38,62 @@ class PowerUp:
                             controls=[
                                 ft.Container(
                                     alignment=ft.Alignment.CENTER,
-                                    content=ft.Text("未実装"),
+                                    content=ft.RadioGroup(
+                                        content=ft.ListView(
+                                            controls=[]
+                                        )
+                                    )
                                 ),
                                 ft.Container(
                                     alignment=ft.Alignment.CENTER,
-                                    content=ft.Text("未実装"),
+                                    content=ft.RadioGroup(
+                                        content=ft.ListView(
+                                            controls=[]
+                                        )
+                                    )
                                 ),
                                 ft.Container(
                                     alignment=ft.Alignment.CENTER,
-                                    content=ft.Text("未実装"),
+                                    content=ft.RadioGroup(
+                                        content=ft.ListView(
+                                            controls=[]
+                                        )
+                                    )
                                 ),
                                 ft.Container(
                                     alignment=ft.Alignment.CENTER,
-                                    content=ft.Text("未実装"),
+                                    content=ft.RadioGroup(
+                                        content=ft.ListView(
+                                            controls=[]
+                                        )
+                                    )
                                 ),
                                 ft.Container(
                                     alignment=ft.Alignment.CENTER,
-                                    content=ft.Text("未実装"),
+                                    content=ft.RadioGroup(
+                                        content=ft.ListView(
+                                            controls=[]
+                                        )
+                                    )
                                 ),
                                 ft.Container(
                                     alignment=ft.Alignment.CENTER,
-                                    content=ft.Text("未実装"),
+                                    content=ft.RadioGroup(
+                                        content=ft.ListView(
+                                            controls=[]
+                                        )
+                                    )
                                 ),
                             ],
                         ),
                     ],
                 ),
             )
-            #仮素材
-            sozai_list = ft.ListView(
-                controls=[
-                ft.Row(
-                    controls=[
-                        ft.Text("aaa"),
-                        ft.Text("bbb")
-                    ]
-                ),
-                ft.Row(
-                    controls=[
-                        ft.Text("ccc"),
-                        ft.Text("ddd")
-                    ]
-                ),
-                ]
+            sozai_list = ft.RadioGroup(
+                content=ft.ListView(
+                    controls=[]
+                )
             )
-            #sozai_list = 
             powerup_tab = ft.Column(
                 controls=[
                     ft.Stack(
@@ -91,7 +102,7 @@ class PowerUp:
                                 content=ft.Container(
                                     border=ft.Border.all(0),
                                     width=728,
-                                    height=876,
+                                    height=776,
                                     alignment=ft.Alignment.CENTER,
                                     bgcolor=ft.Colors.ON_PRIMARY,
                                     content=None
@@ -107,7 +118,7 @@ class PowerUp:
                             ),
                             ft.Row(
                                 width=728,
-                                height=876,
+                                height=776,
                                 alignment=ft.MainAxisAlignment.CENTER,
                                 vertical_alignment=ft.CrossAxisAlignment.START,
                                 controls=[
@@ -124,10 +135,28 @@ class PowerUp:
                                             ],
                                         ),
                                     ),
-                                    sozai_list,
+                                    ft.Container(
+                                        width=250,
+                                        bgcolor=ft.Colors.with_opacity(0.1, ft.Colors.GREY_900),
+                                        alignment=ft.Alignment.TOP_CENTER,
+                                        content=ft.Column(
+                                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                                            controls=[
+                                                ft.Text("素材"),
+                                                ft.Divider(color=ft.Colors.GREY, height=1),
+                                                sozai_list,
+                                            ],
+                                        ),
+                                    ),
                                 ],
                             ),
                         ],
+                    ),
+                    ft.Container(
+                        width=728,
+                        height=100,
+                        expand=True,
+                        content=ft.Button("強化する"),
                     ),
                 ],
             )
