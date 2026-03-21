@@ -54,3 +54,54 @@ def rankid_to_rank(rankId, isSozai):
 def rank_to_rankid(rank):
     key = next((k for k, v in RANK_TABLE.items() if v == rank), None)
     return key
+
+#リソースからATK,DEF,HPの計算
+def calc_status(d_resource, a_resource, rank):
+    #rankから掛け算の補正を決める
+    if rank == "LR":
+        atk_multi = 25
+        def_multi = 25
+    elif rank == "UR":
+        atk_multi = 20
+        def_multi = 20
+    elif rank == "SSR":
+        atk_multi = 15
+        def_multi = 15
+    elif rank == "SR":
+        atk_multi = 10
+        def_multi = 10
+    elif rank == "R":
+        atk_multi = 7.5
+        def_multi = 7.5
+    elif rank == "UC":
+        atk_multi = 4
+        def_multi = 4
+    else: #C
+        atk_multi = 1
+        def_multi = 1
+    #defリソースに対する補正
+    if d_resource > 500000:
+        d_hosei = 0.6
+    elif d_resource > 250000:
+        d_hosei = 0.8
+    elif d_resource > 10000:
+        d_hosei = 1
+    else:
+        d_hosei = 5
+    #atkリソースに対する補正
+    if a_resource > 30000:
+        a_hosei = 2
+    elif a_resource > 10000:
+        a_hosei = 5
+    elif a_resource > 1000:
+        a_hosei = 10
+    elif a_resource > 100:
+        a_hosei = 100
+    elif a_resource > 10:
+        a_hosei = 2000
+    else:
+        a_hosei = 5000
+    defence  = int((d_resource*d_hosei*def_multi)**0.5*7)
+    atk      = int((a_resource*a_hosei*atk_multi)**0.5*7)
+    hitPoint = defence+3000
+    return defence, atk, hitPoint

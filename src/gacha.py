@@ -3,7 +3,7 @@ import urllib.parse
 import asyncio
 import time
 
-from utils.utils import fetch_json
+from utils.utils import fetch_json, calc_status
 from utils.db import save_cards
 from utils.ui import get_card_color, create_card_image
 
@@ -183,38 +183,22 @@ class Gacha:
                     #評価されていない場合はCとみなす
                     q = 0
                     rank = "C"
-                    atk_multi = 1
-                    def_multi = 1
                 else:
                     q = float(rank_data["result"]["ja"]["quality"])
                     if q == 100:
                         rank = "LR"
-                        atk_multi = 25
-                        def_multi = 25
                     elif q >= 90:
                         rank = "UR"
-                        atk_multi = 20
-                        def_multi = 20
                     elif q >= 80:
                         rank = "SSR"
-                        atk_multi = 15
-                        def_multi = 15
                     elif q >= 60:
                         rank = "SR"
-                        atk_multi = 10
-                        def_multi = 10
                     elif q >= 35:
                         rank = "R"
-                        atk_multi = 7.5
-                        def_multi = 7.5
                     elif q >= 20:
                         rank = "UC"
-                        atk_multi = 4
-                        def_multi = 4
                     else:
                         rank = "C"
-                        atk_multi = 1
-                        def_multi = 1
                 p_str = str(pageid)
                 # 素材判定
                 isAimai         = any("曖昧さ回避" in category.get("title", "") for category in info_data["query"]["pages"][p_str]["categories"])
@@ -238,31 +222,7 @@ class Gacha:
                     query = False
                 if query:
                     if isSozai == 0:
-                        #defリソースに対する補正
-                        if d_resource > 500000:
-                            d_hosei = 0.6
-                        elif d_resource > 250000:
-                            d_hosei = 0.8
-                        elif d_resource > 10000:
-                            d_hosei = 1
-                        else:
-                            d_hosei = 5
-                        #atkリソースに対する補正
-                        if a_resource > 30000:
-                            a_hosei = 2
-                        elif a_resource > 10000:
-                            a_hosei = 5
-                        elif a_resource > 1000:
-                            a_hosei = 10
-                        elif a_resource > 100:
-                            a_hosei = 100
-                        elif a_resource > 10:
-                            a_hosei = 2000
-                        else:
-                            a_hosei = 5000
-                        defence  = int((d_resource*d_hosei*def_multi)**0.5*7)
-                        atk      = int((a_resource*a_hosei*atk_multi)**0.5*7)
-                        hitPoint = defence+3000
+                        defence, atk, hitPoint = calc_status(d_resource, a_resource, rank)
                     else:
                         defence = -1
                         atk = -1
