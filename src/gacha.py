@@ -17,9 +17,13 @@ class Gacha:
     async def draw(self, num):
         # ランダム記事取得
         async def get_random(n):
-            random_url = f"https://ja.wikipedia.org/w/api.php?format=json&action=query&list=random&rnnamespace=0&rnlimit={n}"
-            j = await fetch_json(random_url)
-            if "error" in j:
+            j = {}
+            try:
+                random_url = f"https://ja.wikipedia.org/w/api.php?format=json&action=query&list=random&rnnamespace=0&rnlimit={n}"
+                j = await fetch_json(random_url)
+            except:
+                pass
+            if "error" in j or j == {}:
                 return []
             return j.get("query", {}).get("random", [])
         # ランク取得
@@ -155,6 +159,7 @@ class Gacha:
         self.page.update()
         count = 0
         get_card_list = []
+        force_stopped = False
         while True:
             if count >= num:
                 break
@@ -175,6 +180,10 @@ class Gacha:
             #    randList = [{"id":"228773",  "title":"ディープインパクト (競走馬)"}] #LR
             #else:
             randList = await get_random(1)
+            #randList = []
+            if randList == []:
+                force_stopped = True
+                break
             for r in randList:
                 pageid = r["id"]
                 title = r["title"]
@@ -288,6 +297,11 @@ class Gacha:
                     except Exception:
                         pass
                     self.page.update()
+        if force_stopped == True:
+            self.loading_overlay.visible = False
+            self.page.show_dialog(ft.SnackBar(ft.Text("ランダム記事取得エラー。1時間程度時間を置いてからお試しください。")))
+            self.page.update()
+            return
         # DBに保存する
         save_cards(get_card_list)
         # ローディングオーバーレイを非表示
