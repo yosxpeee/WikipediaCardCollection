@@ -14,7 +14,7 @@ async def main(page: ft.Page):
     def change_tabs(e):
         nonlocal last_tab_index
         tabs_widget = e.control
-        async def load_and_set():
+        async def load_and_set_zukan():
             try:
                 content = await zukan.create()
                 tab_bar_view.controls[1] = ft.Container(
@@ -34,6 +34,37 @@ async def main(page: ft.Page):
                     tabs_widget.update()
                 except Exception:
                     pass
+                try:
+                    ov = page.overlay[1]
+                    ov.visible = False
+                    page.update()
+                except Exception:
+                    pass
+        async def load_and_set_powerup():
+            try:
+                content = await powerup.create()
+                tab_bar_view.controls[2] = ft.Container(
+                    content=content,
+                    alignment=ft.Alignment.CENTER,
+                )
+                tab_bar_view.update()
+            except Exception:
+                tab_bar_view.controls[2] = ft.Column([
+                    ft.Text("読み込みに失敗しました。"),
+                ])
+                tab_bar_view.update()
+            finally:
+                try:
+                    tabs_widget.disabled = False
+                    tabs_widget.update()
+                except Exception:
+                    pass
+                try:
+                    if overlay is not None:
+                        overlay.visible = False
+                        page.update()
+                except Exception:
+                    pass
         # 共通で参照する TabBarView のコンテナ参照
         tab_bar_view = e.control.content.controls[1]
         # ガチャのタブに切り替えたとき
@@ -50,24 +81,46 @@ async def main(page: ft.Page):
             tab_bar_view.update()
         # 図鑑タブに切り替えたとき
         if e.control.selected_index == 1:
-            # 図鑑タブは未設定時 or 強化タブから戻ってきた場合は再読み込みする
-            if tab_bar_view.controls[1].content == None or last_tab_index == 2:
-                # 読み込み中はタブ切替を禁止
-                try:
-                    tabs_widget.disabled = True
-                    tabs_widget.update()
-                except Exception:
-                    pass
-                # 図鑑タブの内容を非同期で読み込む
+            # 強化のタブの中身をクリア
+            try:
+                tab_bar_view.controls[2] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
+            except Exception:
+                pass
+            # オーバーレイを即表示して画面操作をブロック
+            try:
+                ov = page.overlay[1]
+                ov.visible = True
+                page.update()
+            except Exception:
+                ov = None
+            # 読み込み中はタブ切替を禁止
+            try:
+                tabs_widget.disabled = True
+                tabs_widget.update()
+            except Exception:
+                pass
+            # 図鑑タブの内容を非同期で読み込む
+            try:
                 zukan = Zukan(page)
                 tab_bar_view.controls[1] = ft.Container(
                     content=ft.Text("読み込み中...", size=18),
                     alignment=ft.Alignment.CENTER,
                 )
                 tab_bar_view.update()
-                asyncio.create_task(load_and_set())
+                asyncio.create_task(load_and_set_zukan())
+            except:
+                try:
+                    tabs_widget.disabled = False
+                    tabs_widget.update()
+                except Exception:
+                    pass
         # 強化タブに切り替えたとき
         if e.control.selected_index == 2:
+            # 図鑑の中身をクリアしておく（メモリ節約）
+            try:
+                tab_bar_view.controls[1] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
+            except Exception:
+                pass
             # 図鑑と同じオーバーレイを表示して読み込み中にUIを覆う
             try:
                 overlay = page.overlay[1]
@@ -84,31 +137,10 @@ async def main(page: ft.Page):
             # 非同期で PowerUp.create() を呼んで差し替える
             try:
                 powerup = PowerUp(page)
-                async def load_and_set_powerup():
-                    try:
-                        content = await powerup.create()
-                        tab_bar_view.controls[2] = ft.Container(
-                            content=content,
-                            alignment=ft.Alignment.CENTER,
-                        )
-                        tab_bar_view.update()
-                    except Exception:
-                        tab_bar_view.controls[2] = ft.Column([
-                            ft.Text("読み込みに失敗しました。"),
-                        ])
-                        tab_bar_view.update()
-                    finally:
-                        try:
-                            tabs_widget.disabled = False
-                            tabs_widget.update()
-                        except Exception:
-                            pass
-                        try:
-                            if overlay is not None:
-                                overlay.visible = False
-                                page.update()
-                        except Exception:
-                            pass
+                tab_bar_view.controls[2] = ft.Container(
+                    content=ft.Text("読み込み中...", size=18),
+                    alignment=ft.Alignment.CENTER,
+                )
                 asyncio.create_task(load_and_set_powerup())
             except Exception:
                 try:
@@ -116,6 +148,18 @@ async def main(page: ft.Page):
                     tabs_widget.update()
                 except Exception:
                     pass
+        # バトルのタブに切り替えたとき
+        if e.control.selected_index == 3:
+            # 図鑑・強化の中身をクリアしておく（メモリ節約）
+            try:
+                tab_bar_view.controls[1] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
+            except Exception:
+                pass
+            try:
+                tab_bar_view.controls[2] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
+            except Exception:
+                pass
+            tab_bar_view.update()
         # 最後に last_tab_index を更新
         last_tab_index = e.control.selected_index
     ####################

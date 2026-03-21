@@ -29,8 +29,8 @@ class PowerUp:
             selected_target_id = None
             selected_sozai_id = None
             # 表示用テキスト
-            selected_target_text = ft.Text("選択中の対象: ")
-            selected_sozai_text = ft.Text("選択中の素材: ")
+            selected_target_text = ft.Text("",no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS, bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.GREY_500))
+            selected_sozai_text = ft.Text("",no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS, bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.ORANGE))
             # コンテナ参照リスト（ハイライト更新用）
             target_containers = []
             sozai_containers = []
@@ -56,7 +56,7 @@ class PowerUp:
                         atk = row[10] if row[10] is not None else "-"
                         deff = row[11] if row[11] is not None else "-"
                         cont = ft.Container(
-                            padding=ft.Padding.all(6),
+                            padding=ft.Padding(top=0, left=6, right=6, bottom=0),
                             bgcolor=None,
                             content=ft.Row(
                                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
@@ -101,17 +101,24 @@ class PowerUp:
                     content=ft.Row(
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                         controls=[
-                            ft.Text("ID".ljust(8, " "), font_family="Consolas"),
+                            ft.Text("ID".ljust(8, " "), font_family="Consolas", bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.WHITE)),
                             ft.Container(width=10),
-                            ft.Text("カード名",expand=True, tooltip="カード名", no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
+                            ft.Text("カード名",expand=True, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS, bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.WHITE)),
                             ft.Container(width=10),
-                            ft.Text("HP".ljust(5, " "), font_family="Consolas"),
-                            ft.Text("ATK".ljust(5, " "), font_family="Consolas"),
-                            ft.Text("DEF".ljust(5, " "), font_family="Consolas"),
+                            ft.Text("HP".ljust(5, " "), font_family="Consolas", bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.WHITE)),
+                            ft.Text("ATK".ljust(5, " "), font_family="Consolas", bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.WHITE)),
+                            ft.Text("DEF".ljust(5, " "), font_family="Consolas", bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.WHITE)),
                         ],
                     )
                 )
-                tab_views.append(ft.Container(content=ft.Column(controls=[header, lv]), alignment=ft.Alignment.CENTER))
+                tab_views.append(
+                    ft.Container(
+                        alignment=ft.Alignment.CENTER,
+                        content=ft.Column(
+                            controls=[header, lv]
+                        ), 
+                    )
+                )
                 # 素材一覧が空ならプレースホルダを表示
                 if len(lv.controls) == 0:
                     lv.controls.append(ft.Container(padding=ft.Padding.all(8), content=ft.Text("対象が見つかりません")))
@@ -139,7 +146,7 @@ class PowerUp:
                         cid = row[0]
                         name = row[2] or ""
                         cont = ft.Container(
-                            padding=ft.Padding.all(6),
+                            padding=ft.Padding(top=0, left=6, right=6, bottom=0),
                             bgcolor=None,
                             content=ft.Row(
                                 controls=[
@@ -204,7 +211,11 @@ class PowerUp:
                                         alignment=ft.Alignment.TOP_CENTER,
                                         content=ft.Column(
                                             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                                            controls=[ft.Text("対象"), ft.Divider(color=ft.Colors.GREY, height=1), target_tab],
+                                            controls=[
+                                                ft.Text("対象",weight=ft.FontWeight.BOLD), 
+                                                ft.Divider(color=ft.Colors.GREY, height=1), 
+                                                target_tab
+                                            ],
                                         ),
                                     ),
                                     ft.Container(
@@ -222,8 +233,8 @@ class PowerUp:
                                                     content=ft.Row(
                                                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                                                         controls=[
-                                                            ft.Text("ID".ljust(8," "), font_family="Consolas"),
-                                                            ft.Text("カード名", expand=True, tooltip="カード名", no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
+                                                            ft.Text("ID".ljust(8," "), font_family="Consolas", bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.ORANGE)),
+                                                            ft.Text("カード名", expand=True, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS, bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.ORANGE)),
                                                         ],
                                                     ),
                                                 ),
@@ -235,7 +246,13 @@ class PowerUp:
                             ),
                         ],
                     ),
-                    ft.Row(spacing=12, controls=[selected_target_text, selected_sozai_text]),
+                    ft.Column(
+                        spacing=0, 
+                        controls=[
+                            ft.Row(controls=[ft.Text("対象: "), selected_target_text]), 
+                            ft.Row(controls=[ft.Text("素材: "), selected_sozai_text]),
+                        ]
+                    ),
                     ft.Container(width=728, height=100, expand=True, content=ft.Button("強化する")),
                 ],
             )
