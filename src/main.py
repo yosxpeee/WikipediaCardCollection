@@ -68,6 +68,7 @@ async def main(page: ft.Page):
     page.window.resizable = False
     page.window.maximizable = False
     page.window.visible = True
+    page.bgcolor = ft.Colors.ON_PRIMARY
     page.title = "Wikipedia Card Collection"
     page.update()
     # ガチャ用ローディングオーバーレイ（進捗バー＋カウンタ）
@@ -81,14 +82,23 @@ async def main(page: ft.Page):
         content=ft.Stack(
             alignment=ft.Alignment.CENTER,
             controls=[
-                ft.Image("gacha.png",scale=ft.Scale(scale_x=0.88, scale_y=0.88)),
+                ft.Stack(
+                    alignment=ft.Alignment.CENTER,
+                    controls=[
+                        ft.Image("gacha_spin1.png",scale=ft.Scale(scale_x=0.88, scale_y=0.88), visible=True),
+                        ft.Image("gacha_spin2.png",scale=ft.Scale(scale_x=0.88, scale_y=0.88), visible=True),
+                        ft.Image("gacha_spin3.png",scale=ft.Scale(scale_x=0.88, scale_y=0.88), visible=True),
+                        ft.Image("gacha_spin4.png",scale=ft.Scale(scale_x=0.88, scale_y=0.88), visible=True),
+                        ft.Image("gacha_spin5.png",scale=ft.Scale(scale_x=0.88, scale_y=0.88), visible=True),
+                    ]
+                ),
                 ft.Column(
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER, 
                     alignment=ft.MainAxisAlignment.CENTER, spacing=12,
                     controls=[
+                        ft.Container(width=20, height=585),
                         gacha_overlay_counter,
                         gacha_overlay_progress,
-                        ft.Container(width=20, height=235),
                     ],
                 ),
             ],

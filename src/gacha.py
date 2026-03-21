@@ -122,6 +122,13 @@ class Gacha:
             for idx, c in enumerate(grid_controls):
                 c.content = make_thumb_content(idx, idx == selected_index)
             self.dialog.update()
+        # ガチャ回してる時のイメージ切り替え
+        def image_slide(col, idx):
+            for cnt in range(5):
+                if cnt==idx:
+                    col.controls[0].controls[cnt].visible = True
+                else:
+                    col.controls[0].controls[cnt].visible = False
         ####################
         # 処理開始
         ####################
@@ -132,8 +139,8 @@ class Gacha:
         try:
             col = self.loading_overlay.content
             if hasattr(col, 'controls') and len(col.controls) >= 2:
-                col.controls[1].controls[0].value = f"ガチャを回しています... 0/{num}"
-                col.controls[1].controls[1].value = 0
+                col.controls[1].controls[1].value = f"ガチャを回しています... 0/{num}"
+                col.controls[1].controls[2].value = 0
         except Exception:
             pass
         self.page.update()
@@ -299,11 +306,12 @@ class Gacha:
                     try:
                         col = self.loading_overlay.content
                         if hasattr(col, 'controls') and len(col.controls) >= 2:
-                            col.controls[1].controls[0].value = f"ガチャを回しています... {count}/{num}"
+                            image_slide(col, count%5)
+                            col.controls[1].controls[1].value = f"ガチャを回しています... {count}/{num}"
                             # progress value between 0..1
-                            col.controls[1].controls[1].value = count / float(num)
-                            col.controls[1].controls[0].update()
+                            col.controls[1].controls[2].value = count / float(num)
                             col.controls[1].controls[1].update()
+                            col.controls[1].controls[2].update()
                     except Exception:
                         pass
                     self.page.update()
@@ -362,8 +370,17 @@ class Gacha:
             alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             controls=[
-               ft.Text("ガチャを回す",size=36),
-               ft.IconButton(icon=ft.Icons.TOKEN, icon_size=100, on_click=lambda: asyncio.create_task(self.draw(10))),
+                ft.Text("ガチャを回す",size=36),
+                ft.Container(
+                    width=200,
+                    height=420,
+                    bgcolor=ft.Colors.ON_SECONDARY ,
+                    content=ft.Image(
+                        src="gacha.png",
+                        fit=ft.BoxFit.CONTAIN,
+                    ),
+                    on_click=lambda: asyncio.create_task(self.draw(10))
+                )
             ],
         )
         return gacha_container
