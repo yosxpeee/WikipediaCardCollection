@@ -61,6 +61,18 @@ def get_all_cards():
     conn.close()
     return data
 
+# 指定idのデータ取得
+def get_card_from_id(card_id):
+    conn = sqlite3.connect('cards.db')
+    cursor = conn.cursor()
+    data = []
+    sql = f"""SELECT * FROM gacha_cards WHERE id == {int(card_id)}"""
+    cursor.execute(sql)
+    for item in cursor:
+        data.append(item)
+    conn.close()
+    return data
+
 # お気に入り状態の更新
 def update_favorite(card_id, value):
     conn = sqlite3.connect('cards.db')

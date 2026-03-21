@@ -90,17 +90,19 @@ def calc_status(d_resource, a_resource, rank):
         d_hosei = 5
     #atkリソースに対する補正
     if a_resource > 30000:
-        a_hosei = 2
+        a_hosei = 3
     elif a_resource > 10000:
-        a_hosei = 5
+        a_hosei = 7.5
     elif a_resource > 1000:
-        a_hosei = 10
+        a_hosei = 20
+    elif a_resource > 500:
+        a_hosei = 75
     elif a_resource > 100:
-        a_hosei = 100
+        a_hosei = 150
     elif a_resource > 10:
-        a_hosei = 2000
+        a_hosei = 1500
     else:
-        a_hosei = 5000
+        a_hosei = 4000
     defence  = int((d_resource*d_hosei*def_multi)**0.5*7)
     atk      = int((a_resource*a_hosei*atk_multi)**0.5*7)
     hitPoint = defence+3000

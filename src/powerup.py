@@ -1,7 +1,7 @@
 import flet as ft
 import asyncio
-from utils.db import get_all_cards
-from utils.utils import rankid_to_rank
+from utils.db import get_all_cards, get_card_from_id
+from utils.utils import RANK_TABLE, rankid_to_rank, calc_status
 
 class PowerUp:
     # 初期化
@@ -18,6 +18,19 @@ class PowerUp:
         self.page.update()
         selected_target_id = -1
         selected_sozai_id = -1
+        # 強化シミュレート
+        def simulate_powerup(card_id):
+            #idからパラメータをとってくる
+            data = get_card_from_id(card_id)
+            a_resource = int(data[0][13])
+            d_resource = int(data[0][14])
+            rankid = int(data[0][5])
+            next_rankid = int(data[0][5])+1
+            print(f"#################### {data[0][2]}")
+            for r in RANK_TABLE:
+                if r >= next_rankid:
+                    d,a,h = calc_status(d_resource, a_resource, rankid_to_rank(r, 0))
+                    print(f"{rankid_to_rank(r, 0)} | ATK:{a} DEF:{d} HP:{h}")
         try:
             # DB からカードを非同期で取得（ブロッキング回避）
             try:
@@ -249,11 +262,16 @@ class PowerUp:
                     ft.Column(
                         spacing=0, 
                         controls=[
-                            ft.Row(controls=[ft.Text("対象: "), selected_target_text]), 
+                            ft.Row(controls=[ft.Text("対象: "), selected_target_text]),
                             ft.Row(controls=[ft.Text("素材: "), selected_sozai_text]),
                         ]
                     ),
-                    ft.Container(width=728, height=100, expand=True, content=ft.Button("強化する")),
+                    ft.Container(
+                        width=728, 
+                        height=100, 
+                        expand=True, 
+                        content=ft.Button("強化する", on_click=lambda x:simulate_powerup(selected_target_id))
+                    ),
                 ],
             )
         finally:

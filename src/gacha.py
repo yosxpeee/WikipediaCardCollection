@@ -25,7 +25,7 @@ class Gacha:
         # ランク取得
         async def get_rank_data(t_quote):
             n = 0
-            j = {"result":"not found"}
+            j = {}
             while n <= 5:
                 try:
                     rank_url = f"https://api.wikirank.net/api.php?name={t_quote}&lang=ja"
@@ -33,15 +33,24 @@ class Gacha:
                     break
                 except Exception as e:
                     print("エラー。5秒後にリトライします。")
+                    j = {}
                     time.sleep(5)
                     n+=1
             return j
         # 記事の情報取得
         async def get_info_data(t_quote):
-            info_url = f"https://ja.wikipedia.org/w/api.php?format=json&action=query&titles={t_quote}&prop=info%7Cpageimages%7Cpageprops%7Cpageviews%7Ccategories&inprop=url%7Ctalkid&pithumbsize=600"
-            j = await fetch_json(info_url)
-            if "error" in j:
-                return {}
+            n = 0
+            j = {}
+            while n <= 5:
+                try:
+                    info_url = f"https://ja.wikipedia.org/w/api.php?format=json&action=query&titles={t_quote}&prop=info%7Cpageimages%7Cpageprops%7Cpageviews%7Ccategories&inprop=url%7Ctalkid&pithumbsize=600"
+                    j = await fetch_json(info_url)
+                    break
+                except Exception as e:
+                    print("エラー。5秒後にリトライします。")
+                    j = {}
+                    time.sleep(5)
+                    n+=1
             return j
         # 記事の概要取得
         async def get_summary(t_quote):
