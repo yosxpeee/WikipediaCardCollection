@@ -374,7 +374,7 @@ class Gacha:
                 ft.Container(
                     width=200,
                     height=420,
-                    bgcolor=ft.Colors.ON_SECONDARY ,
+                    bgcolor=ft.Colors.ON_PRIMARY ,
                     content=ft.Image(
                         src="gacha.png",
                         fit=ft.BoxFit.CONTAIN,

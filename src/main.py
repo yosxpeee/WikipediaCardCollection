@@ -70,6 +70,7 @@ async def main(page: ft.Page):
     page.window.visible = True
     page.bgcolor = ft.Colors.ON_PRIMARY
     page.title = "Wikipedia Card Collection"
+    #page.theme_mode = ft.ThemeMode.DARK
     page.update()
     # ガチャ用ローディングオーバーレイ（進捗バー＋カウンタ）
     gacha_overlay_counter = ft.Text("0/0", size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE)

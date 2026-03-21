@@ -589,55 +589,81 @@ class Zukan:
             # 図鑑タブ全体
             zukan_tab = ft.Column(
                 controls=[
-                    ft.Row(
-                        alignment=ft.MainAxisAlignment.CENTER,
-                        controls=[ft.Text(f"Wikipedia 日本語版 取得対象総記事数：{count}")],
-                    ),
-                    ft.Row(
-                        alignment=ft.MainAxisAlignment.CENTER,
-                        spacing=0,
+                    ft.Stack(
                         controls=[
+                            ft.ShaderMask(
+                                content=ft.Container(
+                                    border=ft.Border.all(0),
+                                    width=728,
+                                    height=876,
+                                    alignment=ft.Alignment.CENTER,
+                                    bgcolor=ft.Colors.ON_PRIMARY,
+                                    content=None
+                                ),
+                                blend_mode=ft.BlendMode.SRC_IN,
+                                shader=ft.RadialGradient(
+                                    center=ft.Alignment.CENTER,
+                                    radius=0.5,
+                                    colors=[ft.Colors.ON_PRIMARY, ft.Colors.PRIMARY_CONTAINER, ft.Colors.ON_PRIMARY],
+                                    stops=[0.2, 0.8, 1.0],
+                                    tile_mode=ft.GradientTileMode.REPEATED,
+                                ),
+                            ),
                             ft.Column(
-                                spacing=0,
                                 controls=[
-                                    ft.Row(         #ソート
-                                        spacing=4,
-                                        margin=4,
-                                        controls=[
-                                            dropdown,
-                                            radio_group,
-                                        ],
-                                    ),
-                                    ft.Row(         #ページ送り
-                                        spacing=4,
+                                    ft.Row(
                                         alignment=ft.MainAxisAlignment.CENTER,
-                                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                                        controls=[ft.Text(f"Wikipedia 日本語版 取得対象総記事数：{count}")],
+                                    ),
+                                    ft.Row(
+                                        alignment=ft.MainAxisAlignment.CENTER,
+                                        spacing=0,
                                         controls=[
-                                            ft.IconButton(
-                                                icon=ft.Icons.ARROW_BACK, 
-                                                scale=ft.Scale(scale_x=0.8, scale_y=0.8), 
-                                                on_click=on_prev
+                                            ft.Column(
+                                                spacing=0,
+                                                controls=[
+                                                    ft.Row(         #ソート
+                                                        spacing=4,
+                                                        margin=4,
+                                                        controls=[
+                                                            dropdown,
+                                                            radio_group,
+                                                        ],
+                                                    ),
+                                                    ft.Row(         #ページ送り
+                                                        spacing=4,
+                                                        alignment=ft.MainAxisAlignment.CENTER,
+                                                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                                                        controls=[
+                                                            ft.IconButton(
+                                                                icon=ft.Icons.ARROW_BACK, 
+                                                                scale=ft.Scale(scale_x=0.8, scale_y=0.8), 
+                                                                on_click=on_prev
+                                                            ),
+                                                            page_input,
+                                                            page_info,
+                                                            ft.IconButton(
+                                                                icon=ft.Icons.ARROW_FORWARD, 
+                                                                scale=ft.Scale(scale_x=0.8, scale_y=0.8), 
+                                                                on_click=on_next
+                                                            ),
+                                                            ft.Container(
+                                                                width=20,
+                                                            ),
+                                                        ],
+                                                    ),
+                                                ],
                                             ),
-                                            page_input,
-                                            page_info,
-                                            ft.IconButton(
-                                                icon=ft.Icons.ARROW_FORWARD, 
-                                                scale=ft.Scale(scale_x=0.8, scale_y=0.8), 
-                                                on_click=on_next
-                                            ),
-                                            ft.Container(
-                                                width=20,
-                                            )
+                                            filter_box,             #フィルタ
                                         ],
                                     ),
+                                    search_ui,                      #検索ボックス
+                                    table,                          #図鑑本体
                                 ],
                             ),
-                            filter_box,             #フィルタ
                         ],
                     ),
-                    search_ui,                      #検索ボックス
-                    table,                          #図鑑本体
-                ]
+                ],
             )
         finally:
             # ローディングオーバーレイを非表示（例外が起きても必ず閉じる）
