@@ -17,7 +17,7 @@ def initialize_db():
             rank TEXT NOT NULL,
             quality TEXT NOT NULL,
             isSozai INTEGER NOT NULL,
-            extract REAL NOT NULL,
+            extract TEXT NOT NULL,
             HP TEXT NOT NULL,
             ATK TEXT NOT NULL,
             DEF TEXT NOT NULL,
@@ -84,3 +84,17 @@ def update_favorite(card_id, value):
         pass
     finally:
         conn.close()
+
+def rankup_card(target_id, next_rankid, atk, defence, hp, sozai_id):
+    conn = sqlite3.connect('cards.db')
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            '''UPDATE gacha_cards SET rank = ?, HP= ?, ATK = ?, DEF = ? WHERE id = ?''',
+            (str(next_rankid), str(atk), str(defence), str(hp), int(target_id))
+        )
+        cursor.execute(f"""DELETE FROM gacha_cards WHERE id = {int(sozai_id)}""")
+        conn.commit()
+    except Exception as e:
+        print(e)
+    conn.close()

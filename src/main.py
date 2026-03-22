@@ -141,6 +141,7 @@ async def main(page: ft.Page):
                     content=ft.Text("読み込み中...", size=18),
                     alignment=ft.Alignment.CENTER,
                 )
+                tab_bar_view.update()
                 asyncio.create_task(load_and_set_powerup())
             except Exception:
                 try:

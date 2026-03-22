@@ -1,6 +1,6 @@
 import flet as ft
 import asyncio
-from utils.db import get_all_cards, get_card_from_id
+from utils.db import get_all_cards, get_card_from_id, rankup_card
 from utils.utils import RANK_TABLE, rankid_to_rank, calc_status
 
 class PowerUp:
@@ -9,18 +9,75 @@ class PowerUp:
         self.page = page
         # ローディングオーバーレイの参照を保持(図鑑のものを使いまわし)
         self.loading_overlay = page.overlay[1]
-    def do_powerup(self):
-        print("未実装")
-        pass
-    def popup_powerup_dialog(self, card_id, sozai_id):
-        if card_id == -1:
+    async def do_powerup(self, target_id, next_rankid, atk, defence, hp, sozai_id):
+        # DB を更新
+        rankup_card(target_id, next_rankid, atk, defence, hp, sozai_id)
+        # 完了通知
+        self.page.show_dialog(ft.SnackBar(ft.Text("アップグレード完了"), bgcolor=ft.Colors.LIGHT_GREEN, duration=3000))
+        # 強化タブ自身を再読み込みして差し替える
+        async def _reload_powerup_tab():
+            try:
+                # create() は自身でオーバーレイを表示/非表示するのでそのまま await する
+                content = await self.create()
+                try:
+                    tabs_widget = self.page.controls[0]
+                    tab_bar_view = tabs_widget.content.controls[1]
+                    tab_bar_view.controls[2] = ft.Container(
+                        content=content,
+                        alignment=ft.Alignment.CENTER,
+                    )
+                    tab_bar_view.update()
+                    # タブ切替を元に戻す
+                    try:
+                        tabs_widget.disabled = False
+                        tabs_widget.update()
+                    except Exception:
+                        pass
+                except Exception:
+                    pass
+            except Exception:
+                try:
+                    tabs_widget = self.page.controls[0]
+                    tab_bar_view = tabs_widget.content.controls[1]
+                    tab_bar_view.controls[2] = ft.Column([ft.Text("読み込みに失敗しました。")])
+                    tab_bar_view.update()
+                    try:
+                        tabs_widget.disabled = False
+                        tabs_widget.update()
+                    except Exception:
+                        pass
+                except Exception:
+                    pass
+        # 表示用のプレースホルダを即時反映してから再読み込みを開始する
+        try:
+            tabs_widget = self.page.controls[0]
+            tab_bar_view = tabs_widget.content.controls[1]
+            tab_bar_view.controls[2] = ft.Container(content=ft.Text("読み込み中...", size=18), alignment=ft.Alignment.CENTER)
+            tab_bar_view.update()
+        except Exception:
+            pass
+        # タブ切替を一時無効化
+        try:
+            tabs_widget.disabled = True
+            tabs_widget.update()
+        except Exception:
+            pass
+        # 非同期で再読み込みを実行（UI スレッドをブロックしない）
+        try:
+            asyncio.create_task(_reload_powerup_tab())
+        finally:
+            # タブ切替は再読み込みタスク内で元に戻すためここでは戻さない
+            # （create() の完了後に表示更新される想定）
+            pass
+    def popup_powerup_dialog(self, target_id, sozai_id):
+        if target_id == -1:
             self.page.show_dialog(ft.SnackBar(ft.Text("対象が選択されていません。"),duration=3000))
             return
         if sozai_id == -1:
             self.page.show_dialog(ft.SnackBar(ft.Text("素材が選択されていません。"),duration=3000))
             return
         #idからパラメータをとってくる
-        data = get_card_from_id(card_id)
+        data = get_card_from_id(target_id)
         title = data[0][2]
         a_resource = int(data[0][13])
         d_resource = int(data[0][14])
@@ -29,14 +86,17 @@ class PowerUp:
         # 強化シミュレート
         print(f"#################### {data[0][2]} 強化シミュレート")
         simulate_data = []
+        defence = 0
+        atk     = 0
+        hp      = 0
         for r in RANK_TABLE:
             if r >= next_rankid:
-                d,a,h = calc_status(d_resource, a_resource, rankid_to_rank(r, 0))
-                print(f"{rankid_to_rank(r, 0)} | ATK:{a} DEF:{d} HP:{h}")
+                defence, atk, hp = calc_status(d_resource, a_resource, rankid_to_rank(r, 0))
+                print(f"{rankid_to_rank(r, 0)} | ATK:{atk} DEF:{defence} HP:{hp}")
                 if r == next_rankid:
                     simulate_data.append(
                         ft.Text(
-                            f"{rankid_to_rank(r, 0).ljust(3, " ")} | ATK:{str(a).ljust(5, " ")} DEF:{str(d).ljust(5, " ")} HP:{str(h).ljust(5, " ")}", 
+                            f"{rankid_to_rank(r, 0).ljust(3, " ")} | ATK:{str(atk).ljust(5, " ")} DEF:{str(defence).ljust(5, " ")} HP:{str(hp).ljust(5, " ")}", 
                             font_family="Consolas",
                             color=ft.Colors.RED
                         )
@@ -44,7 +104,7 @@ class PowerUp:
                 else:
                     simulate_data.append(
                         ft.Text(
-                            f"{rankid_to_rank(r, 0).ljust(3, " ")} | ATK:{str(a).ljust(5, " ")} DEF:{str(d).ljust(5, " ")} HP:{str(h).ljust(5, " ")}",
+                            f"{rankid_to_rank(r, 0).ljust(3, " ")} | ATK:{str(atk).ljust(5, " ")} DEF:{str(defence).ljust(5, " ")} HP:{str(hp).ljust(5, " ")}",
                             font_family="Consolas",
                         )
                     )
@@ -54,7 +114,16 @@ class PowerUp:
         )
         # ダイアログ作成
         self.cancel_button = ft.TextButton("Cancel", on_click=lambda e: self.page.pop_dialog())
-        self.OK_button = ft.TextButton("OK", on_click=lambda e: {self.page.pop_dialog(), self.do_powerup()})
+        def _on_ok(e, tid=target_id, nr=next_rankid, a=atk, d=defence, h=hp, sid=sozai_id):
+            try:
+                self.page.pop_dialog()
+            except Exception:
+                pass
+            try:
+                asyncio.create_task(self.do_powerup(tid, nr, a, d, h, sid))
+            except Exception:
+                pass
+        self.OK_button = ft.TextButton("OK", on_click=_on_ok)
         powerup_dialog = ft.AlertDialog(
             modal=True,
             title=ft.Text("カード強化"),
@@ -137,14 +206,15 @@ class PowerUp:
                                     ft.Text(str(hp).ljust(5, " "), font_family="Consolas"),
                                     ft.Text(str(atk).ljust(5, " "), font_family="Consolas"),
                                     ft.Text(str(deff).ljust(5, " "), font_family="Consolas"),
+                                    ft.Text(rk, disabled=True)
                                 ],
                             ),
                         )
-                        def _on_target_click(e, cid=cid, name=name, cont=cont):
+                        def _on_target_click(e, cid=cid, name=name, rk=rk, cont=cont):
                             nonlocal selected_target_id
                             selected_target_id = cid
                             try:
-                                selected_target_text.value = f"{cid} [{row_rank}] {name}"
+                                selected_target_text.value = f"{cid} [{rk}] {name}"
                                 selected_target_text.update()
                             except Exception:
                                 pass
