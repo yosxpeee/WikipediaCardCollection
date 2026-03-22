@@ -160,6 +160,9 @@ class Gacha:
         count = 0
         get_card_list = []
         force_stopped = False
+        # Note:
+        # 10枚記事をとってきて、途中の処理でエラーになったらスキップ
+        # 足りない分だけまた記事を取得、それを繰り替えして10枚引いたら終わる
         while True:
             if count >= num:
                 break
@@ -179,7 +182,7 @@ class Gacha:
             #    randList = [{"id":"1855047", "title":"新宿駅"}] #UR
             #    randList = [{"id":"228773",  "title":"ディープインパクト (競走馬)"}] #LR
             #else:
-            randList = await get_random(1)
+            randList = await get_random(10-count)
             #randList = []
             if randList == []:
                 force_stopped = True

@@ -9,6 +9,74 @@ class PowerUp:
         self.page = page
         # ローディングオーバーレイの参照を保持(図鑑のものを使いまわし)
         self.loading_overlay = page.overlay[1]
+    def do_powerup(self):
+        print("未実装")
+        pass
+    def popup_powerup_dialog(self, card_id, sozai_id):
+        if card_id == -1:
+            self.page.show_dialog(ft.SnackBar(ft.Text("対象が選択されていません。"),duration=3000))
+            return
+        if sozai_id == -1:
+            self.page.show_dialog(ft.SnackBar(ft.Text("素材が選択されていません。"),duration=3000))
+            return
+        #idからパラメータをとってくる
+        data = get_card_from_id(card_id)
+        title = data[0][2]
+        a_resource = int(data[0][13])
+        d_resource = int(data[0][14])
+        rankid = int(data[0][5])
+        next_rankid = int(data[0][5])+1
+        # 強化シミュレート
+        print(f"#################### {data[0][2]} 強化シミュレート")
+        simulate_data = []
+        for r in RANK_TABLE:
+            if r >= next_rankid:
+                d,a,h = calc_status(d_resource, a_resource, rankid_to_rank(r, 0))
+                print(f"{rankid_to_rank(r, 0)} | ATK:{a} DEF:{d} HP:{h}")
+                if r == next_rankid:
+                    simulate_data.append(
+                        ft.Text(
+                            f"{rankid_to_rank(r, 0).ljust(3, " ")} | ATK:{str(a).ljust(5, " ")} DEF:{str(d).ljust(5, " ")} HP:{str(h).ljust(5, " ")}", 
+                            font_family="Consolas",
+                            color=ft.Colors.RED
+                        )
+                    )
+                else:
+                    simulate_data.append(
+                        ft.Text(
+                            f"{rankid_to_rank(r, 0).ljust(3, " ")} | ATK:{str(a).ljust(5, " ")} DEF:{str(d).ljust(5, " ")} HP:{str(h).ljust(5, " ")}",
+                            font_family="Consolas",
+                        )
+                    )
+        simulate = ft.Column(
+            controls=simulate_data,
+            spacing=0
+        )
+        # ダイアログ作成
+        self.cancel_button = ft.TextButton("Cancel", on_click=lambda e: self.page.pop_dialog())
+        self.OK_button = ft.TextButton("OK", on_click=lambda e: {self.page.pop_dialog(), self.do_powerup()})
+        powerup_dialog = ft.AlertDialog(
+            modal=True,
+            title=ft.Text("カード強化"),
+            content=ft.Column(
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                tight=True,
+                expand=True,
+                spacing=0,
+                controls=[
+                    ft.Text(f"対象: {title}",no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
+                    ft.Divider(height=1),
+                    simulate,
+                    ft.Divider(height=1),
+                    ft.Container(width=20, height=20),
+                    ft.Text(f"現在の{rankid_to_rank(rankid, 0)}ランクから{rankid_to_rank(next_rankid, 0)}への強化を行いますか？")
+                ],
+            ),
+            actions=[self.cancel_button, self.OK_button],
+            actions_alignment=ft.MainAxisAlignment.END,
+            title_padding=ft.Padding.all(10),
+        )
+        self.page.show_dialog(powerup_dialog)
     async def create(self):
         ####################
         # 処理開始
@@ -18,19 +86,7 @@ class PowerUp:
         self.page.update()
         selected_target_id = -1
         selected_sozai_id = -1
-        # 強化シミュレート
-        def simulate_powerup(card_id):
-            #idからパラメータをとってくる
-            data = get_card_from_id(card_id)
-            a_resource = int(data[0][13])
-            d_resource = int(data[0][14])
-            rankid = int(data[0][5])
-            next_rankid = int(data[0][5])+1
-            print(f"#################### {data[0][2]}")
-            for r in RANK_TABLE:
-                if r >= next_rankid:
-                    d,a,h = calc_status(d_resource, a_resource, rankid_to_rank(r, 0))
-                    print(f"{rankid_to_rank(r, 0)} | ATK:{a} DEF:{d} HP:{h}")
+
         try:
             # DB からカードを非同期で取得（ブロッキング回避）
             try:
@@ -39,8 +95,8 @@ class PowerUp:
                 all_cards = []
             ranks = ["UR", "SSR", "SR", "R", "UC", "C"]
             # 選択中のIDを保持する変数
-            selected_target_id = None
-            selected_sozai_id = None
+            #selected_target_id = None
+            #selected_sozai_id = None
             # 表示用テキスト
             selected_target_text = ft.Text("",no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS, bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.GREY_500))
             selected_sozai_text = ft.Text("",no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS, bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.ORANGE))
@@ -270,7 +326,7 @@ class PowerUp:
                         width=728, 
                         height=100, 
                         expand=True, 
-                        content=ft.Button("強化する", on_click=lambda x:simulate_powerup(selected_target_id))
+                        content=ft.Button("強化する", on_click=lambda x:self.popup_powerup_dialog(selected_target_id, selected_sozai_id))
                     ),
                 ],
             )
