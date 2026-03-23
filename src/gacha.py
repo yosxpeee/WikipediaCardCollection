@@ -1,10 +1,9 @@
 import flet as ft
 import urllib.parse
 import asyncio
-import time
 
-from utils.utils import fetch_json, calc_status
-from utils.db import save_cards
+from utils.utils import fetch_json, calc_status, rankid_to_rank
+from utils.db import save_cards, get_card_from_pageid
 from utils.ui import get_card_color, create_card_image
 
 class Gacha:
@@ -160,7 +159,6 @@ class Gacha:
         count = 0
         get_card_list = []
         force_stopped = False
-        # Note:
         # 10枚記事をとってきて、途中の処理でエラーになったらスキップ
         # 足りない分だけまた記事を取得、それを繰り替えして10枚引いたら終わる
         while True:
@@ -180,75 +178,99 @@ class Gacha:
             #    randList = [{"id":"1492869", "title":"キンシャサノキセキ"}] #SSR
             #    randList = [{"id":"1855047", "title":"新宿駅"}] #UR
             #    randList = [{"id":"228773",  "title":"ディープインパクト (競走馬)"}] #LR
-            randList = await get_random(10-count)
+            #    randList = [{"id":"68326",   "title":"平宗盛"}]
+            #else:
+            #    randList = await get_random(10-count)
             #randList = []
+            randList = await get_random(10-count)
             if randList == []:
                 force_stopped = True
                 break
             for r in randList:
                 pageid = r["id"]
                 title = r["title"]
-                #Note：かぶったらAPIコールをせず内部データを使って更新するようにしたい
-                #dup = check_dup(pageid)
-                #if len(dup) == 1:
-                #    #必要なデータをDBから持ってくる(お気に入り以外)
-                #    #ただし、アップグレードしている可能性があるため、ランクは元のやつ(resourceRANK)を使う
-                #else:  
-                t_quote = urllib.parse.quote(title)
-                rank_data = await get_rank_data(t_quote) #Rank
-                info_data = await get_info_data(t_quote) #info
-                if info_data == {}:
-                    print("記事情報取得失敗。リトライ")
-                    break
-                extract  = await get_summary(t_quote) #概要
-                if extract == "ERROR":
-                    print("記事概要取得失敗。リトライ")
-                    break
-                if rank_data == {} :
-                    #評価されていない場合はCとみなす
-                    q = 0
-                    rank = "C"
-                else:
-                    try:
-                        q = float(rank_data["result"]["ja"]["quality"])
-                    except Exception:
-                        print("ランクデータ読取失敗。リトライ")
-                        break
-                    if q == 100:
-                        rank = "LR"
-                    elif q >= 90:
-                        rank = "UR"
-                    elif q >= 80:
-                        rank = "SSR"
-                    elif q >= 60:
-                        rank = "SR"
-                    elif q >= 35:
-                        rank = "R"
-                    elif q >= 20:
-                        rank = "UC"
-                    else:
-                        rank = "C"
-                p_str = str(pageid)
-                # 素材判定
-                isAimai         = any("曖昧さ回避" in category.get("title", "") for category in info_data["query"]["pages"][p_str]["categories"])
-                isSoftRedirect  = any("ソフトリダイレクト" in category.get("title", "") for category in info_data["query"]["pages"][p_str]["categories"])
-                if isAimai or isSoftRedirect:
-                    isSozai = 1
-                else:
-                    isSozai = 0
-                try:
-                    # リソース取得
-                    d_resource = info_data["query"]["pages"][p_str]["length"]
-                    a_resource = 0
-                    for dayView in info_data["query"]["pages"][p_str]["pageviews"]:
-                        if info_data["query"]["pages"][p_str]["pageviews"][dayView] != None:
-                            a_resource = a_resource + info_data["query"]["pages"][p_str]["pageviews"][dayView]
+                #すでに取得済みかどうかpageidで検索
+                data_from_pageid = get_card_from_pageid(pageid)
+                if len(data_from_pageid) >= 1:
+                    #かぶったらAPIコールをせず内部データを使って更新する
+                    full_url = data_from_pageid[0][3]
+                    image_url = data_from_pageid[0][4]
+                    #既存のデータは強化済みの可能性があるので元ランクのデータを使う
+                    rank = rankid_to_rank(data_from_pageid[0][15], data_from_pageid[0][7])
+                    quality = data_from_pageid[0][6]
+                    isSozai = data_from_pageid[0][7]
+                    extract = data_from_pageid[0][8]
+                    hitPoint = int(data_from_pageid[0][9])
+                    atk = int(data_from_pageid[0][10])
+                    defence = int(data_from_pageid[0][11])
+                    #favorite = data_from_pageid[0][12]
+                    a_resource = int(data_from_pageid[0][13])
+                    d_resource = int(data_from_pageid[0][14])
+                    #r_resource = rankid_to_rank(data_from_pageid[0][15], data_from_pageid[0][7])
                     query = True
-                except:
-                    #最新すぎる記事は情報取得できないケースがある。
-                    #その場合は以降の処理をすべて行わず、引いた数もカウントアップしない。
-                    print("クエリ取得できない記事。リトライします。")
-                    query = False
+                else:
+                    #かぶってない場合は通常処理(APIコールしてデータ取得)
+                    t_quote = urllib.parse.quote(title)
+                    rank_data = await get_rank_data(t_quote) #Rank
+                    info_data = await get_info_data(t_quote) #info
+                    if info_data == {}:
+                        print("記事情報取得失敗。リトライ")
+                        break
+                    extract  = await get_summary(t_quote) #概要
+                    if extract == "ERROR":
+                        print("記事概要取得失敗。リトライ")
+                        break
+                    if rank_data == {} :
+                        #評価されていない場合はCとみなす
+                        quality = 0
+                        rank = "C"
+                    else:
+                        try:
+                            quality = float(rank_data["result"]["ja"]["quality"])
+                        except Exception:
+                            print("ランクデータ読取失敗。リトライ")
+                            break
+                        if quality == 100:
+                            rank = "LR"
+                        elif quality >= 90:
+                            rank = "UR"
+                        elif quality >= 80:
+                            rank = "SSR"
+                        elif quality >= 60:
+                            rank = "SR"
+                        elif quality >= 35:
+                            rank = "R"
+                        elif quality >= 20:
+                            rank = "UC"
+                        else:
+                            rank = "C"
+                    p_str = str(pageid)
+                    # 素材判定
+                    isAimai         = any("曖昧さ回避" in category.get("title", "") for category in info_data["query"]["pages"][p_str]["categories"])
+                    isSoftRedirect  = any("ソフトリダイレクト" in category.get("title", "") for category in info_data["query"]["pages"][p_str]["categories"])
+                    if isAimai or isSoftRedirect:
+                        isSozai = 1
+                    else:
+                        isSozai = 0
+                    try:
+                        # リソース取得
+                        d_resource = info_data["query"]["pages"][p_str]["length"]
+                        a_resource = 0
+                        for dayView in info_data["query"]["pages"][p_str]["pageviews"]:
+                            if info_data["query"]["pages"][p_str]["pageviews"][dayView] != None:
+                                a_resource = a_resource + info_data["query"]["pages"][p_str]["pageviews"][dayView]
+                        # URL関連取得
+                        if "thumbnail" in info_data["query"]["pages"][p_str]:
+                            image_url = info_data["query"]["pages"][p_str]["thumbnail"]["source"]
+                        else:
+                            image_url = ""
+                        full_url = info_data["query"]["pages"][p_str]["fullurl"]
+                        query = True
+                    except:
+                        #最新すぎる記事は情報取得できないケースがある。
+                        #その場合は以降の処理をすべて行わず、引いた数もカウントアップしない。
+                        print("クエリ取得できない記事。リトライします。")
+                        query = False
                 if query:
                     if isSozai == 0:
                         defence, atk, hitPoint = calc_status(d_resource, a_resource, rank)
@@ -256,17 +278,12 @@ class Gacha:
                         defence = -1
                         atk = -1
                         hitPoint = -1
-                    if "thumbnail" in info_data["query"]["pages"][p_str]:
-                        image_url = info_data["query"]["pages"][p_str]["thumbnail"]["source"]
-                    else:
-                        image_url = ""
-                    full_url = info_data["query"]["pages"][p_str]["fullurl"]
                     # ↓デバッグ用にしばらく残す
                     print("#########################################################")
                     if isSozai == 1:
-                        print(f"{pageid}: {title} [{rank}] ({q}) (素材)")
+                        print(f"{pageid}: {title} [{rank}] ({quality}) (素材)")
                     else:
-                        print(f"{pageid}: {title} [{rank}] ({q})")
+                        print(f"{pageid}: {title} [{rank}] ({quality})")
                     print(f"Page URL: {full_url}")
                     if extract == "":
                         print("概要: なし")
@@ -284,15 +301,16 @@ class Gacha:
                         "pageUrl": full_url,
                         "imageUrl": image_url,
                         "rank": rank,
-                        "quality": q,
+                        "quality": quality,
                         "isSozai": isSozai,
                         "extract": extract,
                         "HP": hitPoint,
                         "ATK": atk,
                         "DEF": defence,
+                        "favorite": 0, #引いた直後なので必ず0
                         "resourceATK": a_resource,
                         "resourceDEF": d_resource,
-                        "resourceRANK": rank,
+                        "resourceRANK": rank, #引いた直後なので必ず現在のランク＝元のランク
                     })
                     count = count + 1
                     # 更新：プログレスとカウンタ

@@ -198,6 +198,8 @@ class PowerUp:
         d_resource = int(data[0][14])
         rankid = int(data[0][5])
         next_rankid = int(data[0][5])+1
+        sozai_data = get_card_from_id(sozai_id)
+        sozai_title = sozai_data[0][2]
         # 強化シミュレート
         print(f"#################### {data[0][2]} 強化シミュレート")
         simulate_data = []
@@ -248,11 +250,12 @@ class PowerUp:
                 expand=True,
                 spacing=0,
                 controls=[
-                    ft.Text(f"対象: {title}",no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
+                    ft.Text(f"強化対象: {title}",no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
+                    ft.Text(f"使用素材: {sozai_title}",no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
                     ft.Divider(height=1),
                     simulate,
                     ft.Divider(height=1),
-                    ft.Container(width=20, height=20),
+                    ft.Container(width=20, height=10),
                     ft.Text(f"現在の{rankid_to_rank(rankid, 0)}ランクから{rankid_to_rank(next_rankid, 0)}への強化を行いますか？")
                 ],
             ),
