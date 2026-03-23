@@ -15,37 +15,28 @@ class PowerUp:
         # 強化タブ自身を再読み込みして差し替える
         async def _reload_powerup_tab():
             try:
+                # タブを一時的に無効化する
+                tabs_widget = self.page.controls[0]
+                tabs_widget.disabled = True
+                tabs_widget.update()
                 # create() は自身でオーバーレイを表示/非表示するのでそのまま await する
                 content = await self.create()
-                try:
-                    tabs_widget = self.page.controls[0]
-                    tab_bar_view = tabs_widget.content.controls[1]
-                    tab_bar_view.controls[2] = ft.Container(
-                        content=content,
-                        alignment=ft.Alignment.CENTER,
-                    )
-                    tab_bar_view.update()
-                    # タブ切替を元に戻す
-                    try:
-                        tabs_widget.disabled = False
-                        tabs_widget.update()
-                    except Exception:
-                        pass
-                except Exception:
-                    pass
+                tab_bar_view = tabs_widget.content.controls[1]
+                tab_bar_view.controls[2] = ft.Container(
+                    content=content,
+                    alignment=ft.Alignment.CENTER,
+                )
+                tab_bar_view.update()
+                # タブを再有効化する
+                tabs_widget.disabled = False
+                tabs_widget.update()
             except Exception:
-                try:
-                    tabs_widget = self.page.controls[0]
-                    tab_bar_view = tabs_widget.content.controls[1]
-                    tab_bar_view.controls[2] = ft.Column([ft.Text("読み込みに失敗しました。")])
-                    tab_bar_view.update()
-                    try:
-                        tabs_widget.disabled = False
-                        tabs_widget.update()
-                    except Exception:
-                        pass
-                except Exception:
-                    pass
+                tabs_widget = self.page.controls[0]
+                tab_bar_view = tabs_widget.content.controls[1]
+                tab_bar_view.controls[2] = ft.Column([ft.Text("読み込みに失敗しました。")])
+                tab_bar_view.update()
+                tabs_widget.disabled = False
+                tabs_widget.update()
         # 強化演出
         async def _powerup_effect():
             powerup_overlay = ft.Stack(
@@ -75,7 +66,7 @@ class PowerUp:
                                     ),
                         animate_position=ft.Animation(1000, ft.AnimationCurve.EASE_IN_OUT_CUBIC_EMPHASIZED)
                     ),
-                    # カード素材
+                    # カード(素材)
                     ft.Container(
                         width=120,
                         height=140,
@@ -96,34 +87,29 @@ class PowerUp:
                     ),
                 ]
             )
-            #今作ったものに差し替える
+            # 今作ったものに差し替える
             self.page.overlay[2] = powerup_overlay
-            #オーバーレイの切り替え
+            # オーバーレイの切り替え
             self.loading_overlay = self.page.overlay[2]
             self.page.update()
             await asyncio.sleep(0.1)
-            #アニメーション
+            # アニメーション
             powerup_overlay.controls[1].top = 512-60
             powerup_overlay.controls[1].left = 384-80
             powerup_overlay.controls[2].top = 512-60
             powerup_overlay.controls[2].left = 384-80
             self.page.update()
-            await asyncio.sleep(1) #アニメーションと同じ時間待機する
-        # タブ切替を一時無効化
-        try:
-            tabs_widget.disabled = True
-            tabs_widget.update()
-        except Exception:
-            pass
+            # アニメーションと同じ時間待機する
+            await asyncio.sleep(1)
         # 強化演出を行う
         await _powerup_effect()
-        # DB を更新
+        # DBを更新
         rankup_card(target_id, next_rankid, atk, defence, hp, sozai_id)
+        # オーバーレイを解いてローディングのものに戻しておく
         self.loading_overlay.visible = False
-        # オーバーレイをローディングのものに戻す
         self.loading_overlay = self.page.overlay[1]
         self.page.update()
-        # 完了通知POP
+        # 完了通知POP(完了後のカードイメージを出力する)
         row_data = get_card_from_id(target_id)
         rank = rankid_to_rank(row_data[0][5], 0)
         rank_origin = rankid_to_rank(row_data[0][15], 0)
@@ -146,7 +132,6 @@ class PowerUp:
             "resourceRANK": rank_origin,
         }
         self.close_button = ft.TextButton("Close", on_click=lambda e: self.page.pop_dialog())
-        # 完了後のカードイメージを出力する
         complete_dialog = ft.AlertDialog(
             modal=True,
             title=ft.Text("強化完了"),
@@ -169,29 +154,29 @@ class PowerUp:
         )
         self.page.show_dialog(complete_dialog)
         # カードイメージ出力の裏で強化画面の再読み込みを開始する
-        try:
-            tabs_widget = self.page.controls[0]
-            tab_bar_view = tabs_widget.content.controls[1]
-            tab_bar_view.controls[2] = ft.Container(content=ft.Text("読み込み中...", size=18), alignment=ft.Alignment.CENTER)
-            tab_bar_view.update()
-        except Exception:
-            pass
+        tabs_widget = self.page.controls[0]
+        tab_bar_view = tabs_widget.content.controls[1]
+        tab_bar_view.controls[2] = ft.Container(content=ft.Text("読み込み中...", size=18), alignment=ft.Alignment.CENTER)
+        tab_bar_view.update()
         # 非同期で再読み込みを実行（UI スレッドをブロックしない）
-        try:
-            asyncio.create_task(_reload_powerup_tab())
-        finally:
-            # タブ切替は再読み込みタスク内で元に戻すためここでは戻さない
-            # （create() の完了後に表示更新される想定）
-            pass
+        asyncio.create_task(_reload_powerup_tab())
+        # Note:
+        # タブ切替は再読み込みタスク内で元に戻すためここでは戻さない
+        # （create() の完了後に表示更新される想定）
     # 強化の確認画面表示
     def popup_powerup_dialog(self, target_id, sozai_id):
+        # ダイアログのOKボタンイベント
+        def _on_ok(e, tid=target_id, nr=next_rankid, a=atk, d=defence, h=hp, sid=sozai_id):
+            self.page.pop_dialog()
+            asyncio.create_task(self.do_powerup(tid, nr, a, d, h, sid))
+        # 状態チェック
         if target_id == -1:
             self.page.show_dialog(ft.SnackBar(ft.Text("対象が選択されていません。"), duration=1500))
             return
         if sozai_id == -1:
             self.page.show_dialog(ft.SnackBar(ft.Text("素材が選択されていません。"), duration=1500))
             return
-        #idからパラメータをとってくる
+        # idからパラメータをとってくる
         data = get_card_from_id(target_id)
         title = data[0][2]
         a_resource = int(data[0][13])
@@ -231,15 +216,6 @@ class PowerUp:
         )
         # ダイアログ作成
         self.cancel_button = ft.TextButton("Cancel", on_click=lambda e: self.page.pop_dialog())
-        def _on_ok(e, tid=target_id, nr=next_rankid, a=atk, d=defence, h=hp, sid=sozai_id):
-            try:
-                self.page.pop_dialog()
-            except Exception:
-                pass
-            try:
-                asyncio.create_task(self.do_powerup(tid, nr, a, d, h, sid))
-            except Exception:
-                pass
         self.OK_button = ft.TextButton("OK", on_click=_on_ok)
         powerup_dialog = ft.AlertDialog(
             modal=True,
@@ -276,10 +252,7 @@ class PowerUp:
         selected_sozai_id = -1
         try:
             # DB からカードを非同期で取得（ブロッキング回避）
-            try:
-                all_cards = await asyncio.to_thread(get_all_cards)
-            except Exception:
-                all_cards = []
+            all_cards = await asyncio.to_thread(get_all_cards)
             ranks = ["UR", "SSR", "SR", "R", "UC", "C"]
             # 表示用テキスト
             selected_target_text = ft.Text("",no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS, bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.GREY_500))
@@ -298,10 +271,7 @@ class PowerUp:
                 )
                 for row in all_cards:
                     # row: (id, pageId, title, pageUrl, imageUrl, rank, quality, isSozai, extract, HP, ATK, DEF, ...)
-                    try:
-                        row_rank = rankid_to_rank(row[5], row[7])
-                    except Exception:
-                        row_rank = ""
+                    row_rank = rankid_to_rank(row[5], row[7])
                     if row_rank == rk and int(row[7]) == 0:
                         cid = row[0]
                         name = row[2] or ""
@@ -327,23 +297,14 @@ class PowerUp:
                         def _on_target_click(e, cid=cid, name=name, rk=rk, cont=cont):
                             nonlocal selected_target_id
                             selected_target_id = cid
-                            try:
-                                selected_target_text.value = f"{cid} [{rk}] {name}"
-                                selected_target_text.update()
-                            except Exception:
-                                pass
+                            selected_target_text.value = f"{cid} [{rk}] {name}"
+                            selected_target_text.update()
                             # ハイライト更新
                             for c in target_containers:
-                                try:
-                                    c.bgcolor = None
-                                    c.update()
-                                except Exception:
-                                    pass
-                            try:
-                                cont.bgcolor = ft.Colors.YELLOW_100
-                                cont.update()
-                            except Exception:
-                                pass
+                                c.bgcolor = None
+                                c.update()
+                            cont.bgcolor = ft.Colors.YELLOW_100
+                            cont.update()
                         cont.on_click = _on_target_click
                         lv.controls.append(cont)
                         target_containers.append(cont)
@@ -394,44 +355,32 @@ class PowerUp:
                 controls=[]
             )
             for row in all_cards:
-                try:
-                    if int(row[7]) == 1:
-                        cid = row[0]
-                        name = row[2] or ""
-                        cont = ft.Container(
-                            padding=ft.Padding(top=0, left=6, right=6, bottom=0),
-                            bgcolor=None,
-                            content=ft.Row(
-                                controls=[
-                                    ft.Text(str(cid).ljust(8, " "), font_family="Consolas"), 
-                                    ft.Text(name, expand=True, tooltip=name, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS)
-                                ],
-                            ),
-                        )
-                        def _on_sozai_click(e, cid=cid, name=name, cont=cont):
-                            nonlocal selected_sozai_id
-                            selected_sozai_id = cid
-                            try:
-                                selected_sozai_text.value = f"{cid} : {name}"
-                                selected_sozai_text.update()
-                            except Exception:
-                                pass
-                            for c in sozai_containers:
-                                try:
-                                    c.bgcolor = None
-                                    c.update()
-                                except Exception:
-                                    pass
-                            try:
-                                cont.bgcolor = ft.Colors.YELLOW_100
-                                cont.update()
-                            except Exception:
-                                pass
-                        cont.on_click = _on_sozai_click
-                        sozai_lv.controls.append(cont)
-                        sozai_containers.append(cont)
-                except Exception:
-                    pass
+                if int(row[7]) == 1:
+                    cid = row[0]
+                    name = row[2] or ""
+                    cont = ft.Container(
+                        padding=ft.Padding(top=0, left=6, right=6, bottom=0),
+                        bgcolor=None,
+                        content=ft.Row(
+                            controls=[
+                                ft.Text(str(cid).ljust(8, " "), font_family="Consolas"), 
+                                ft.Text(name, expand=True, tooltip=name, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS)
+                            ],
+                        ),
+                    )
+                    def _on_sozai_click(e, cid=cid, name=name, cont=cont):
+                        nonlocal selected_sozai_id
+                        selected_sozai_id = cid
+                        selected_sozai_text.value = f"{cid} : {name}"
+                        selected_sozai_text.update()
+                        for c in sozai_containers:
+                            c.bgcolor = None
+                            c.update()
+                        cont.bgcolor = ft.Colors.YELLOW_100
+                        cont.update()
+                    cont.on_click = _on_sozai_click
+                    sozai_lv.controls.append(cont)
+                    sozai_containers.append(cont)
             # 素材一覧が空ならプレースホルダを表示
             if len(sozai_lv.controls) == 0:
                 sozai_lv.controls.append(ft.Container(padding=ft.Padding.all(8), content=ft.Text("素材が見つかりません")))
