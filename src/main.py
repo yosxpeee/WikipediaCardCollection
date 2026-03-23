@@ -8,10 +8,9 @@ from powerup import PowerUp
 from utils.db import initialize_db
 
 async def main(page: ft.Page):
-    # 前回選択したタブ(index)を保持
-    last_tab_index = 0
     # event: タブ切り替え
     def _change_tabs(e):
+        # 図鑑タブのロード
         async def __load_and_set_zukan():
             try:
                 content = await zukan.create()
@@ -25,19 +24,13 @@ async def main(page: ft.Page):
                     ft.Text("読み込みに失敗しました。"),
                     ft.Text(str(ex)),
                 ])
-                tab_bar_view.update()
-            finally:
-                try:
-                    tabs_widget.disabled = False
-                    tabs_widget.update()
-                except Exception:
-                    pass
-                try:
-                    ov = page.overlay[1]
-                    ov.visible = False
-                    page.update()
-                except Exception:
-                    pass
+            tab_bar_view.update()
+            tabs_widget.disabled = False
+            tabs_widget.update()
+            ov = page.overlay[1]
+            ov.visible = False
+            page.update()
+        # 強化タブのロード
         async def __load_and_set_powerup():
             try:
                 content = await powerup.create()
@@ -51,18 +44,11 @@ async def main(page: ft.Page):
                     ft.Text("読み込みに失敗しました。"),
                 ])
                 tab_bar_view.update()
-            finally:
-                try:
-                    tabs_widget.disabled = False
-                    tabs_widget.update()
-                except Exception:
-                    pass
-                try:
-                    if overlay is not None:
-                        overlay.visible = False
-                        page.update()
-                except Exception:
-                    pass
+            tabs_widget.disabled = False
+            tabs_widget.update()
+            ov = page.overlay[1]
+            ov.visible = False
+            page.update()
         # コントロール取得
         nonlocal last_tab_index
         tabs_widget = e.control
@@ -88,18 +74,12 @@ async def main(page: ft.Page):
             except Exception:
                 pass
             # オーバーレイを即表示して画面操作をブロック
-            try:
-                ov = page.overlay[1]
-                ov.visible = True
-                page.update()
-            except Exception:
-                ov = None
+            ov = page.overlay[1]
+            ov.visible = True
+            page.update()
             # 読み込み中はタブ切替を禁止
-            try:
-                tabs_widget.disabled = True
-                tabs_widget.update()
-            except Exception:
-                pass
+            tabs_widget.disabled = True
+            tabs_widget.update()
             # 図鑑タブの内容を非同期で読み込む
             try:
                 zukan = Zukan(page)
@@ -110,11 +90,8 @@ async def main(page: ft.Page):
                 tab_bar_view.update()
                 asyncio.create_task(__load_and_set_zukan())
             except:
-                try:
-                    tabs_widget.disabled = False
-                    tabs_widget.update()
-                except Exception:
-                    pass
+                tabs_widget.disabled = False
+                tabs_widget.update()
         # 強化タブに切り替えたとき
         if e.control.selected_index == 2:
             # 図鑑の中身をクリアしておく（メモリ節約）
@@ -123,18 +100,12 @@ async def main(page: ft.Page):
             except Exception:
                 pass
             # 図鑑と同じオーバーレイを表示して読み込み中にUIを覆う
-            try:
-                overlay = page.overlay[1]
-                overlay.visible = True
-                page.update()
-            except Exception:
-                overlay = None
+            overlay = page.overlay[1]
+            overlay.visible = True
+            page.update()
             # 読み込み中はタブ切替を禁止
-            try:
-                tabs_widget.disabled = True
-                tabs_widget.update()
-            except Exception:
-                pass
+            tabs_widget.disabled = True
+            tabs_widget.update()
             # 非同期で PowerUp.create() を呼んで差し替える
             try:
                 powerup = PowerUp(page)
@@ -145,11 +116,8 @@ async def main(page: ft.Page):
                 tab_bar_view.update()
                 asyncio.create_task(__load_and_set_powerup())
             except Exception:
-                try:
-                    tabs_widget.disabled = False
-                    tabs_widget.update()
-                except Exception:
-                    pass
+                tabs_widget.disabled = False
+                tabs_widget.update()
         # バトルのタブに切り替えたとき
         if e.control.selected_index == 3:
             # 図鑑・強化の中身をクリアしておく（メモリ節約）
