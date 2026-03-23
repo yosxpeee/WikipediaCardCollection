@@ -168,7 +168,7 @@ class PowerUp:
                 if r == next_rankid:
                     simulate_data.append(
                         ft.Text(
-                            f"{rankid_to_rank(r, 0).ljust(3, " ")} | ATK:{str(atk).ljust(5, " ")} DEF:{str(defence).ljust(5, " ")} HP:{str(hp).ljust(5, " ")}", 
+                            f"{rankid_to_rank(r, 0).ljust(3, " ")} | HP:{str(hp).ljust(5, " ")} ATK:{str(atk).ljust(5, " ")} DEF:{str(defence).ljust(5, " ")}", 
                             font_family="Consolas",
                             color=ft.Colors.RED
                         )
@@ -176,7 +176,7 @@ class PowerUp:
                 else:
                     simulate_data.append(
                         ft.Text(
-                            f"{rankid_to_rank(r, 0).ljust(3, " ")} | ATK:{str(atk).ljust(5, " ")} DEF:{str(defence).ljust(5, " ")} HP:{str(hp).ljust(5, " ")}",
+                            f"{rankid_to_rank(r, 0).ljust(3, " ")} | HP:{str(hp).ljust(5, " ")} ATK:{str(atk).ljust(5, " ")} DEF:{str(defence).ljust(5, " ")}",
                             font_family="Consolas",
                         )
                     )
@@ -275,7 +275,6 @@ class PowerUp:
                                     ft.Text(str(hp).ljust(5, " "), font_family="Consolas"),
                                     ft.Text(str(atk).ljust(5, " "), font_family="Consolas"),
                                     ft.Text(str(deff).ljust(5, " "), font_family="Consolas"),
-                                    ft.Text(rk, disabled=True)
                                 ],
                             ),
                         )
@@ -399,7 +398,7 @@ class PowerUp:
                                 content=ft.Container(
                                     border=ft.Border.all(0),
                                     width=728,
-                                    height=776,
+                                    height=784,
                                     alignment=ft.Alignment.CENTER,
                                     bgcolor=ft.Colors.ON_PRIMARY,
                                     content=None,
@@ -409,7 +408,7 @@ class PowerUp:
                             ),
                             ft.Row(
                                 width=728,
-                                height=776,
+                                height=784,
                                 alignment=ft.MainAxisAlignment.CENTER,
                                 vertical_alignment=ft.CrossAxisAlignment.START,
                                 controls=[
@@ -433,7 +432,7 @@ class PowerUp:
                                         content=ft.Column(
                                             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                                             controls=[
-                                                ft.Text(f"素材"),
+                                                ft.Text(f"素材",weight=ft.FontWeight.BOLD),
                                                 ft.Divider(color=ft.Colors.GREY, height=1),
                                                 ft.Container(
                                                     padding=ft.Padding.all(6),
@@ -462,10 +461,13 @@ class PowerUp:
                         ]
                     ),
                     ft.Container(
-                        width=728, 
-                        height=100, 
-                        expand=True, 
-                        content=ft.Button("強化する", on_click=lambda x:self.popup_powerup_dialog(selected_target_id, selected_sozai_id))
+                        width=728,
+                        height=35,
+                        padding=ft.Padding.all(0),
+                        content=ft.Button(
+                            "強化する", 
+                            on_click=lambda x:self.popup_powerup_dialog(selected_target_id, selected_sozai_id)
+                        )
                     ),
                 ],
             )

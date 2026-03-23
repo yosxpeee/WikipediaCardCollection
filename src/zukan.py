@@ -99,6 +99,7 @@ class Zukan:
                 row_data = filtered_data[idx]
                 # ランクを先に計算
                 rank = rankid_to_rank(row_data[5], row_data[7])
+                rank_origin = rankid_to_rank(row_data[15], row_data[7])
                 row_data_for_image = {
                     "id": row_data[0],
                     "pageId": row_data[1],
@@ -113,11 +114,17 @@ class Zukan:
                     "ATK": row_data[10],
                     "DEF": row_data[11],
                     "favorite": row_data[12],
+                    "resourceATK": row_data[13],
+                    "resourceDEF": row_data[14],
+                    "resourceRANK": rank_origin,
                 }
                 num_text = str(row_data[0]).ljust(8, " ")
                 pageid_text = str(row_data[1]).ljust(8, " ")
                 rank_text = str(rank).ljust(4, " ")
-                nameText = row_data[2] if row_data[2] is not None else ""
+                if rank == rank_origin:
+                    nameText = row_data[2] if row_data[2] is not None else ""
+                else:
+                    nameText = "🔨"+row_data[2] if row_data[2] is not None else ""
                 if row_data[9] == "-1":
                     hp_text = "-".ljust(5, " ") if row_data[9] is not None else "".ljust(5, " ")
                 else:

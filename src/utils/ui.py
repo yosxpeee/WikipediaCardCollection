@@ -179,15 +179,17 @@ def create_card_image(data, isShow, on_fav_changed=None):
                     content=ft.Container(
                         width=300,
                         height=300,
-                        bgcolor=ft.Colors.WHITE
+                        bgcolor=ft.Colors.WHITE,
+                        content=ft.Image(
+                            src=data["imageUrl"],
+                            width=300,
+                            height=300,
+                            fit=ft.BoxFit.CONTAIN,
+                        ),
+                        alignment=ft.Alignment.CENTER,
                     )
                 ),
-                ft.Image(
-                    src=data["imageUrl"],
-                    width=300,
-                    height=300,
-                    fit=ft.BoxFit.CONTAIN,
-                ),
+                
             ],
         )
     else:
@@ -208,16 +210,34 @@ def create_card_image(data, isShow, on_fav_changed=None):
     fav_icon = ft.IconButton(
         icon=ft.Icons.STAR if data.get("favorite") == 1 else ft.Icons.STAR_BORDER,
         scale=ft.Scale(scale=0.75),
+        bgcolor=ft.Colors.with_opacity(0.25, ft.Colors.WHITE),
     )
     fav_icon.on_click = _on_fav_click
-    #Note: 強化済みなら左下に強化済みアイコンを表示したい
-    #DBからresourceRANKとrankをとってきて比較する。同じなら未強化。違うなら強化済み。
+    # 強化済みアイコン
+    if data["rank"] != data["resourceRANK"]:
+        uppered = ft.Container(
+            ft.Text("🔨"),
+            margin=5,
+            bgcolor=ft.Colors.with_opacity(0.25, ft.Colors.WHITE),
+            shape=ft.BoxShape.CIRCLE,
+            tooltip=f"強化前のランク: {data["resourceRANK"]}"
+        )
+    else:
+        uppered = ft.Text("")
     image_stack = ft.Stack(
+        width=310,
+        height=310,
+        margin=0,
+        alignment=ft.Alignment.TOP_CENTER,
         controls=[
             image,
             ft.Container(
                 alignment=ft.Alignment.TOP_RIGHT,
                 content=fav_icon,
+            ),
+            ft.Container(
+                alignment=ft.Alignment.BOTTOM_LEFT,
+                content=uppered,
             )
         ]
     )
