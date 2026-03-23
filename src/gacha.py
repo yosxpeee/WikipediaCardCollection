@@ -209,7 +209,11 @@ class Gacha:
                     q = 0
                     rank = "C"
                 else:
-                    q = float(rank_data["result"]["ja"]["quality"])
+                    try:
+                        q = float(rank_data["result"]["ja"]["quality"])
+                    except Exception:
+                        print("ランクデータ読取失敗。リトライ")
+                        break
                     if q == 100:
                         rank = "LR"
                     elif q >= 90:

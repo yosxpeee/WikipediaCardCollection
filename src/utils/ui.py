@@ -228,16 +228,31 @@ def create_card_image(data, isShow, on_fav_changed=None):
         width=310,
         height=310,
         margin=0,
-        alignment=ft.Alignment.TOP_CENTER,
+        alignment=ft.Alignment.CENTER,
         controls=[
             image,
-            ft.Container(
-                alignment=ft.Alignment.TOP_RIGHT,
-                content=fav_icon,
-            ),
-            ft.Container(
-                alignment=ft.Alignment.BOTTOM_LEFT,
-                content=uppered,
+            ft.Column(
+                width=310,
+                height=310,
+                spacing=0,
+                controls=[
+                    ft.Container(
+                        width=310,
+                        height=40,
+                        alignment=ft.Alignment.TOP_RIGHT,
+                        content=fav_icon,
+                    ),
+                    ft.Container(
+                        width=310,
+                        height=240,
+                    ),
+                    ft.Container(
+                        width=310,
+                        height=30,
+                        alignment=ft.Alignment.BOTTOM_LEFT,
+                        content=uppered,
+                    ),
+                ]
             )
         ]
     )

@@ -2,7 +2,7 @@ import flet as ft
 import asyncio
 from utils.db import get_all_cards, get_card_from_id, rankup_card
 from utils.utils import RANK_TABLE, rankid_to_rank, calc_status
-from utils.ui import get_card_color
+from utils.ui import get_card_color, create_card_image
 
 class PowerUp:
     # 初期化
@@ -86,12 +86,12 @@ class PowerUp:
                         bgcolor=ft.Colors.ORANGE,
                         content=ft.Text("✡",size=50, color=ft.Colors.with_opacity(0.5, ft.Colors.BLACK)),
                         shadow=ft.BoxShadow(
-                                        blur_style=ft.BlurStyle.NORMAL,
-                                        spread_radius=1,
-                                        blur_radius=10,
-                                        color=ft.Colors.BLACK_45,
-                                        offset=ft.Offset(0, 0),
-                                    ),
+                            blur_style=ft.BlurStyle.NORMAL,
+                            spread_radius=1,
+                            blur_radius=10,
+                            color=ft.Colors.BLACK_45,
+                            offset=ft.Offset(0, 0),
+                        ),
                         animate_position=ft.Animation(1000, ft.AnimationCurve.EASE_IN_OUT_CUBIC_EMPHASIZED)
                     ),
                 ]
@@ -124,8 +124,51 @@ class PowerUp:
         self.loading_overlay = self.page.overlay[1]
         self.page.update()
         # 完了通知POP
-        self.page.show_dialog(ft.SnackBar(ft.Text("アップグレード完了"), bgcolor=ft.Colors.LIGHT_GREEN, duration=1500))
-        # 表示用のプレースホルダを即時反映してから再読み込みを開始する
+        row_data = get_card_from_id(target_id)
+        rank = rankid_to_rank(row_data[0][5], 0)
+        rank_origin = rankid_to_rank(row_data[0][15], 0)
+        row_data_for_image = {
+            "id": row_data[0][0],
+            "pageId": row_data[0][1],
+            "title": row_data[0][2],
+            "pageUrl": row_data[0][3],
+            "imageUrl": row_data[0][4],
+            "rank": rank,
+            "quality": row_data[0][6],
+            "isSozai": row_data[0][7],
+            "extract": row_data[0][8],
+            "HP": row_data[0][9],
+            "ATK": row_data[0][10],
+            "DEF": row_data[0][11],
+            "favorite": row_data[0][12],
+            "resourceATK": row_data[0][13],
+            "resourceDEF": row_data[0][14],
+            "resourceRANK": rank_origin,
+        }
+        self.close_button = ft.TextButton("Close", on_click=lambda e: self.page.pop_dialog())
+        # 完了後のカードイメージを出力する
+        complete_dialog = ft.AlertDialog(
+            modal=True,
+            title=ft.Text("強化完了"),
+            content=ft.Container(
+                width=320,
+                height=480,
+                content=ft.Column(
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    expand=True,
+                    controls=[
+                        create_card_image(row_data_for_image, True),
+                    ],
+                ),
+                bgcolor=ft.Colors.GREY_100, border_radius=5,
+                padding=ft.Padding.all(5),
+            ),
+            actions=[self.close_button],
+            actions_alignment=ft.MainAxisAlignment.END,
+            title_padding=ft.Padding.all(10),
+        )
+        self.page.show_dialog(complete_dialog)
+        # カードイメージ出力の裏で強化画面の再読み込みを開始する
         try:
             tabs_widget = self.page.controls[0]
             tab_bar_view = tabs_widget.content.controls[1]
