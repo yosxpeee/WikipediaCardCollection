@@ -210,6 +210,8 @@ def create_card_image(data, isShow, on_fav_changed=None):
         scale=ft.Scale(scale=0.75),
     )
     fav_icon.on_click = _on_fav_click
+    #Note: 強化済みなら左下に強化済みアイコンを表示したい
+    #DBからresourceRANKとrankをとってきて比較する。同じなら未強化。違うなら強化済み。
     image_stack = ft.Stack(
         controls=[
             image,
@@ -293,8 +295,8 @@ def create_card_image(data, isShow, on_fav_changed=None):
                 content=ft.Column(
                     horizontal_alignment=ft.CrossAxisAlignment.START,
                     controls=[
-                        title,
-                        image_stack,
+                        title,                          # カード名
+                        image_stack,                    # 画像関連
                         ft.Row(
                             controls=[
                                 statuses,               # ステータス

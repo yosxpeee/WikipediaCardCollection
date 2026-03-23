@@ -182,7 +182,7 @@ async def main(page: ft.Page):
     page.update()
     # 初期 last_tab_index を設定
     last_tab_index = 0
-    # ガチャ用ローディングオーバーレイ（進捗バー＋カウンタ）
+    # オーバーレイ[0]：ガチャ用ローディング画面（進捗バー＋カウンタ）
     gacha_overlay_counter = ft.Text("0/0", size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE)
     gacha_overlay_progress = ft.ProgressBar(width=300, height=12, value=0)
     gacha_overlay = ft.Container(
@@ -216,7 +216,7 @@ async def main(page: ft.Page):
         ),
     )
     page.overlay.append(gacha_overlay)
-    # 図鑑用ローディングオーバーレイ（従来のもの）
+    # オーバーレイ[1]：図鑑、強化用ローディング画面
     zukan_overlay = ft.Container(
         visible=False,
         expand=True,
@@ -231,10 +231,11 @@ async def main(page: ft.Page):
         ),
     )
     page.overlay.append(zukan_overlay)
+    # オーバーレイ[2]：強化実行エフェクト用(予約)
+    powerup_overlay_dummy = ft.Container(visible=False,content=None)
+    page.overlay.append(powerup_overlay_dummy)
     # ガチャタブの中身のクラス生成
     gacha = Gacha(page)
-    # 強化タブの中身のクラス生成
-    powerup = PowerUp(page)
     # DBがない場合初期作成する
     initialize_db()
     # ページに要素追加
@@ -261,7 +262,7 @@ async def main(page: ft.Page):
                         controls=[
                             ft.Container(   #ガチャ
                                 alignment=ft.Alignment.CENTER,
-                                content=gacha.create(), #最初の画面かつこの画面でデータの再読み個の必要はないのでこれでよい。
+                                content=gacha.create(), #最初の画面かつこの画面でデータの再読み込みの必要はないのでこれでよい。
                             ),
                             ft.Container(   #図鑑
                                 alignment=ft.Alignment.CENTER,

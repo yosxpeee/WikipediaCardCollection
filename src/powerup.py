@@ -2,6 +2,7 @@ import flet as ft
 import asyncio
 from utils.db import get_all_cards, get_card_from_id, rankup_card
 from utils.utils import RANK_TABLE, rankid_to_rank, calc_status
+from utils.ui import get_card_color
 
 class PowerUp:
     # 初期化
@@ -9,11 +10,8 @@ class PowerUp:
         self.page = page
         # ローディングオーバーレイの参照を保持(図鑑のものを使いまわし)
         self.loading_overlay = page.overlay[1]
+    # 強化実施処理
     async def do_powerup(self, target_id, next_rankid, atk, defence, hp, sozai_id):
-        # DB を更新
-        rankup_card(target_id, next_rankid, atk, defence, hp, sozai_id)
-        # 完了通知
-        self.page.show_dialog(ft.SnackBar(ft.Text("アップグレード完了"), bgcolor=ft.Colors.LIGHT_GREEN, duration=3000))
         # 強化タブ自身を再読み込みして差し替える
         async def _reload_powerup_tab():
             try:
@@ -48,18 +46,91 @@ class PowerUp:
                         pass
                 except Exception:
                     pass
+        # 強化演出
+        async def _powerup_effect():
+            powerup_overlay = ft.Stack(
+                expand=True,
+                controls=[
+                    # 下地
+                    ft.Container(
+                        expand=True,
+                        bgcolor=ft.Colors.with_opacity(0.88, ft.Colors.GREY),
+                    ),
+                    # カード(対象)
+                    ft.Container(
+                        width=120,
+                        height=140,
+                        top=0,
+                        left=0,
+                        border_radius=8,
+                        alignment=ft.Alignment.CENTER,
+                        bgcolor=get_card_color(rankid_to_rank(next_rankid-1, 0) ,0),
+                        content=ft.Text("✡",size=50, color=ft.Colors.with_opacity(0.5, ft.Colors.BLACK)),
+                        shadow=ft.BoxShadow(
+                                        blur_style=ft.BlurStyle.NORMAL,
+                                        spread_radius=1,
+                                        blur_radius=10,
+                                        color=ft.Colors.BLACK_45,
+                                        offset=ft.Offset(0, 0),
+                                    ),
+                        animate_position=ft.Animation(1000, ft.AnimationCurve.EASE_IN_OUT_CUBIC_EMPHASIZED)
+                    ),
+                    # カード素材
+                    ft.Container(
+                        width=120,
+                        height=140,
+                        top=1024-140,
+                        left=768-120,
+                        border_radius=8,
+                        alignment=ft.Alignment.CENTER,
+                        bgcolor=ft.Colors.ORANGE,
+                        content=ft.Text("✡",size=50, color=ft.Colors.with_opacity(0.5, ft.Colors.BLACK)),
+                        shadow=ft.BoxShadow(
+                                        blur_style=ft.BlurStyle.NORMAL,
+                                        spread_radius=1,
+                                        blur_radius=10,
+                                        color=ft.Colors.BLACK_45,
+                                        offset=ft.Offset(0, 0),
+                                    ),
+                        animate_position=ft.Animation(1000, ft.AnimationCurve.EASE_IN_OUT_CUBIC_EMPHASIZED)
+                    ),
+                ]
+            )
+            #今作ったものに差し替える
+            self.page.overlay[2] = powerup_overlay
+            #オーバーレイの切り替え
+            self.loading_overlay = self.page.overlay[2]
+            self.page.update()
+            await asyncio.sleep(0.1)
+            #アニメーション
+            powerup_overlay.controls[1].top = 512-60
+            powerup_overlay.controls[1].left = 384-80
+            powerup_overlay.controls[2].top = 512-60
+            powerup_overlay.controls[2].left = 384-80
+            self.page.update()
+            await asyncio.sleep(1) #アニメーションと同じ時間待機する
+        # タブ切替を一時無効化
+        try:
+            tabs_widget.disabled = True
+            tabs_widget.update()
+        except Exception:
+            pass
+        # 強化演出を行う
+        await _powerup_effect()
+        # DB を更新
+        rankup_card(target_id, next_rankid, atk, defence, hp, sozai_id)
+        self.loading_overlay.visible = False
+        # オーバーレイをローディングのものに戻す
+        self.loading_overlay = self.page.overlay[1]
+        self.page.update()
+        # 完了通知POP
+        self.page.show_dialog(ft.SnackBar(ft.Text("アップグレード完了"), bgcolor=ft.Colors.LIGHT_GREEN, duration=1500))
         # 表示用のプレースホルダを即時反映してから再読み込みを開始する
         try:
             tabs_widget = self.page.controls[0]
             tab_bar_view = tabs_widget.content.controls[1]
             tab_bar_view.controls[2] = ft.Container(content=ft.Text("読み込み中...", size=18), alignment=ft.Alignment.CENTER)
             tab_bar_view.update()
-        except Exception:
-            pass
-        # タブ切替を一時無効化
-        try:
-            tabs_widget.disabled = True
-            tabs_widget.update()
         except Exception:
             pass
         # 非同期で再読み込みを実行（UI スレッドをブロックしない）
@@ -69,12 +140,13 @@ class PowerUp:
             # タブ切替は再読み込みタスク内で元に戻すためここでは戻さない
             # （create() の完了後に表示更新される想定）
             pass
+    # 強化の確認画面表示
     def popup_powerup_dialog(self, target_id, sozai_id):
         if target_id == -1:
-            self.page.show_dialog(ft.SnackBar(ft.Text("対象が選択されていません。"),duration=3000))
+            self.page.show_dialog(ft.SnackBar(ft.Text("対象が選択されていません。"), duration=1500))
             return
         if sozai_id == -1:
-            self.page.show_dialog(ft.SnackBar(ft.Text("素材が選択されていません。"),duration=3000))
+            self.page.show_dialog(ft.SnackBar(ft.Text("素材が選択されていません。"), duration=1500))
             return
         #idからパラメータをとってくる
         data = get_card_from_id(target_id)
@@ -146,6 +218,7 @@ class PowerUp:
             title_padding=ft.Padding.all(10),
         )
         self.page.show_dialog(powerup_dialog)
+    # 画面作成
     async def create(self):
         ####################
         # 処理開始
@@ -155,7 +228,6 @@ class PowerUp:
         self.page.update()
         selected_target_id = -1
         selected_sozai_id = -1
-
         try:
             # DB からカードを非同期で取得（ブロッキング回避）
             try:
@@ -163,9 +235,6 @@ class PowerUp:
             except Exception:
                 all_cards = []
             ranks = ["UR", "SSR", "SR", "R", "UC", "C"]
-            # 選択中のIDを保持する変数
-            #selected_target_id = None
-            #selected_sozai_id = None
             # 表示用テキスト
             selected_target_text = ft.Text("",no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS, bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.GREY_500))
             selected_sozai_text = ft.Text("",no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS, bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.ORANGE))

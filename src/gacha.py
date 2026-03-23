@@ -30,30 +30,30 @@ class Gacha:
         async def get_rank_data(t_quote):
             n = 0
             j = {}
-            while n <= 5:
+            while n < 5:
                 try:
                     rank_url = f"https://api.wikirank.net/api.php?name={t_quote}&lang=ja"
                     j = await fetch_json(rank_url)
                     break
                 except Exception as e:
-                    print("エラー。5秒後にリトライします。")
+                    print("エラー。3秒後にリトライします。")
                     j = {}
-                    time.sleep(5)
+                    await asyncio.sleep(3)
                     n+=1
             return j
         # 記事の情報取得
         async def get_info_data(t_quote):
             n = 0
             j = {}
-            while n <= 5:
+            while n < 5:
                 try:
                     info_url = f"https://ja.wikipedia.org/w/api.php?format=json&action=query&titles={t_quote}&prop=info%7Cpageimages%7Cpageprops%7Cpageviews%7Ccategories&inprop=url%7Ctalkid&pithumbsize=600"
                     j = await fetch_json(info_url)
                     break
                 except Exception as e:
-                    print("エラー。5秒後にリトライします。")
+                    print("エラー。3秒後にリトライします。")
                     j = {}
-                    time.sleep(5)
+                    await asyncio.sleep(3)
                     n+=1
             return j
         # 記事の概要取得
@@ -172,7 +172,6 @@ class Gacha:
             #    randList = [{"id":"4059891", "title":"コニャ"}] #素材(500エラーになる)
             #    randList = [{"id":"1610365", "title":"1-(5-ホスホリボシル)-5-((5-ホスホリボシルアミノ)メチリデンアミノ)イミダゾール-4-カルボキサミドイソメラーゼ"}] #素材(バカ長い名前)
             #    randList = [{"id":"1662965", "title":"鎌倉山 (曖昧さ回避)"}] #素材
-            #    randList = [{"id":"296076",  "title":"菊水町"}] #素材
             #    randList = [{"id":"4690122", "title":"2024年アメリカ合衆国選挙"}] #C (svg画像)
             #    randList = [{"id":"673688",  "title":"カール9世 (スウェーデン王)"}] #C（tif画像）
             #    randList = [{"id":"24342",   "title":"ソロモン"}] #UC
@@ -181,7 +180,6 @@ class Gacha:
             #    randList = [{"id":"1492869", "title":"キンシャサノキセキ"}] #SSR
             #    randList = [{"id":"1855047", "title":"新宿駅"}] #UR
             #    randList = [{"id":"228773",  "title":"ディープインパクト (競走馬)"}] #LR
-            #else:
             randList = await get_random(10-count)
             #randList = []
             if randList == []:
@@ -190,6 +188,12 @@ class Gacha:
             for r in randList:
                 pageid = r["id"]
                 title = r["title"]
+                #Note：かぶったらAPIコールをせず内部データを使って更新するようにしたい
+                #dup = check_dup(pageid)
+                #if len(dup) == 1:
+                #    #必要なデータをDBから持ってくる(お気に入り以外)
+                #    #ただし、アップグレードしている可能性があるため、ランクは元のやつ(resourceRANK)を使う
+                #else:  
                 t_quote = urllib.parse.quote(title)
                 rank_data = await get_rank_data(t_quote) #Rank
                 info_data = await get_info_data(t_quote) #info
@@ -200,7 +204,7 @@ class Gacha:
                 if extract == "ERROR":
                     print("記事概要取得失敗。リトライ")
                     break
-                if rank_data["result"] == "not found" :
+                if rank_data == {} :
                     #評価されていない場合はCとみなす
                     q = 0
                     rank = "C"
@@ -302,7 +306,7 @@ class Gacha:
                     self.page.update()
         if force_stopped == True:
             self.loading_overlay.visible = False
-            self.page.show_dialog(ft.SnackBar(ft.Text("ランダム記事取得エラー。1時間程度時間を置いてからお試しください。")))
+            self.page.show_dialog(ft.SnackBar(ft.Text("ランダム記事取得エラー。1時間程度時間を置いてからお試しください。"), duration=1500))
             self.page.update()
             return
         # DBに保存する

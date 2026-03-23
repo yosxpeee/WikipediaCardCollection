@@ -85,13 +85,14 @@ def update_favorite(card_id, value):
     finally:
         conn.close()
 
+# カードのランクアップ
 def rankup_card(target_id, next_rankid, atk, defence, hp, sozai_id):
     conn = sqlite3.connect('cards.db')
     cursor = conn.cursor()
     try:
         cursor.execute(
             '''UPDATE gacha_cards SET rank = ?, HP= ?, ATK = ?, DEF = ? WHERE id = ?''',
-            (str(next_rankid), str(atk), str(defence), str(hp), int(target_id))
+            (str(next_rankid), str(hp), str(atk), str(defence), int(target_id))
         )
         cursor.execute(f"""DELETE FROM gacha_cards WHERE id = {int(sozai_id)}""")
         conn.commit()
