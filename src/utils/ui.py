@@ -27,43 +27,22 @@ def get_card_color(rank, isSozai):
 def create_card_image(data, isShow, on_fav_changed=None):
     def _on_fav_click(e):
         # 一時的に無効化して多重クリックを防ぐ
-        try:
-            fav_icon.disabled = True
-            fav_icon.update()
-        except Exception:
-            pass
+        fav_icon.disabled = True
+        fav_icon.update()
         # 切り替え値を決定
-        try:
-            curr = int(data.get("favorite", 0))
-        except Exception:
-            curr = 0
+        curr = int(data.get("favorite", 0))
         new_val = 0 if curr == 1 else 1
-        try:
-            update_favorite(data.get("id"), new_val)
-            # ローカルデータを更新してアイコンを切替
-            data["favorite"] = new_val
-            fav_icon.icon = ft.Icons.STAR if new_val == 1 else ft.Icons.STAR_BORDER
-            try:
-                fav_icon.update()
-            except Exception:
-                pass
-            # 親に変更通知（図鑑など）
-            if callable(on_fav_changed):
-                try:
-                    # external_update=True を伝える（DB は既に更新済み）
-                    on_fav_changed(data.get("id"), new_val, True)
-                except Exception:
-                    pass
-            else:
-                pass
-        except Exception:
-            pass
-        finally:
-            try:
-                fav_icon.disabled = False
-                fav_icon.update()
-            except Exception:
-                pass
+        update_favorite(data.get("id"), new_val)
+        # ローカルデータを更新してアイコンを切替
+        data["favorite"] = new_val
+        fav_icon.icon = ft.Icons.STAR if new_val == 1 else ft.Icons.STAR_BORDER
+        fav_icon.update()
+        # 親に変更通知（図鑑など）
+        if callable(on_fav_changed):
+            # external_update=True を伝える（DB は既に更新済み）
+            on_fav_changed(data.get("id"), new_val, True)
+        fav_icon.disabled = False
+        fav_icon.update()
     # ランクとカードタイトル
     link_text = ft.GestureDetector(
         mouse_cursor=ft.MouseCursor.CLICK,

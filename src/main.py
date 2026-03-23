@@ -11,10 +11,8 @@ async def main(page: ft.Page):
     # 前回選択したタブ(index)を保持
     last_tab_index = 0
     # event: タブ切り替え
-    def change_tabs(e):
-        nonlocal last_tab_index
-        tabs_widget = e.control
-        async def load_and_set_zukan():
+    def _change_tabs(e):
+        async def __load_and_set_zukan():
             try:
                 content = await zukan.create()
                 tab_bar_view.controls[1] = ft.Container(
@@ -40,7 +38,7 @@ async def main(page: ft.Page):
                     page.update()
                 except Exception:
                     pass
-        async def load_and_set_powerup():
+        async def __load_and_set_powerup():
             try:
                 content = await powerup.create()
                 tab_bar_view.controls[2] = ft.Container(
@@ -65,6 +63,9 @@ async def main(page: ft.Page):
                         page.update()
                 except Exception:
                     pass
+        # コントロール取得
+        nonlocal last_tab_index
+        tabs_widget = e.control
         # 共通で参照する TabBarView のコンテナ参照
         tab_bar_view = e.control.content.controls[1]
         # ガチャのタブに切り替えたとき
@@ -107,7 +108,7 @@ async def main(page: ft.Page):
                     alignment=ft.Alignment.CENTER,
                 )
                 tab_bar_view.update()
-                asyncio.create_task(load_and_set_zukan())
+                asyncio.create_task(__load_and_set_zukan())
             except:
                 try:
                     tabs_widget.disabled = False
@@ -142,7 +143,7 @@ async def main(page: ft.Page):
                     alignment=ft.Alignment.CENTER,
                 )
                 tab_bar_view.update()
-                asyncio.create_task(load_and_set_powerup())
+                asyncio.create_task(__load_and_set_powerup())
             except Exception:
                 try:
                     tabs_widget.disabled = False
@@ -244,7 +245,7 @@ async def main(page: ft.Page):
             selected_index=0,
             length=4,
             expand=True,
-            on_change=change_tabs,
+            on_change=_change_tabs,
             content=ft.Column(
                 expand=True,
                 controls=[

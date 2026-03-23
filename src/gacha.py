@@ -15,7 +15,7 @@ class Gacha:
     # ガチャを引く
     async def draw(self, num):
         # ランダム記事取得
-        async def get_random(n):
+        async def _get_random(n):
             j = {}
             try:
                 random_url = f"https://ja.wikipedia.org/w/api.php?format=json&action=query&list=random&rnnamespace=0&rnlimit={n}"
@@ -26,7 +26,7 @@ class Gacha:
                 return []
             return j.get("query", {}).get("random", [])
         # ランク取得
-        async def get_rank_data(t_quote):
+        async def _get_rank_data(t_quote):
             n = 0
             j = {}
             while n < 5:
@@ -41,7 +41,7 @@ class Gacha:
                     n+=1
             return j
         # 記事の情報取得
-        async def get_info_data(t_quote):
+        async def _get_info_data(t_quote):
             n = 0
             j = {}
             while n < 5:
@@ -56,14 +56,14 @@ class Gacha:
                     n+=1
             return j
         # 記事の概要取得
-        async def get_summary(t_quote):
+        async def _get_summary(t_quote):
             summary_url = f"https://ja.wikipedia.org/api/rest_v1/page/summary/{t_quote}"
             j = await fetch_json(summary_url)
             if "status" in j:
                 return "ERROR"
             return j.get("extract", "")
         # サムネイルのコンテンツを生成するヘルパー
-        def make_thumb_content(idx, selected):
+        def _make_thumb_content(idx, selected):
             color = get_card_color(get_card_list[idx]["rank"], get_card_list[idx]["isSozai"])
             if selected:
                 # 選択時の黒い枠(内側は白)をContainerで表現
@@ -124,7 +124,7 @@ class Gacha:
                 )
             return thumb
         # 選択処理の更新（外側の変数を変更するため nonlocal）
-        def select_gacha_result(n):
+        def _select_gacha_result(n):
             nonlocal selected_index, grid_controls, stack_controls
             selected_index = n
             # スタックの表示切替
@@ -132,10 +132,10 @@ class Gacha:
                 v.visible = (idx == n)
             # サムネイルの再構築（選択枠を変更）
             for idx, c in enumerate(grid_controls):
-                c.content = make_thumb_content(idx, idx == selected_index)
+                c.content = _make_thumb_content(idx, idx == selected_index)
             self.dialog.update()
         # ガチャ回してる時のイメージ切り替え
-        def image_slide(col, idx):
+        def _image_slide(col, idx):
             for cnt in range(5):
                 if cnt==idx:
                     col.controls[0].controls[cnt].visible = True
@@ -180,9 +180,9 @@ class Gacha:
             #    randList = [{"id":"228773",  "title":"ディープインパクト (競走馬)"}] #LR
             #    randList = [{"id":"68326",   "title":"平宗盛"}]
             #else:
-            #    randList = await get_random(10-count)
+            #    randList = await _get_random(10-count)
             #randList = []
-            randList = await get_random(10-count)
+            randList = await _get_random(10-count)
             if randList == []:
                 force_stopped = True
                 break
@@ -211,12 +211,12 @@ class Gacha:
                 else:
                     #かぶってない場合は通常処理(APIコールしてデータ取得)
                     t_quote = urllib.parse.quote(title)
-                    rank_data = await get_rank_data(t_quote) #Rank
-                    info_data = await get_info_data(t_quote) #info
+                    rank_data = await _get_rank_data(t_quote) #Rank
+                    info_data = await _get_info_data(t_quote) #info
                     if info_data == {}:
                         print("記事情報取得失敗。リトライ")
                         break
-                    extract  = await get_summary(t_quote) #概要
+                    extract  = await _get_summary(t_quote) #概要
                     if extract == "ERROR":
                         print("記事概要取得失敗。リトライ")
                         break
@@ -317,7 +317,7 @@ class Gacha:
                     try:
                         col = self.loading_overlay.content
                         if hasattr(col, 'controls') and len(col.controls) >= 2:
-                            image_slide(col, count%5)
+                            _image_slide(col, count%5)
                             col.controls[1].controls[1].value = f"ガチャを回しています... {count}/{num}"
                             # progress value between 0..1
                             col.controls[1].controls[2].value = count / float(num)
@@ -344,8 +344,8 @@ class Gacha:
         grid_controls = []
         for i in range(10):
             c = ft.Container(
-                content=make_thumb_content(i, i == selected_index),
-                on_click=(lambda e, idx=i: select_gacha_result(idx)),
+                content=_make_thumb_content(i, i == selected_index),
+                on_click=(lambda e, idx=i: _select_gacha_result(idx)),
             )
             grid_controls.append(c)
         # Stack の表示用コントロール群

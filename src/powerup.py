@@ -166,9 +166,9 @@ class PowerUp:
     # 強化の確認画面表示
     def popup_powerup_dialog(self, target_id, sozai_id):
         # ダイアログのOKボタンイベント
-        def _on_ok(e, tid=target_id, nr=next_rankid, a=atk, d=defence, h=hp, sid=sozai_id):
+        def _on_ok(target_id, next_rankid, atk, defence, hp, sozai_id):
             self.page.pop_dialog()
-            asyncio.create_task(self.do_powerup(tid, nr, a, d, h, sid))
+            asyncio.create_task(self.do_powerup(target_id, next_rankid, atk, defence, hp, sozai_id))
         # 状態チェック
         if target_id == -1:
             self.page.show_dialog(ft.SnackBar(ft.Text("対象が選択されていません。"), duration=1500))
@@ -216,7 +216,7 @@ class PowerUp:
         )
         # ダイアログ作成
         self.cancel_button = ft.TextButton("Cancel", on_click=lambda e: self.page.pop_dialog())
-        self.OK_button = ft.TextButton("OK", on_click=_on_ok)
+        self.OK_button = ft.TextButton("OK", on_click=lambda x:_on_ok(target_id, next_rankid, atk, defence, hp, sozai_id))
         powerup_dialog = ft.AlertDialog(
             modal=True,
             title=ft.Text("カード強化"),
