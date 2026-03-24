@@ -5,13 +5,13 @@ from utils.utils import RANK_TABLE, rankid_to_rank, calc_status
 from utils.ui import get_card_color, create_card_image
 
 class PowerUp:
-    # 初期化
     def __init__(self, page):
+        """初期化"""
         self.page = page
         # ローディングオーバーレイの参照を保持(図鑑のものを使いまわし)
         self.loading_overlay = page.overlay[1]
-    # 強化実施処理
     async def do_powerup(self, target_id, next_rankid, atk, defence, hp, sozai_id):
+        """強化実施処理"""
         # 強化タブ自身を再読み込みして差し替える
         async def _reload_powerup_tab():
             try:
@@ -37,8 +37,8 @@ class PowerUp:
                 tab_bar_view.update()
                 tabs_widget.disabled = False
                 tabs_widget.update()
-        # 強化演出
         async def _powerup_effect():
+            """強化演出"""
             powerup_overlay = ft.Stack(
                 expand=True,
                 controls=[
@@ -163,8 +163,8 @@ class PowerUp:
         # Note:
         # タブ切替は再読み込みタスク内で元に戻すためここでは戻さない
         # （create() の完了後に表示更新される想定）
-    # 強化の確認画面表示
     def popup_powerup_dialog(self, target_id, sozai_id):
+        """強化の確認画面表示"""
         # ダイアログのOKボタンイベント
         def _on_ok(target_id, next_rankid, atk, defence, hp, sozai_id):
             self.page.pop_dialog()
@@ -240,8 +240,8 @@ class PowerUp:
             title_padding=ft.Padding.all(10),
         )
         self.page.show_dialog(powerup_dialog)
-    # 画面作成
     async def create(self):
+        """画面作成"""
         ####################
         # 処理開始
         ####################
@@ -404,9 +404,11 @@ class PowerUp:
                     ft.Stack(
                         controls=[
                             ft.ShaderMask(
+                                width=738,
+                                height=784,
                                 content=ft.Container(
                                     border=ft.Border.all(0),
-                                    width=728,
+                                    width=738,
                                     height=784,
                                     alignment=ft.Alignment.CENTER,
                                     bgcolor=ft.Colors.ON_PRIMARY,
@@ -416,13 +418,13 @@ class PowerUp:
                                 shader=ft.RadialGradient(center=ft.Alignment.CENTER, radius=0.22, colors=[ft.Colors.ON_PRIMARY, ft.Colors.PRIMARY_CONTAINER, ft.Colors.ON_PRIMARY], stops=[0.2, 0.8, 1.0], tile_mode=ft.GradientTileMode.REPEATED),
                             ),
                             ft.Row(
-                                width=728,
+                                width=738,
                                 height=784,
                                 alignment=ft.MainAxisAlignment.CENTER,
-                                vertical_alignment=ft.CrossAxisAlignment.START,
+                                vertical_alignment=ft.CrossAxisAlignment.CENTER,
                                 controls=[
                                     ft.Container(
-                                        width=450,
+                                        width=460,
                                         bgcolor=ft.Colors.with_opacity(0.1, ft.Colors.GREY_900),
                                         alignment=ft.Alignment.TOP_CENTER,
                                         content=ft.Column(
@@ -435,7 +437,7 @@ class PowerUp:
                                         ),
                                     ),
                                     ft.Container(
-                                        width=250,
+                                        width=268,
                                         bgcolor=ft.Colors.with_opacity(0.1, ft.Colors.GREY_900),
                                         alignment=ft.Alignment.TOP_CENTER,
                                         content=ft.Column(
@@ -470,7 +472,7 @@ class PowerUp:
                         ]
                     ),
                     ft.Container(
-                        width=728,
+                        width=738,
                         height=35,
                         padding=ft.Padding.all(0),
                         content=ft.Button(

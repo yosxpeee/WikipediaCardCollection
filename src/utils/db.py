@@ -1,8 +1,8 @@
 import sqlite3
 from utils.utils import rank_to_rankid
 
-# DB初期化
 def initialize_db():
+    """DB初期化"""
     conn = sqlite3.connect('cards.db')
     cursor = conn.cursor()
     # ファイルがない、ファイルがあってもテーブルがない場合は新規作成する
@@ -30,8 +30,8 @@ def initialize_db():
     conn.commit()
     conn.close()
 
-# カード保存
 def save_cards(cards):
+    """カード保存"""
     conn = sqlite3.connect('cards.db')
     cursor = conn.cursor()
     # カードがかぶっても関係なく新しく追加していく
@@ -49,8 +49,8 @@ def save_cards(cards):
     conn.commit()
     conn.close()
 
-# 全件取得
 def get_all_cards():
+    """全件取得"""
     conn = sqlite3.connect('cards.db')
     cursor = conn.cursor()
     data = []
@@ -61,8 +61,8 @@ def get_all_cards():
     conn.close()
     return data
 
-# 指定idのデータ取得
 def get_card_from_id(card_id):
+    """指定idのデータ取得"""
     conn = sqlite3.connect('cards.db')
     cursor = conn.cursor()
     data = []
@@ -73,8 +73,8 @@ def get_card_from_id(card_id):
     conn.close()
     return data
 
-# 指定pageidのデータ取得
 def get_card_from_pageid(pageid):
+    """指定pageidのデータ取得"""
     conn = sqlite3.connect('cards.db')
     cursor = conn.cursor()
     data = []
@@ -85,8 +85,8 @@ def get_card_from_pageid(pageid):
     conn.close()
     return data
 
-# お気に入り状態の更新
 def update_favorite(card_id, value):
+    """お気に入り状態の更新"""
     conn = sqlite3.connect('cards.db')
     cursor = conn.cursor()
     try:
@@ -97,8 +97,8 @@ def update_favorite(card_id, value):
     finally:
         conn.close()
 
-# カードのランクアップ
 def rankup_card(target_id, next_rankid, atk, defence, hp, sozai_id):
+    """カードのランクアップ"""
     conn = sqlite3.connect('cards.db')
     cursor = conn.cursor()
     try:

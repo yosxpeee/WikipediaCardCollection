@@ -163,5 +163,5 @@ cython_debug/
 storage/
 
 # 参考ソースなど
-WikipediaCardCollection.py
 *.db
+settings.json

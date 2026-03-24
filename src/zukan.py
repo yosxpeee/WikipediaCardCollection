@@ -9,14 +9,14 @@ from utils.ui import create_card_image
 PAGE_PER_CARDS = 30
 
 class Zukan:
-    # 初期化
     def __init__(self, page):
+        """初期化"""
         self.page = page
         # ローディングオーバーレイの参照を保持
         # page.overlay[0] はガチャ用、図鑑は後ろに追加しているため index 1 を使う
         self.loading_overlay = page.overlay[1]
-    # 総数を取得する
     def get_all_target_count(self):
+        """総数を取得する(APIコール)"""
         url = "https://ja.wikipedia.org/wiki/Special:Statistics"
         response = do_api(url)
         soup = BeautifulSoup(response.text, "html.parser")
@@ -34,8 +34,8 @@ class Zukan:
                         return count
         else:
             return -1
-    # カードイメージ表示
     def open_card_image(self, data, on_fav_changed=None):
+        """カードイメージ表示"""
         self.close_button = ft.TextButton("Close", on_click=lambda e: self.page.pop_dialog())
         self.dialog = ft.AlertDialog(
             modal=True,
@@ -58,10 +58,10 @@ class Zukan:
             title_padding=ft.Padding.all(10),
         )
         self.page.show_dialog(self.dialog)
-    # 画面作成
     async def create(self):
-        # 図鑑リスト作成
+        """画面作成"""
         def _build_zukan_list(page):
+            """図鑑リスト作成"""
             table.controls.clear()
             # ヘッダを作成
             header = ft.Row(
@@ -193,8 +193,8 @@ class Zukan:
                             height=1,
                         )
                     )
-        # ページラベルの更新
         def _refresh_page_label():
+            """ページラベルの更新"""
             # page_input を現在ページに合わせて更新
             try:
                 page_input.value = str(current_page)
@@ -203,24 +203,24 @@ class Zukan:
                 page_info.update()
             except Exception:
                 pass
-        # ページ操作(前)
         def _on_prev(e):
+            """ページ操作(前)"""
             nonlocal current_page
             if current_page > 1:
                 current_page -= 1
                 _build_zukan_list(current_page)
                 _refresh_page_label()
                 self.page.update()
-        # ページ操作(後ろ)
         def _on_next(e):
+            """ページ操作(後ろ)"""
             nonlocal current_page
             if current_page < total_pages:
                 current_page += 1
                 _build_zukan_list(current_page)
                 _refresh_page_label()
                 self.page.update()
-        # ページジャンプ
         def _jump_to_page(e):
+            """ページジャンプ"""
             nonlocal current_page
             # e.control は TextField
             v = str(e.control.value).strip()
@@ -238,8 +238,8 @@ class Zukan:
             _build_zukan_list(current_page)
             _refresh_page_label()
             self.page.update()
-        # フィルタ適用
-        def apply_filters():
+        def _apply_filters():
+            """フィルタ適用"""
             filtered = []
             for row in data:
                 r = rankid_to_rank(row[5], row[7])
@@ -251,8 +251,8 @@ class Zukan:
                         pass
                     filtered.append(row)
             return filtered
-        # ソートの順序定義
-        def name_sort_key(name):
+        def _name_sort_key(name):
+            """ソートの順序定義"""
             if not name:
                 return (3, "")
             first = name[0]
@@ -266,8 +266,8 @@ class Zukan:
             else:
                 cat = 3
             return (cat, name)
-        # ソート適用
         def _apply_sort():
+            """ソート適用"""
             nonlocal filtered_data
             key = None
             if sort_field == "id":
@@ -277,7 +277,7 @@ class Zukan:
             elif sort_field == "rank":
                 key = lambda r: rank_order.index(rankid_to_rank(r[5], r[7])) if rankid_to_rank(r[5], r[7]) in rank_order else 0
             elif sort_field == "name":
-                key = lambda r: name_sort_key(r[2] or "")
+                key = lambda r: _name_sort_key(r[2] or "")
             elif sort_field == "HP":
                 key = lambda r: int(r[9]) if str(r[9]).lstrip("-+").isdigit() else (-999999 if r[9] == "-1" else 0)
             elif sort_field == "ATK":
@@ -290,31 +290,31 @@ class Zukan:
                 filtered_data = sorted(filtered_data, key=key, reverse=(not sort_ascending))
             except Exception:
                 pass
-        # ドロップダウン選択
         def _on_dropdown_select(e):
+            """ドロップダウン選択"""
             nonlocal sort_field
             sort_field = e.control.value
             _apply_sort()
             _build_zukan_list(current_page)
             _refresh_page_label()
             self.page.update()
-        # ラジオボタン切り替え
         def _on_radio_change(e):
+            """ラジオボタン切り替え"""
             nonlocal sort_ascending
             sort_ascending = (e.control.value == "asc")
             _apply_sort()
             _build_zukan_list(current_page)
             _refresh_page_label()
             self.page.update()
-        # フィルタ用チェックボックス作成（素材→C→... の順）
         def _make_filter_checkbox(rk):
+            """フィルタ用チェックボックス作成（素材→C→... の順）"""
             def __on_change(e):
                 nonlocal filtered_data, total_items, total_pages, current_page
                 if e.control.value:
                     selected_ranks.add(rk)
                 else:
                     selected_ranks.discard(rk)
-                filtered_data = apply_filters()
+                filtered_data = _apply_filters()
                 total_items = len(filtered_data)
                 total_pages = (total_items + PAGE_PER_CARDS - 1) // PAGE_PER_CARDS if total_items > 0 else 1
                 if current_page > total_pages:
@@ -333,8 +333,8 @@ class Zukan:
             )
             cb.on_change = __on_change
             return cb
-        # すべて選択にする
         def _filter_all_select():
+            """すべて選択にする"""
             nonlocal filtered_data, total_items, total_pages, current_page, selected_ranks
             selected_ranks = set(rank_order)
             # 各チェックボックスを更新（filter_controls にはチェックボックスとボタンが混在）
@@ -346,7 +346,7 @@ class Zukan:
                 except Exception:
                     pass
             # フィルタ反映・ページ再計算
-            filtered_data = apply_filters()
+            filtered_data = _apply_filters()
             total_items = len(filtered_data)
             total_pages = (total_items + PAGE_PER_CARDS - 1) // PAGE_PER_CARDS if total_items > 0 else 1
             current_page = 1
@@ -354,8 +354,8 @@ class Zukan:
             _refresh_page_label()
             _apply_search()
             self.page.update()
-        # すべて解除にする
         def _filter_all_unselect():
+            """すべて解除にする"""
             nonlocal filtered_data, total_items, total_pages, current_page, selected_ranks
             selected_ranks = set()
             for ctrl in filter_controls:
@@ -365,7 +365,7 @@ class Zukan:
                         ctrl.update()
                 except Exception:
                     pass
-            filtered_data = apply_filters()
+            filtered_data = _apply_filters()
             total_items = len(filtered_data)
             total_pages = (total_items + PAGE_PER_CARDS - 1) // PAGE_PER_CARDS if total_items > 0 else 1
             if current_page > total_pages:
@@ -374,8 +374,8 @@ class Zukan:
             _refresh_page_label()
             _apply_search()
             self.page.update()
-        # 検索適用
         def _apply_search():
+            """検索適用"""
             nonlocal filtered_data, total_items, total_pages, current_page
             q = ""
             try:
@@ -383,7 +383,7 @@ class Zukan:
             except Exception:
                 q = ""
             # ベースはランクフィルタを通したデータ
-            base = apply_filters()
+            base = _apply_filters()
             if q == "":
                 filtered_data = base
             else:
@@ -407,8 +407,8 @@ class Zukan:
             _build_zukan_list(current_page)
             _refresh_page_label()
             self.page.update()
-        # お気に入り切替ハンドラ（DB更新して再読み込み）
         def _toggle_favorite(card_id, current_fav, external_update=False):
+            """お気に入り切替ハンドラ（DB更新して再読み込み）"""
             nonlocal data, filtered_data, total_items, total_pages, current_page
             # external_update=True の場合は既に DB が更新済みなので再更新しない
             if external_update:
@@ -427,7 +427,7 @@ class Zukan:
                     pass
             try:
                 data = get_all_cards()
-                filtered_data = apply_filters()
+                filtered_data = _apply_filters()
                 _apply_sort()
                 total_items = len(filtered_data)
                 total_pages = (total_items + PAGE_PER_CARDS - 1) // PAGE_PER_CARDS if total_items > 0 else 1
@@ -438,11 +438,11 @@ class Zukan:
                 self.page.update()
             except Exception:
                 pass
-        # お気に入りの登録を切り替えたときの裏処理
         def _on_fav_change(e):
+            """お気に入りの登録を切り替えたときの裏処理"""
             nonlocal filtered_data, total_items, total_pages, current_page, favorites_only
             favorites_only = e.control.value
-            filtered_data = apply_filters()
+            filtered_data = _apply_filters()
             total_items = len(filtered_data)
             total_pages = (total_items + PAGE_PER_CARDS - 1) // PAGE_PER_CARDS if total_items > 0 else 1
             if current_page > total_pages:
@@ -470,7 +470,7 @@ class Zukan:
             selected_ranks = set(rank_order)
             # お気に入りのみ表示フラグ
             favorites_only = False
-            filtered_data = apply_filters()
+            filtered_data = _apply_filters()
             # 図鑑本体を作っておく
             table = ft.ListView(
                 expand=True,

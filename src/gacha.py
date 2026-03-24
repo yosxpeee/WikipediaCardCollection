@@ -7,15 +7,15 @@ from utils.db import save_cards, get_card_from_pageid
 from utils.ui import get_card_color, create_card_image
 
 class Gacha:
-    # 初期化
     def __init__(self, page):
+        """初期化"""
         self.page = page
         # ローディングオーバーレイの参照を保持
         self.loading_overlay = page.overlay[0]
-    # ガチャを引く
     async def draw(self, num):
-        # ランダム記事取得
+        """初期化"""
         async def _get_random(n):
+            """ランダム記事取得"""
             j = {}
             try:
                 random_url = f"https://ja.wikipedia.org/w/api.php?format=json&action=query&list=random&rnnamespace=0&rnlimit={n}"
@@ -25,8 +25,8 @@ class Gacha:
             if "error" in j or j == {}:
                 return []
             return j.get("query", {}).get("random", [])
-        # ランク取得
         async def _get_rank_data(t_quote):
+            """ランク取得"""
             n = 0
             j = {}
             while n < 5:
@@ -40,8 +40,8 @@ class Gacha:
                     await asyncio.sleep(3)
                     n+=1
             return j
-        # 記事の情報取得
         async def _get_info_data(t_quote):
+            """記事の情報取得"""
             n = 0
             j = {}
             while n < 5:
@@ -55,15 +55,15 @@ class Gacha:
                     await asyncio.sleep(3)
                     n+=1
             return j
-        # 記事の概要取得
         async def _get_summary(t_quote):
+            """記事の概要取得"""
             summary_url = f"https://ja.wikipedia.org/api/rest_v1/page/summary/{t_quote}"
             j = await fetch_json(summary_url)
             if "status" in j:
                 return "ERROR"
             return j.get("extract", "")
-        # サムネイルのコンテンツを生成するヘルパー
         def _make_thumb_content(idx, selected):
+            """サムネイルのコンテンツを生成するヘルパー"""
             color = get_card_color(get_card_list[idx]["rank"], get_card_list[idx]["isSozai"])
             if selected:
                 # 選択時の黒い枠(内側は白)をContainerで表現
@@ -123,8 +123,9 @@ class Gacha:
                     ],
                 )
             return thumb
-        # 選択処理の更新（外側の変数を変更するため nonlocal）
         def _select_gacha_result(n):
+            """選択処理の更新"""
+            # 外側の変数を変更するため nonlocal
             nonlocal selected_index, grid_controls, stack_controls
             selected_index = n
             # スタックの表示切替
@@ -134,8 +135,8 @@ class Gacha:
             for idx, c in enumerate(grid_controls):
                 c.content = _make_thumb_content(idx, idx == selected_index)
             self.dialog.update()
-        # ガチャ回してる時のイメージ切り替え
         def _image_slide(col, idx):
+            """ガチャ回してる時のイメージ切り替え"""
             for cnt in range(5):
                 if cnt==idx:
                     col.controls[0].controls[cnt].visible = True
@@ -187,6 +188,7 @@ class Gacha:
                 force_stopped = True
                 break
             for r in randList:
+                query = False
                 pageid = r["id"]
                 title = r["title"]
                 #すでに取得済みかどうかpageidで検索
@@ -246,12 +248,16 @@ class Gacha:
                             rank = "C"
                     p_str = str(pageid)
                     # 素材判定
-                    isAimai         = any("曖昧さ回避" in category.get("title", "") for category in info_data["query"]["pages"][p_str]["categories"])
-                    isSoftRedirect  = any("ソフトリダイレクト" in category.get("title", "") for category in info_data["query"]["pages"][p_str]["categories"])
-                    if isAimai or isSoftRedirect:
-                        isSozai = 1
-                    else:
-                        isSozai = 0
+                    try:
+                        isAimai         = any("曖昧さ回避" in category.get("title", "") for category in info_data["query"]["pages"][p_str]["categories"])
+                        isSoftRedirect  = any("ソフトリダイレクト" in category.get("title", "") for category in info_data["query"]["pages"][p_str]["categories"])
+                        if isAimai or isSoftRedirect:
+                            isSozai = 1
+                        else:
+                            isSozai = 0
+                    except :
+                        print("カテゴリ取得失敗。リトライ")
+                        break
                     try:
                         # リソース取得
                         d_resource = info_data["query"]["pages"][p_str]["length"]
@@ -259,7 +265,11 @@ class Gacha:
                         for dayView in info_data["query"]["pages"][p_str]["pageviews"]:
                             if info_data["query"]["pages"][p_str]["pageviews"][dayView] != None:
                                 a_resource = a_resource + info_data["query"]["pages"][p_str]["pageviews"][dayView]
-                        # URL関連取得
+                    except:
+                        print("リソース取得失敗。リトライ")
+                        break
+                    try:
+                        # URL取得
                         if "thumbnail" in info_data["query"]["pages"][p_str]:
                             image_url = info_data["query"]["pages"][p_str]["thumbnail"]["source"]
                         else:
@@ -267,10 +277,8 @@ class Gacha:
                         full_url = info_data["query"]["pages"][p_str]["fullurl"]
                         query = True
                     except:
-                        #最新すぎる記事は情報取得できないケースがある。
-                        #その場合は以降の処理をすべて行わず、引いた数もカウントアップしない。
-                        print("クエリ取得できない記事。リトライします。")
-                        query = False
+                        print("URL取得失敗。リトライ")
+                        break
                 if query:
                     if isSozai == 0:
                         defence, atk, hitPoint = calc_status(d_resource, a_resource, rank)
@@ -380,8 +388,8 @@ class Gacha:
             title_padding=ft.Padding.all(10),
         )
         self.page.show_dialog(self.dialog)
-    # 画面作成
     def create(self):
+        """画面作成"""
         gacha_container=ft.Column(
             alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -390,7 +398,6 @@ class Gacha:
                 ft.Container(
                     width=200,
                     height=420,
-                    bgcolor=ft.Colors.ON_PRIMARY ,
                     content=ft.Image(
                         src="gacha.png",
                         fit=ft.BoxFit.CONTAIN,

@@ -4,8 +4,10 @@ import asyncio
 from zukan import Zukan
 from gacha import Gacha
 from powerup import PowerUp
+from setting import Setting
 
 from utils.db import initialize_db
+from utils.manage_settings import get_dark_theme
 
 async def main(page: ft.Page):
     # event: タブ切り替え
@@ -99,7 +101,7 @@ async def main(page: ft.Page):
                 tab_bar_view.controls[1] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             except Exception:
                 pass
-            # 図鑑と同じオーバーレイを表示して読み込み中にUIを覆う
+            # 図鑑と同じオーバーレイを表示して読み込み中に UI を覆う
             overlay = page.overlay[1]
             overlay.visible = True
             page.update()
@@ -130,6 +132,18 @@ async def main(page: ft.Page):
             except Exception:
                 pass
             tab_bar_view.update()
+        # 設定タブに切り替えたとき
+        if e.control.selected_index == 4:
+            # 図鑑・強化の中身をクリアしておく（メモリ節約）
+            try:
+                tab_bar_view.controls[1] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
+            except Exception:
+                pass
+            try:
+                tab_bar_view.controls[2] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
+            except Exception:
+                pass
+            tab_bar_view.update()
         # 最後に last_tab_index を更新
         last_tab_index = e.control.selected_index
     ####################
@@ -145,13 +159,17 @@ async def main(page: ft.Page):
     page.window.resizable = False
     page.window.maximizable = False
     page.window.visible = True
-    page.bgcolor = ft.Colors.ON_PRIMARY
     page.title = "Wikipedia Card Collection"
-    #page.theme_mode = ft.ThemeMode.DARK
+    # ダークテーマ対応：初期化
+    dark_theme_enabled = get_dark_theme()
+    if dark_theme_enabled:
+        page.theme_mode = ft.ThemeMode.DARK
+    else:
+        page.theme_mode = ft.ThemeMode.LIGHT
     page.update()
     # 初期 last_tab_index を設定
     last_tab_index = 0
-    # オーバーレイ[0]：ガチャ用ローディング画面（進捗バー＋カウンタ）
+    # オーバーレイ [0]：ガチャ用ローディング画面（進捗バー＋カウンタ）
     gacha_overlay_counter = ft.Text("0/0", size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE)
     gacha_overlay_progress = ft.ProgressBar(width=300, height=12, value=0)
     gacha_overlay = ft.Container(
@@ -165,11 +183,11 @@ async def main(page: ft.Page):
                 ft.Stack(
                     alignment=ft.Alignment.CENTER,
                     controls=[
-                        ft.Image("gacha_spin1.png",scale=ft.Scale(scale_x=0.88, scale_y=0.88), visible=True),
-                        ft.Image("gacha_spin2.png",scale=ft.Scale(scale_x=0.88, scale_y=0.88), visible=True),
-                        ft.Image("gacha_spin3.png",scale=ft.Scale(scale_x=0.88, scale_y=0.88), visible=True),
-                        ft.Image("gacha_spin4.png",scale=ft.Scale(scale_x=0.88, scale_y=0.88), visible=True),
-                        ft.Image("gacha_spin5.png",scale=ft.Scale(scale_x=0.88, scale_y=0.88), visible=True),
+                        ft.Image("gacha_spin1.png", scale=ft.Scale(scale_x=0.88, scale_y=0.88), visible=True),
+                        ft.Image("gacha_spin2.png", scale=ft.Scale(scale_x=0.88, scale_y=0.88), visible=True),
+                        ft.Image("gacha_spin3.png", scale=ft.Scale(scale_x=0.88, scale_y=0.88), visible=True),
+                        ft.Image("gacha_spin4.png", scale=ft.Scale(scale_x=0.88, scale_y=0.88), visible=True),
+                        ft.Image("gacha_spin5.png", scale=ft.Scale(scale_x=0.88, scale_y=0.88), visible=True),
                     ]
                 ),
                 ft.Column(
@@ -185,7 +203,7 @@ async def main(page: ft.Page):
         ),
     )
     page.overlay.append(gacha_overlay)
-    # オーバーレイ[1]：図鑑、強化用ローディング画面
+    # オーバーレイ [1]：図鑑、強化用ローディング画面
     zukan_overlay = ft.Container(
         visible=False,
         expand=True,
@@ -200,18 +218,19 @@ async def main(page: ft.Page):
         ),
     )
     page.overlay.append(zukan_overlay)
-    # オーバーレイ[2]：強化実行エフェクト用(予約)
-    powerup_overlay_dummy = ft.Container(visible=False,content=None)
+    # オーバーレイ [2]：強化実行エフェクト用 (予約)
+    powerup_overlay_dummy = ft.Container(visible=False, content=None)
     page.overlay.append(powerup_overlay_dummy)
-    # ガチャタブの中身のクラス生成
+    # ガチャタブ、設定タブの中身のクラス生成
     gacha = Gacha(page)
-    # DBがない場合初期作成する
+    setting = Setting(page)
+    # DB がない場合初期作成する
     initialize_db()
     # ページに要素追加
     page.controls.append(
         ft.Tabs(
             selected_index=0,
-            length=4,
+            length=5,  # ガチャ・図鑑・強化・バトル・設定 の 5 タブ
             expand=True,
             on_change=_change_tabs,
             content=ft.Column(
@@ -224,26 +243,31 @@ async def main(page: ft.Page):
                             ft.Tab(label="図鑑", icon=ft.Icons.ARTICLE),
                             ft.Tab(label="強化", icon=ft.Icons.ADD_MODERATOR),
                             ft.Tab(label="バトル", icon=ft.Icons.BATCH_PREDICTION),
+                            ft.Tab(label="設定", icon=ft.Icons.SETTINGS),
                         ],
                     ),
                     ft.TabBarView(
                         expand=True,
                         controls=[
-                            ft.Container(   #ガチャ
+                            ft.Container(   # ガチャ
                                 alignment=ft.Alignment.CENTER,
-                                content=gacha.create(), #最初の画面かつこの画面でデータの再読み込みの必要はないのでこれでよい。
+                                content=gacha.create(),
                             ),
-                            ft.Container(   #図鑑
+                            ft.Container(   # 図鑑
                                 alignment=ft.Alignment.CENTER,
-                                content=None, #初期状態は空
+                                content=None,
                             ),
-                            ft.Container(   #強化
+                            ft.Container(   # 強化
                                 alignment=ft.Alignment.CENTER,
-                                content=None, #初期状態は空
+                                content=None,
                             ),
-                            ft.Container(   #バトル
+                            ft.Container(   # バトル
                                 alignment=ft.Alignment.CENTER,
-                                content=ft.Text("未実装"), #まだ未実装なので・・・
+                                content=ft.Text("未実装"),
+                            ),
+                            ft.Container(   # 設定
+                                alignment=ft.Alignment.CENTER,
+                                content=setting.create(),
                             ),
                         ],
                     ),
@@ -253,5 +277,6 @@ async def main(page: ft.Page):
     )
     # 念のためここでも更新を掛ける
     page.update()
+
 if __name__ == "__main__":
     ft.run(main, view=ft.AppView.FLET_APP_HIDDEN, assets_dir="assets")

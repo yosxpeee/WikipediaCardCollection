@@ -3,8 +3,8 @@ import webbrowser
 
 from utils.db import update_favorite
 
-# ランクからカードの色を決める
 def get_card_color(rank, isSozai):
+    """ランクからカードの色を決める"""
     if isSozai == 1:
         color = ft.Colors.ORANGE
     else:
@@ -23,9 +23,10 @@ def get_card_color(rank, isSozai):
         else: #C
             color = ft.Colors.LIME_900
     return color
-# カードイメージの作成
 def create_card_image(data, isShow, on_fav_changed=None):
+    """カードイメージの作成"""
     def _on_fav_click(e):
+        """お気に入りボタンクリックの処理"""
         # 一時的に無効化して多重クリックを防ぐ
         fav_icon.disabled = True
         fav_icon.update()

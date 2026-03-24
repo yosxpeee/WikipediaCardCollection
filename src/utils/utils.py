@@ -17,8 +17,8 @@ RANK_TABLE = {
     6: "LR",
 }
 
-# HTTPリクエスト(API)
 def do_api(url):
+    """HTTPリクエスト(API)"""
     while True:
         try:
             #print(url)
@@ -30,8 +30,8 @@ def do_api(url):
             break
     return response
 
-# 非同期でブロッキングなHTTP呼び出しをスレッドで実行するヘルパー
 async def fetch_json(url, key_path=None):
+    """非同期でブロッキングなHTTP呼び出しをスレッドで実行するヘルパー"""
     def _call():
         r = do_api(url)
         j = r.json()
@@ -43,20 +43,20 @@ async def fetch_json(url, key_path=None):
         return v
     return await asyncio.to_thread(_call)
 
-#rank to rankid
 def rankid_to_rank(rankId, isSozai):
+    """rank to rankid"""
     if isSozai == 1:
         return RANK_TABLE[-1]
     else:
         return RANK_TABLE[int(rankId)]
 
-#rankid to rank
 def rank_to_rankid(rank):
+    """rankid to rank"""
     key = next((k for k, v in RANK_TABLE.items() if v == rank), None)
     return key
 
-#リソースからATK,DEF,HPの計算
 def calc_status(d_resource, a_resource, rank):
+    """リソースからATK,DEF,HPの計算"""
     #rankから掛け算の補正を決める
     if rank == "LR":
         atk_multi = 25
