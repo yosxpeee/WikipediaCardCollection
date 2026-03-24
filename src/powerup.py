@@ -51,8 +51,8 @@ class PowerUp:
                     ft.Container(
                         width=120,
                         height=140,
-                        top=0,
                         left=0,
+                        top=0,
                         border_radius=8,
                         alignment=ft.Alignment.CENTER,
                         bgcolor=get_card_color(rankid_to_rank(next_rankid-1, 0) ,0),
@@ -70,8 +70,8 @@ class PowerUp:
                     ft.Container(
                         width=120,
                         height=140,
-                        top=1024-140,
-                        left=768-120,
+                        left=768-134,
+                        top=1024-180,
                         border_radius=8,
                         alignment=ft.Alignment.CENTER,
                         bgcolor=ft.Colors.ORANGE,
@@ -302,8 +302,18 @@ class PowerUp:
                             # ハイライト更新
                             for c in target_containers:
                                 c.bgcolor = None
+                                c.content.controls[0].color = None
+                                c.content.controls[2].color = None
+                                c.content.controls[4].color = None
+                                c.content.controls[5].color = None
+                                c.content.controls[6].color = None
                                 c.update()
                             cont.bgcolor = ft.Colors.YELLOW_100
+                            cont.content.controls[0].color = ft.Colors.BLACK
+                            cont.content.controls[2].color = ft.Colors.BLACK
+                            cont.content.controls[4].color = ft.Colors.BLACK
+                            cont.content.controls[5].color = ft.Colors.BLACK
+                            cont.content.controls[6].color = ft.Colors.BLACK
                             cont.update()
                         cont.on_click = _on_target_click
                         lv.controls.append(cont)
@@ -375,8 +385,12 @@ class PowerUp:
                         selected_sozai_text.update()
                         for c in sozai_containers:
                             c.bgcolor = None
+                            c.content.controls[0].color = None
+                            c.content.controls[1].color = None
                             c.update()
                         cont.bgcolor = ft.Colors.YELLOW_100
+                        cont.content.controls[0].color = ft.Colors.BLACK
+                        cont.content.controls[1].color = ft.Colors.BLACK
                         cont.update()
                     cont.on_click = _on_sozai_click
                     sozai_lv.controls.append(cont)

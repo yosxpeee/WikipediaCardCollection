@@ -122,12 +122,14 @@ def create_card_image(data, isShow, on_fav_changed=None):
             )
         elif data["rank"] == "R" or data["rank"] == "SR":
             rank_text = ft.Text(
-                f"{data['rank']}", 
+                f"{data['rank']}",
+                color=ft.Colors.BLACK,
                 weight=ft.FontWeight.BOLD
             )
         else:
             rank_text = ft.Text(
-                f"{data['rank']}"
+                f"{data['rank']}",
+                color=ft.Colors.BLACK,
             )
         title = ft.Row(
             spacing=0,
@@ -188,6 +190,7 @@ def create_card_image(data, isShow, on_fav_changed=None):
     # 安全なクリックハンドラを作成（連打時の不整合を防ぐ）
     fav_icon = ft.IconButton(
         icon=ft.Icons.STAR if data.get("favorite") == 1 else ft.Icons.STAR_BORDER,
+        icon_color=ft.Colors.BLACK,
         scale=ft.Scale(scale=0.75),
         bgcolor=ft.Colors.with_opacity(0.25, ft.Colors.WHITE),
     )
@@ -239,17 +242,17 @@ def create_card_image(data, isShow, on_fav_changed=None):
     if data["isSozai"]:
         statuses = ft.Column(
             controls=[
-                ft.Text(f"HP : -    ",size=24, font_family="Consolas"),
-                ft.Text(f"ATK: -    ",size=24, font_family="Consolas"),
-                ft.Text(f"DEF: -    ",size=24, font_family="Consolas"),
+                ft.Text(f"HP : -    ",size=24, font_family="Consolas",color=ft.Colors.BLACK ),
+                ft.Text(f"ATK: -    ",size=24, font_family="Consolas",color=ft.Colors.BLACK ),
+                ft.Text(f"DEF: -    ",size=24, font_family="Consolas",color=ft.Colors.BLACK ),
             ],
         )
     else:
         statuses = ft.Column(
             controls=[
-                ft.Text(f"HP : {data["HP"]}".ljust(10," "),  size=24,font_family="Consolas"),
-                ft.Text(f"ATK: {data["ATK"]}".ljust(10," "), size=24,font_family="Consolas"),
-                ft.Text(f"DEF: {data["DEF"]}".ljust(10," "), size=24,font_family="Consolas"),
+                ft.Text(f"HP : {data["HP"]}".ljust(10," "),  size=24,font_family="Consolas",color=ft.Colors.BLACK ),
+                ft.Text(f"ATK: {data["ATK"]}".ljust(10," "), size=24,font_family="Consolas",color=ft.Colors.BLACK ),
+                ft.Text(f"DEF: {data["DEF"]}".ljust(10," "), size=24,font_family="Consolas",color=ft.Colors.BLACK ),
             ],
         )
     #カードのベース色
@@ -318,6 +321,7 @@ def create_card_image(data, isShow, on_fav_changed=None):
                                     expand=True,
                                     content=ft.Text(
                                         data["extract"],
+                                        color=ft.Colors.BLACK,
                                         tooltip=data["extract"],
                                         max_lines=5,
                                         overflow=ft.TextOverflow.ELLIPSIS,
