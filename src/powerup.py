@@ -165,8 +165,8 @@ class PowerUp:
         # （create() の完了後に表示更新される想定）
     def popup_powerup_dialog(self, target_id, sozai_id):
         """強化の確認画面表示"""
-        # ダイアログのOKボタンイベント
         def _on_ok(target_id, next_rankid, atk, defence, hp, sozai_id):
+            """ダイアログのOKボタンイベント"""
             self.page.pop_dialog()
             asyncio.create_task(self.do_powerup(target_id, next_rankid, atk, defence, hp, sozai_id))
         # 状態チェック
@@ -295,6 +295,7 @@ class PowerUp:
                             ),
                         )
                         def _on_target_click(e, cid=cid, name=name, rk=rk, cont=cont):
+                            """対象リストをクリックしたときの処理"""
                             nonlocal selected_target_id
                             selected_target_id = cid
                             selected_target_text.value = f"{cid} [{rk}] {name}"
@@ -379,6 +380,7 @@ class PowerUp:
                         ),
                     )
                     def _on_sozai_click(e, cid=cid, name=name, cont=cont):
+                        """素材リストをクリックしたときの処理"""
                         nonlocal selected_sozai_id
                         selected_sozai_id = cid
                         selected_sozai_text.value = f"{cid} : {name}"
