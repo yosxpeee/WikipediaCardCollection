@@ -489,6 +489,7 @@ class Zukan:
                 label_style=ft.TextStyle(
                     size=12,
                 ),
+                border_color=ft.Colors.GREY,
                 min_lines=1, 
                 max_lines=1, 
                 height=24,
@@ -509,6 +510,7 @@ class Zukan:
             # ソートUI: ドロップダウン + ラジオ（昇順/降順）
             dropdown = ft.Dropdown(
                 width=160,
+                border_color=ft.Colors.GREY,
                 value="id",
                 label="ソート",
                 options=[
@@ -576,6 +578,7 @@ class Zukan:
                 label_style=ft.TextStyle(
                     size=14,
                 ),
+                border_color=ft.Colors.GREY,
                 min_lines=1, 
                 max_lines=1, 
                 height=36,
@@ -603,7 +606,7 @@ class Zukan:
                             ft.ShaderMask(
                                 content=ft.Container(
                                     border=ft.Border.all(0),
-                                    width=728,
+                                    width=738,
                                     height=876,
                                     alignment=ft.Alignment.CENTER,
                                     bgcolor=ft.Colors.ON_PRIMARY,
