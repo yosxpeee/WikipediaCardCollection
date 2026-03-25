@@ -41,9 +41,11 @@ async def main(page: ft.Page):
                     alignment=ft.Alignment.CENTER,
                 )
                 tab_bar_view.update()
-            except Exception:
+            except Exception as ex:
+                # エラー内容を表示してデバッグしやすくする
                 tab_bar_view.controls[2] = ft.Column([
                     ft.Text("読み込みに失敗しました。"),
+                    ft.Text(str(ex)),
                 ])
                 tab_bar_view.update()
             tabs_widget.disabled = False

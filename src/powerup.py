@@ -198,7 +198,7 @@ class PowerUp:
                 if r == next_rankid:
                     simulate_data.append(
                         ft.Text(
-                            f"{rankid_to_rank(r, 0).ljust(3, " ")} | HP:{str(hp).ljust(5, " ")} ATK:{str(atk).ljust(5, " ")} DEF:{str(defence).ljust(5, " ")}", 
+                            f"{rankid_to_rank(r, 0).ljust(3, ' ')} | HP:{str(hp).ljust(5, ' ')} ATK:{str(atk).ljust(5, ' ')} DEF:{str(defence).ljust(5, ' ')}", 
                             font_family="Consolas",
                             color=ft.Colors.RED
                         )
@@ -206,7 +206,7 @@ class PowerUp:
                 else:
                     simulate_data.append(
                         ft.Text(
-                            f"{rankid_to_rank(r, 0).ljust(3, " ")} | HP:{str(hp).ljust(5, " ")} ATK:{str(atk).ljust(5, " ")} DEF:{str(defence).ljust(5, " ")}",
+                            f"{rankid_to_rank(r, 0).ljust(3, ' ')} | HP:{str(hp).ljust(5, ' ')} ATK:{str(atk).ljust(5, ' ')} DEF:{str(defence).ljust(5, ' ')}",
                             font_family="Consolas",
                         )
                     )
@@ -277,104 +277,137 @@ class PowerUp:
                     auto_scroll=False, 
                     controls=[]
                 )
-                # DB から先に絞り込んだ結果を使う
-                for row in all_cards_by_rank.get(rk, []):
-                    # row: (id, pageId, title, pageUrl, imageUrl, rank, quality, isSozai, extract, HP, ATK, DEF, ...)
-                    # ここでは already filtered by rank & isSozai
-                        cid = row[0]
-                        name = row[2] or ""
-                        hp = row[9] if row[9] is not None else "-"
-                        atk = row[10] if row[10] is not None else "-"
-                        deff = row[11] if row[11] is not None else "-"
-                        cont = ft.Container(
-                            padding=ft.Padding(top=0, left=6, right=6, bottom=0),
-                            bgcolor=None,
-                            content=ft.Row(
-                                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                                controls=[
-                                    ft.Text(str(cid).ljust(8, " "), font_family="Consolas"),
-                                    ft.Container(width=10),
-                                    ft.Text(name, expand=True, tooltip=name, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
-                                    ft.Container(width=10),
-                                    ft.Text(str(hp).ljust(5, " "), font_family="Consolas"),
-                                    ft.Text(str(atk).ljust(5, " "), font_family="Consolas"),
-                                    ft.Text(str(deff).ljust(5, " "), font_family="Consolas"),
-                                ],
-                            ),
-                        )
-                        def _on_target_click(e, cid=cid, name=name, rk=rk, cont=cont):
-                            """対象リストをクリックしたときの処理"""
-                            nonlocal selected_target_id
-                            selected_target_id = cid
-                            selected_target_text.value = f"{cid} [{rk}] {name}"
-                            selected_target_text.update()
-                            # ハイライト更新
-                            for c in target_containers:
-                                c.bgcolor = None
+                # フィルタ/ソート/検索UIを個別に生成してから表示データを構築する
+                sort_dd = ft.Dropdown(
+                    margin=ft.Margin.all(0),
+                    border_color=ft.Colors.GREY,
+                    value="id",
+                    options=[
+                        ft.DropdownOption(key="id",   text="ID順"),
+                        ft.DropdownOption(key="name", text="名前順"),
+                        ft.DropdownOption(key="HP",   text="HP順"),
+                        ft.DropdownOption(key="ATK",  text="ATK順"),
+                        ft.DropdownOption(key="DEF",  text="DEF順"),
+                    ],
+                    editable=False,
+                )
+                sort_rg = ft.RadioGroup(
+                    content=ft.Column(
+                        spacing=0,
+                        scale=ft.Scale(scale=0.75),
+                        controls=[
+                            ft.Radio(label="昇順", value="asc"), 
+                            ft.Radio(label="降順", value="desc")
+                        ]
+                    ),
+                    value="asc",
+                )
+                search_tf = ft.TextField(
+                    value="",
+                    label="カード名検索",
+                    label_style=ft.TextStyle(size=14),
+                    border_color=ft.Colors.GREY,
+                    min_lines=1, 
+                    max_lines=1, 
+                    height=36,
+                    text_size=13,
+                    suffix_icon=ft.IconButton(icon=ft.Icons.BACKSPACE, scale=ft.Scale(scale=0.75), opacity=0.5),
+                    expand=True,
+                )
+
+                def build_row_cont(row):
+                    cid = row[0]
+                    name = row[2] or ""
+                    hp = row[9] if row[9] is not None else "-"
+                    atk = row[10] if row[10] is not None else "-"
+                    deff = row[11] if row[11] is not None else "-"
+                    cont = ft.Container(
+                        padding=ft.Padding(top=0, left=6, right=6, bottom=0),
+                        bgcolor=None,
+                        content=ft.Row(
+                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                            controls=[
+                                ft.Text(str(cid).ljust(8, " "), font_family="Consolas"),
+                                ft.Container(width=10),
+                                ft.Text(name, expand=True, tooltip=name, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
+                                ft.Container(width=10),
+                                ft.Text(str(hp).ljust(5, " "), font_family="Consolas"),
+                                ft.Text(str(atk).ljust(5, " "), font_family="Consolas"),
+                                ft.Text(str(deff).ljust(5, " "), font_family="Consolas"),
+                            ],
+                        ),
+                    )
+                    def _on_target_click(e, cid=cid, name=name, rk=rk, cont=cont):
+                        nonlocal selected_target_id
+                        selected_target_id = cid
+                        selected_target_text.value = f"{cid} [{rk}] {name}"
+                        selected_target_text.update()
+                        for c in target_containers:
+                            c.bgcolor = None
+                            try:
                                 c.content.controls[0].color = None
                                 c.content.controls[2].color = None
                                 c.content.controls[4].color = None
                                 c.content.controls[5].color = None
                                 c.content.controls[6].color = None
-                                c.update()
-                            cont.bgcolor = ft.Colors.YELLOW_100
+                            except Exception:
+                                pass
+                            c.update()
+                        cont.bgcolor = ft.Colors.YELLOW_100
+                        try:
                             cont.content.controls[0].color = ft.Colors.BLACK
                             cont.content.controls[2].color = ft.Colors.BLACK
                             cont.content.controls[4].color = ft.Colors.BLACK
                             cont.content.controls[5].color = ft.Colors.BLACK
                             cont.content.controls[6].color = ft.Colors.BLACK
-                            cont.update()
-                        cont.on_click = _on_target_click
+                        except Exception:
+                            pass
+                        cont.update()
+                    cont.on_click = _on_target_click
+                    return cont
+
+                def refresh_lv(e=None, rk=rk, lv=lv, sort_dd=sort_dd, sort_rg=sort_rg, search_tf=search_tf):
+                    rows = all_cards_by_rank.get(rk, [])
+                    q = (search_tf.value or "").strip().lower()
+                    key = sort_dd.value or "id"
+                    order_desc = (sort_rg.value == "desc")
+                    # フィルタ
+                    filtered = []
+                    for row in rows:
+                        name = (row[2] or "").lower()
+                        if q == "" or q in name:
+                            filtered.append(row)
+                    # ソート
+                    def keyfunc(r):
+                        try:
+                            if key == "id":
+                                return int(r[0])
+                            if key == "name":
+                                return (r[2] or "").lower()
+                            if key == "HP":
+                                return int(r[9]) if r[9] is not None and str(r[9]).isdigit() else -1
+                            if key == "ATK":
+                                return int(r[10]) if r[10] is not None and str(r[10]).isdigit() else -1
+                            if key == "DEF":
+                                return int(r[11]) if r[11] is not None and str(r[11]).isdigit() else -1
+                        except Exception:
+                            return 0
+                        return 0
+                    filtered.sort(key=keyfunc, reverse=order_desc)
+                    # 再構築
+                    lv.controls.clear()
+                    for row in filtered:
+                        cont = build_row_cont(row)
                         lv.controls.append(cont)
                         target_containers.append(cont)
-                # ヘッダ（ListView の外に置くことでスクロール時に固定される）
+                    if len(lv.controls) == 0:
+                        lv.controls.append(ft.Container(padding=ft.Padding.all(8), content=ft.Text("対象が見つかりません")))
+
+                # sort_ui に実際のコントロールを渡す
                 sort_ui = ft.Row(
                     spacing=4,
                     alignment=ft.MainAxisAlignment.CENTER,
-                    controls=[
-                        ft.Dropdown(
-                            margin=ft.Margin.all(0),
-                            border_color=ft.Colors.GREY,
-                            value="id",
-                            options=[
-                                ft.DropdownOption(key="id",   text="ID順"),
-                                ft.DropdownOption(key="name", text="名前順"),
-                                ft.DropdownOption(key="HP",   text="HP順"),
-                                ft.DropdownOption(key="ATK",  text="ATK順"),
-                                ft.DropdownOption(key="DEF",  text="DEF順"),
-                            ],
-                            editable=False,
-                        ),
-                        ft.RadioGroup(
-                            content=ft.Column(
-                                spacing=0,
-                                scale=ft.Scale(scale=0.75),
-                                controls=[
-                                    ft.Radio(label="昇順", value="asc"), 
-                                    ft.Radio(label="降順", value="desc")
-                                ]
-                            ),
-                            value="asc",
-                        ),
-                        ft.TextField(
-                            value="",
-                            label="カード名検索",
-                            label_style=ft.TextStyle(
-                                size=14,
-                            ),
-                            border_color=ft.Colors.GREY,
-                            min_lines=1, 
-                            max_lines=1, 
-                            height=36,
-                            text_size=13,
-                            suffix_icon=ft.IconButton(
-                                icon=ft.Icons.BACKSPACE,
-                                scale=ft.Scale(scale=0.75),
-                                opacity=0.5,
-                            ),
-                            expand=True,
-                        )
-                    ],
+                    controls=[sort_dd, sort_rg, search_tf],
                 )
                 header = ft.Container(
                     padding=ft.Padding.all(6),
@@ -407,9 +440,12 @@ class PowerUp:
                         ), 
                     ),
                 )
-                # 素材一覧が空ならプレースホルダを表示
-                if len(lv.controls) == 0:
-                    lv.controls.append(ft.Container(padding=ft.Padding.all(8), content=ft.Text("対象が見つかりません")))
+                # 初期表示を構築
+                # イベントに bind
+                sort_dd.on_select = refresh_lv
+                sort_rg.on_change = refresh_lv
+                search_tf.on_change = refresh_lv
+                refresh_lv()
             target_tab = ft.Tabs(
                 selected_index=0,
                 length=len(ranks),
