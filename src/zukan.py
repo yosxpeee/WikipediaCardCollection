@@ -531,8 +531,9 @@ class Zukan:
                     spacing=0,
                     controls=[
                         ft.Radio(label="昇順", value="asc"), 
-                        ft.Radio(label="降順", value="desc")]
-                    ),
+                        ft.Radio(label="降順", value="desc")
+                    ]
+                ),
                 value="asc",
             )
             radio_group.on_change = _on_radio_change

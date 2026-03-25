@@ -1,7 +1,7 @@
 import flet as ft
 import asyncio
-from utils.db import get_all_cards, get_card_from_id, rankup_card
-from utils.utils import RANK_TABLE, rankid_to_rank, calc_status
+from utils.db import get_card_from_id, rankup_card, get_cards_by_rankid, get_cards_by_sozai
+from utils.utils import RANK_TABLE, rankid_to_rank, rank_to_rankid, calc_status
 from utils.ui import get_card_color, create_card_image
 
 class PowerUp:
@@ -251,9 +251,17 @@ class PowerUp:
         selected_target_id = -1
         selected_sozai_id = -1
         try:
-            # DB からカードを非同期で取得（ブロッキング回避）
-            all_cards = await asyncio.to_thread(get_all_cards)
+            # DB からカードを非同期で取得（ランクごとに分割して取得）
             ranks = ["UR", "SSR", "SR", "R", "UC", "C"]
+            # ランクごとにDBから必要な行だけ取得してメモリを分割する
+            all_cards_by_rank = {}
+            for rk in ranks:
+                rid = rank_to_rankid(rk)
+                # isSozai == 0 の通常カードだけ取得
+                rows = await asyncio.to_thread(get_cards_by_rankid, rid, 0)
+                all_cards_by_rank[rk] = rows
+            # 素材一覧は別途取得しておく
+            sozai_all = await asyncio.to_thread(get_cards_by_sozai, 1)
             # 表示用テキスト
             selected_target_text = ft.Text("",no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS, bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.GREY_500))
             selected_sozai_text = ft.Text("",no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS, bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.ORANGE))
@@ -269,10 +277,10 @@ class PowerUp:
                     auto_scroll=False, 
                     controls=[]
                 )
-                for row in all_cards:
+                # DB から先に絞り込んだ結果を使う
+                for row in all_cards_by_rank.get(rk, []):
                     # row: (id, pageId, title, pageUrl, imageUrl, rank, quality, isSozai, extract, HP, ATK, DEF, ...)
-                    row_rank = rankid_to_rank(row[5], row[7])
-                    if row_rank == rk and int(row[7]) == 0:
+                    # ここでは already filtered by rank & isSozai
                         cid = row[0]
                         name = row[2] or ""
                         hp = row[9] if row[9] is not None else "-"
@@ -320,6 +328,54 @@ class PowerUp:
                         lv.controls.append(cont)
                         target_containers.append(cont)
                 # ヘッダ（ListView の外に置くことでスクロール時に固定される）
+                sort_ui = ft.Row(
+                    spacing=4,
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    controls=[
+                        ft.Dropdown(
+                            margin=ft.Margin.all(0),
+                            border_color=ft.Colors.GREY,
+                            value="id",
+                            options=[
+                                ft.DropdownOption(key="id",   text="ID順"),
+                                ft.DropdownOption(key="name", text="名前順"),
+                                ft.DropdownOption(key="HP",   text="HP順"),
+                                ft.DropdownOption(key="ATK",  text="ATK順"),
+                                ft.DropdownOption(key="DEF",  text="DEF順"),
+                            ],
+                            editable=False,
+                        ),
+                        ft.RadioGroup(
+                            content=ft.Column(
+                                spacing=0,
+                                scale=ft.Scale(scale=0.75),
+                                controls=[
+                                    ft.Radio(label="昇順", value="asc"), 
+                                    ft.Radio(label="降順", value="desc")
+                                ]
+                            ),
+                            value="asc",
+                        ),
+                        ft.TextField(
+                            value="",
+                            label="カード名検索",
+                            label_style=ft.TextStyle(
+                                size=14,
+                            ),
+                            border_color=ft.Colors.GREY,
+                            min_lines=1, 
+                            max_lines=1, 
+                            height=36,
+                            text_size=13,
+                            suffix_icon=ft.IconButton(
+                                icon=ft.Icons.BACKSPACE,
+                                scale=ft.Scale(scale=0.75),
+                                opacity=0.5,
+                            ),
+                            expand=True,
+                        )
+                    ],
+                )
                 header = ft.Container(
                     padding=ft.Padding.all(6),
                     bgcolor=None,
@@ -340,9 +396,16 @@ class PowerUp:
                     ft.Container(
                         alignment=ft.Alignment.CENTER,
                         content=ft.Column(
-                            controls=[header, lv]
+                            spacing=1,
+                            controls=[
+                                sort_ui, 
+                                ft.Divider(height=1), 
+                                header, 
+                                ft.Divider(height=1), 
+                                lv
+                            ],
                         ), 
-                    )
+                    ),
                 )
                 # 素材一覧が空ならプレースホルダを表示
                 if len(lv.controls) == 0:
@@ -365,8 +428,8 @@ class PowerUp:
                 spacing=0, 
                 controls=[]
             )
-            for row in all_cards:
-                if int(row[7]) == 1:
+            for row in sozai_all:
+                # sozai_all は isSozai==1 の行のみ
                     cid = row[0]
                     name = row[2] or ""
                     cont = ft.Container(

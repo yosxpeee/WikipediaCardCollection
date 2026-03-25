@@ -61,6 +61,29 @@ def get_all_cards():
     conn.close()
     return data
 
+def get_cards_by_rankid(rankid, is_sozai=0):
+    """指定ランクIDかつ素材フラグで絞り込み取得
+
+    rankid: int (ランクID) - None を渡すとランク条件を無視
+    is_sozai: 0/1
+    """
+    conn = sqlite3.connect('cards.db')
+    cursor = conn.cursor()
+    data = []
+    if rankid is None:
+        sql = f"""SELECT * FROM gacha_cards WHERE isSozai == {int(is_sozai)}"""
+    else:
+        sql = f"""SELECT * FROM gacha_cards WHERE rank == {int(rankid)} AND isSozai == {int(is_sozai)}"""
+    cursor.execute(sql)
+    for item in cursor:
+        data.append(item)
+    conn.close()
+    return data
+
+def get_cards_by_sozai(is_sozai=1):
+    """素材フラグで絞り込み取得（isSozai=1 等）"""
+    return get_cards_by_rankid(None, is_sozai)
+
 def get_card_from_id(card_id):
     """指定idのデータ取得"""
     conn = sqlite3.connect('cards.db')
