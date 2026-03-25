@@ -311,8 +311,13 @@ class PowerUp:
                     max_lines=1, 
                     height=36,
                     text_size=13,
-                    suffix_icon=ft.IconButton(icon=ft.Icons.BACKSPACE, scale=ft.Scale(scale=0.75), opacity=0.5),
+                    suffix_icon=ft.IconButton(
+                        icon=ft.Icons.BACKSPACE, 
+                        scale=ft.Scale(scale=0.75), 
+                        opacity=0.5,
+                    ),
                     expand=True,
+                    
                 )
 
                 def build_row_cont(row):
@@ -442,9 +447,22 @@ class PowerUp:
                 )
                 # 初期表示を構築
                 # イベントに bind
-                sort_dd.on_select = refresh_lv
-                sort_rg.on_change = refresh_lv
-                search_tf.on_change = refresh_lv
+                sort_dd.on_select = refresh_lv      #選んだ時
+                sort_rg.on_change = refresh_lv      #切り替わったとき
+                search_tf.on_submit = refresh_lv    #入力後にEnterを押したとき
+                # クリアボタンの挙動を設定（クリックで入力を消して即時リフレッシュ）
+                def _on_search_clear(e, tf=search_tf, ref=refresh_lv):
+                    try:
+                        tf.value = ""
+                        ref()
+                        tf.update()
+                    except Exception:
+                        pass
+                if hasattr(search_tf, 'suffix_icon') and search_tf.suffix_icon is not None:
+                    try:
+                        search_tf.suffix_icon.on_click = _on_search_clear
+                    except Exception:
+                        pass
                 refresh_lv()
             target_tab = ft.Tabs(
                 selected_index=0,
