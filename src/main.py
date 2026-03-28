@@ -4,6 +4,7 @@ import asyncio
 from zukan import Zukan
 from gacha import Gacha
 from powerup import PowerUp
+from battle import Battle
 from setting import Setting
 
 from utils.db import initialize_db
@@ -226,6 +227,7 @@ async def main(page: ft.Page):
     # ガチャタブ、設定タブの中身のクラス生成
     gacha = Gacha(page)
     setting = Setting(page)
+    battle = Battle(page)
     # DB がない場合初期作成する
     initialize_db()
     # ページに要素追加
@@ -265,7 +267,7 @@ async def main(page: ft.Page):
                             ),
                             ft.Container(   # バトル
                                 alignment=ft.Alignment.CENTER,
-                                content=ft.Text("未実装"),
+                                content=battle.create(),
                             ),
                             ft.Container(   # 設定
                                 alignment=ft.Alignment.CENTER,

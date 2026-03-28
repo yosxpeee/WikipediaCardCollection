@@ -257,7 +257,6 @@ class PowerUp:
             all_cards_by_rank = {}
             for rk in ranks:
                 rid = rank_to_rankid(rk)
-                # isSozai == 0 の通常カードだけ取得
                 rows = await asyncio.to_thread(get_cards_by_rankid, rid, 0)
                 all_cards_by_rank[rk] = rows
             # 素材一覧は別途取得しておく
@@ -319,7 +318,6 @@ class PowerUp:
                     expand=True,
                     
                 )
-
                 def build_row_cont(row):
                     cid = row[0]
                     name = row[2] or ""
@@ -370,7 +368,6 @@ class PowerUp:
                         cont.update()
                     cont.on_click = _on_target_click
                     return cont
-
                 def refresh_lv(e=None, rk=rk, lv=lv, sort_dd=sort_dd, sort_rg=sort_rg, search_tf=search_tf):
                     rows = all_cards_by_rank.get(rk, [])
                     q = (search_tf.value or "").strip().lower()
@@ -407,7 +404,6 @@ class PowerUp:
                         target_containers.append(cont)
                     if len(lv.controls) == 0:
                         lv.controls.append(ft.Container(padding=ft.Padding.all(8), content=ft.Text("対象が見つかりません")))
-
                 # sort_ui に実際のコントロールを渡す
                 sort_ui = ft.Row(
                     spacing=4,
@@ -522,7 +518,7 @@ class PowerUp:
                 controls=[
                     ft.Stack(
                         controls=[
-                            ft.ShaderMask(
+                            ft.ShaderMask(      #バックグラウンド
                                 width=738,
                                 height=784,
                                 content=ft.Container(
@@ -542,7 +538,7 @@ class PowerUp:
                                 alignment=ft.MainAxisAlignment.CENTER,
                                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                                 controls=[
-                                    ft.Container(
+                                    ft.Container(       #左(対象)
                                         width=460,
                                         bgcolor=ft.Colors.with_opacity(0.1, ft.Colors.GREY_900),
                                         alignment=ft.Alignment.TOP_CENTER,
@@ -555,7 +551,7 @@ class PowerUp:
                                             ],
                                         ),
                                     ),
-                                    ft.Container(
+                                    ft.Container(       #右(素材)
                                         width=268,
                                         bgcolor=ft.Colors.with_opacity(0.1, ft.Colors.GREY_900),
                                         alignment=ft.Alignment.TOP_CENTER,
@@ -583,14 +579,14 @@ class PowerUp:
                             ),
                         ],
                     ),
-                    ft.Column(
+                    ft.Column(      #選択したアイテムの表示
                         spacing=0, 
                         controls=[
                             ft.Row(controls=[ft.Text("対象: "), selected_target_text]),
                             ft.Row(controls=[ft.Text("素材: "), selected_sozai_text]),
                         ]
                     ),
-                    ft.Container(
+                    ft.Container(   #強化実行ボタン
                         width=738,
                         height=35,
                         padding=ft.Padding.all(0),
