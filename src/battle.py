@@ -1,6 +1,6 @@
 import flet as ft
 import asyncio
-from utils.db import get_cards_by_rankid, get_cards_by_sozai
+from utils.db import get_cards_by_rankid, get_random_card_by_rank
 from utils.utils import rank_to_rankid
 
 class Battle:
@@ -34,15 +34,29 @@ class Battle:
                 upper_menu.content.controls[3].bgcolor = ft.Colors.BLUE
                 lower_screen.controls[3].visible = True
             self.page.update()
+        def select_npc_by_rank(rank):
+            """対戦相手選択処理"""
+            nonlocal selected_single_mock_npc_card_id
+            random = get_random_card_by_rank(rank_to_rankid(rank))
+            if len(random) == 0:
+                self.page.show_dialog(ft.SnackBar(ft.Text(f"{rank}ランクのカードを所有していません。"), duration=1500))
+            else:
+                selected_single_mock_npc_card_id = random[0][0]
+                selected_single_mock_npc_text.value = f"{random[0][0]} [{rank}] {random[0][2]}"
+                selected_single_mock_npc_text.update()
         ####################
         # 処理開始
         ####################
         # ローディングオーバーレイを表示
         self.loading_overlay.visible = True
         self.page.update()
-        selected_player_card_id = -1 #ここに選択したカードのIDを入れる
-        selected_npc_card_id = -1    #ここにランダムで選ばれたカードのIDを入れる
+        #各ページの選択カード格納場所
+        selected_single_mock_player_card_id = -1
+        selected_single_mock_npc_card_id    = -1
         try:
+            ########################################
+            # 模擬戦（シングル）のページ作成
+            ########################################
             # DB からカードを非同期で取得（ランクごとに分割して取得）
             ranks = ["LR", "UR", "SSR", "SR", "R", "UC", "C"]
             # ランクごとにDBから必要な行だけ取得してメモリを分割する
@@ -52,8 +66,8 @@ class Battle:
                 rows = await asyncio.to_thread(get_cards_by_rankid, rid, 0)
                 all_cards_by_rank[rk] = rows
             # 表示用テキスト
-            selected_target_text = ft.Text("",no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS, bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.GREY_500))
-            selected_sozai_text = ft.Text("",no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS, bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.ORANGE))
+            selected_single_mock_player_text = ft.Text("",no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS, bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.GREY_500))
+            selected_single_mock_npc_text = ft.Text("",no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS, bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.ORANGE))
             # コンテナ参照リスト（ハイライト更新用）
             target_containers = []
             # 左側：ランク別タブの ListView を作成
@@ -130,10 +144,10 @@ class Battle:
                         ),
                     )
                     def _on_target_click(e, cid=cid, name=name, rk=rk, cont=cont):
-                        nonlocal selected_player_card_id
-                        selected_player_card_id = cid
-                        selected_target_text.value = f"{cid} [{rk}] {name}"
-                        selected_target_text.update()
+                        nonlocal selected_single_mock_player_card_id
+                        selected_single_mock_player_card_id = cid
+                        selected_single_mock_player_text.value = f"{cid} [{rk}] {name}"
+                        selected_single_mock_player_text.update()
                         for c in target_containers:
                             c.bgcolor = None
                             try:
@@ -261,7 +275,7 @@ class Battle:
                     ],
                 ),
             )
-            # 強化タブ本体
+            # 模擬戦のページ本体
             single_mock = ft.Column(
                 controls=[
                     ft.Stack(
@@ -315,13 +329,13 @@ class Battle:
                                             controls=[
                                                 ft.Text("対戦相手",weight=ft.FontWeight.BOLD), 
                                                 ft.Divider(color=ft.Colors.GREY, height=1), 
-                                                ft.Button(ft.Text("  C級からランダムに選ぶ",font_family="Consolas")),
-                                                ft.Button(ft.Text(" UC級からランダムに選ぶ",font_family="Consolas")),
-                                                ft.Button(ft.Text("  R級からランダムに選ぶ",font_family="Consolas")),
-                                                ft.Button(ft.Text(" SR級からランダムに選ぶ",font_family="Consolas")),
-                                                ft.Button(ft.Text("SSR級からランダムに選ぶ",font_family="Consolas")),
-                                                ft.Button(ft.Text(" UR級からランダムに選ぶ",font_family="Consolas")),
-                                                ft.Button(ft.Text(" LR級からランダムに選ぶ",font_family="Consolas")),
+                                                ft.Button(ft.Text("  C級からランダムに選ぶ",font_family="Consolas"),on_click=lambda x:select_npc_by_rank("C")),
+                                                ft.Button(ft.Text(" UC級からランダムに選ぶ",font_family="Consolas"),on_click=lambda x:select_npc_by_rank("UC")),
+                                                ft.Button(ft.Text("  R級からランダムに選ぶ",font_family="Consolas"),on_click=lambda x:select_npc_by_rank("R")),
+                                                ft.Button(ft.Text(" SR級からランダムに選ぶ",font_family="Consolas"),on_click=lambda x:select_npc_by_rank("SR")),
+                                                ft.Button(ft.Text("SSR級からランダムに選ぶ",font_family="Consolas"),on_click=lambda x:select_npc_by_rank("SSR")),
+                                                ft.Button(ft.Text(" UR級からランダムに選ぶ",font_family="Consolas"),on_click=lambda x:select_npc_by_rank("UR")),
+                                                ft.Button(ft.Text(" LR級からランダムに選ぶ",font_family="Consolas"),on_click=lambda x:select_npc_by_rank("LR")),
                                             ]
                                         ),
                                     ),
@@ -332,8 +346,8 @@ class Battle:
                     ft.Column(      #選択したアイテムの表示
                         spacing=0, 
                         controls=[
-                            ft.Row(controls=[ft.Text("プレイヤー: "), selected_target_text]),
-                            ft.Row(controls=[ft.Text("対戦相手: "), selected_sozai_text]),
+                            ft.Row(controls=[ft.Text("プレイヤー: "), selected_single_mock_player_text]),
+                            ft.Row(controls=[ft.Text("対戦相手: "), selected_single_mock_npc_text]),
                         ]
                     ),
                     ft.Container(   #開始ボタン
@@ -342,11 +356,20 @@ class Battle:
                         padding=ft.Padding.all(0),
                         content=ft.Button(
                             "模擬戦開始", 
-                            #on_click=lambda x:self.popup_powerup_dialog(selected_player_card_id, selected_npc_card_id)
+                            #on_click=lambda x:self.popup_powerup_dialog(selected_single_mock_player_card_id, selected_single_mock_npc_card_id)
                         )
                     ),
                 ],
             )
+            ########################################
+            # 未実装1のページ作成
+            ########################################
+            ########################################
+            # 未実装2のページ作成
+            ########################################
+            ########################################
+            # 未実装3のページ作成
+            ########################################
             upper_menu = ft.Container(
                 alignment=ft.Alignment.CENTER,
                 width=738,

@@ -108,6 +108,18 @@ def get_card_from_pageid(pageid):
     conn.close()
     return data
 
+def get_random_card_by_rank(rank):
+    """指定ランクの中からランダムに1件取得"""
+    conn = sqlite3.connect('cards.db')
+    cursor = conn.cursor()
+    data = []
+    sql = f"""SELECT * FROM gacha_cards WHERE rank == {int(rank)} ORDER BY RANDOM() LIMIT 1"""
+    cursor.execute(sql)
+    for item in cursor:
+        data.append(item)
+    conn.close()
+    return data
+
 def update_favorite(card_id, value):
     """お気に入り状態の更新"""
     conn = sqlite3.connect('cards.db')
