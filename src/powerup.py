@@ -530,7 +530,13 @@ class PowerUp:
                                     content=None,
                                 ),
                                 blend_mode=ft.BlendMode.SRC_IN,
-                                shader=ft.RadialGradient(center=ft.Alignment.CENTER, radius=0.22, colors=[ft.Colors.ON_PRIMARY, ft.Colors.PRIMARY_CONTAINER, ft.Colors.ON_PRIMARY], stops=[0.2, 0.8, 1.0], tile_mode=ft.GradientTileMode.REPEATED),
+                                shader=ft.RadialGradient(
+                                    center=ft.Alignment.CENTER, 
+                                    radius=0.22, 
+                                    colors=[ft.Colors.ON_PRIMARY, ft.Colors.PRIMARY_CONTAINER, ft.Colors.ON_PRIMARY], 
+                                    stops=[0.2, 0.8, 1.0], 
+                                    tile_mode=ft.GradientTileMode.REPEATED
+                                ),
                             ),
                             ft.Row(
                                 width=738,
@@ -588,7 +594,7 @@ class PowerUp:
                     ),
                     ft.Container(   #強化実行ボタン
                         width=738,
-                        height=35,
+                        height=34,
                         padding=ft.Padding.all(0),
                         content=ft.Button(
                             "強化する", 
