@@ -4,7 +4,7 @@ import asyncio
 from zukan import Zukan
 from gacha import Gacha
 from powerup import PowerUp
-from battle import Battle
+from battle import MockBattle
 from setting import Setting
 
 from utils.db import initialize_db
@@ -53,7 +53,7 @@ async def main(page: ft.Page):
             ov = page.overlay[1]
             ov.visible = False
             page.update()
-        # バトルタブのロード
+        # 模擬戦タブのロード
         async def __load_and_set_battle():
             try:
                 content = await battle.create()
@@ -86,7 +86,7 @@ async def main(page: ft.Page):
             tab_bar_view.update()
         # 図鑑タブに切り替えたとき
         if e.control.selected_index == 1:
-            # 強化、バトルのタブの中身をクリア（メモリ節約）
+            # 強化、模擬戦のタブの中身をクリア（メモリ節約）
             tab_bar_view.controls[2] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             tab_bar_view.controls[3] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             # オーバーレイを即表示して画面操作をブロック
@@ -110,7 +110,7 @@ async def main(page: ft.Page):
                 tabs_widget.update()
         # 強化タブに切り替えたとき
         if e.control.selected_index == 2:
-            # 図鑑、バトルの中身をクリアしておく（メモリ節約）
+            # 図鑑、模擬戦の中身をクリアしておく（メモリ節約）
             tab_bar_view.controls[1] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             tab_bar_view.controls[3] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             # 図鑑と同じオーバーレイを表示して読み込み中に UI を覆う
@@ -132,7 +132,7 @@ async def main(page: ft.Page):
             except Exception:
                 tabs_widget.disabled = False
                 tabs_widget.update()
-        # バトルのタブに切り替えたとき
+        # 模擬戦のタブに切り替えたとき
         if e.control.selected_index == 3:
             # 図鑑・強化の中身をクリアしておく（メモリ節約）
             tab_bar_view.controls[1] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
@@ -144,9 +144,9 @@ async def main(page: ft.Page):
             # 読み込み中はタブ切替を禁止
             tabs_widget.disabled = True
             tabs_widget.update()
-            # 非同期で Battle.create() を呼んで差し替える
+            # 非同期で MockBattle.create() を呼んで差し替える
             try:
-                battle = Battle(page)
+                battle = MockBattle(page)
                 tab_bar_view.controls[3] = ft.Container(
                     content=ft.Text("読み込み中...", size=18),
                     alignment=ft.Alignment.CENTER,
@@ -158,7 +158,7 @@ async def main(page: ft.Page):
                 tabs_widget.update()
         # 設定タブに切り替えたとき
         if e.control.selected_index == 4:
-            # 図鑑・強化、バトルの中身をクリアしておく（メモリ節約）
+            # 図鑑・強化、模擬戦の中身をクリアしておく（メモリ節約）
             tab_bar_view.controls[1] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             tab_bar_view.controls[2] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             tab_bar_view.controls[3] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
@@ -243,14 +243,14 @@ async def main(page: ft.Page):
     # ガチャタブ、設定タブの中身のクラス生成
     gacha = Gacha(page)
     setting = Setting(page)
-    #battle = Battle(page)
+    #battle = MockBattle(page)
     # DB がない場合初期作成する
     initialize_db()
     # ページに要素追加
     page.controls.append(
         ft.Tabs(
             selected_index=0,
-            length=5,  # ガチャ・図鑑・強化・バトル・設定 の 5 タブ
+            length=5,
             expand=True,
             on_change=_change_tabs,
             content=ft.Column(
@@ -262,7 +262,7 @@ async def main(page: ft.Page):
                             ft.Tab(label="ガチャ", icon=ft.Icons.SHOPPING_BAG),
                             ft.Tab(label="図鑑", icon=ft.Icons.ARTICLE),
                             ft.Tab(label="強化", icon=ft.Icons.ADD_MODERATOR),
-                            ft.Tab(label="バトル", icon=ft.Icons.BATCH_PREDICTION),
+                            ft.Tab(label="模擬戦", icon=ft.Icons.BATCH_PREDICTION),
                             ft.Tab(label="設定", icon=ft.Icons.SETTINGS),
                         ],
                     ),
@@ -281,7 +281,7 @@ async def main(page: ft.Page):
                                 alignment=ft.Alignment.CENTER,
                                 content=None,
                             ),
-                            ft.Container(   # バトル
+                            ft.Container(   # 模擬戦
                                 alignment=ft.Alignment.CENTER,
                                 content=None,
                             ),

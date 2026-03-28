@@ -1,39 +1,95 @@
 import flet as ft
 import asyncio
-from utils.db import get_cards_by_rankid, get_random_card_by_rank
-from utils.utils import rank_to_rankid
+from utils.db import get_cards_by_rankid, get_random_card_by_rank, get_card_from_id
+from utils.ui import create_card_image
+from utils.utils import rank_to_rankid, rankid_to_rank
 
-class Battle:
+class MockBattle:
     def __init__(self, page):
         """初期化"""
         self.page = page
         # ローディングオーバーレイの参照を保持(図鑑のものを使いまわし)
         self.loading_overlay = page.overlay[1]
+    def popup_mock_battle_dialog(self, player_id, npc_id):
+        """模擬戦のダイアログ表示"""
+        def create_card_image_from_id(data):
+            rank = rankid_to_rank(data[0][5], 0)
+            rank_origin = rankid_to_rank(data[0][15], 0)
+            data_for_image = {
+                "id": data[0][0],
+                "pageId": data[0][1],
+                "title": data[0][2],
+                "pageUrl": data[0][3],
+                "imageUrl": data[0][4],
+                "rank": rank,
+                "quality": data[0][6],
+                "isSozai": data[0][7],
+                "extract": data[0][8],
+                "HP": data[0][9],
+                "ATK": data[0][10],
+                "DEF": data[0][11],
+                "favorite": data[0][12],
+                "resourceATK": data[0][13],
+                "resourceDEF": data[0][14],
+                "resourceRANK": rank_origin,
+            }
+            return create_card_image(data_for_image, True)
+        if player_id == -1:
+            return
+        if npc_id == -1:
+            return
+        #プレイヤーカードの取得
+        player_card = create_card_image_from_id(get_card_from_id(player_id))
+        npc_card = create_card_image_from_id(get_card_from_id(npc_id))
+        mock_battle_dialog = ft.AlertDialog(
+            modal=True,
+            expand=True,
+            content_padding=ft.Padding.all(10),
+            title=ft.Text("模擬戦"),
+            content=ft.Row(
+                spacing=0,
+                alignment=ft.MainAxisAlignment.CENTER,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                #horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                controls=[
+                    ft.Container(
+                        width=320,
+                        height=480,
+                        #scale=ft.Scale(scale=0.8),
+                        content=ft.Column(
+                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                            expand=True,
+                            controls=[
+                                player_card
+                            ],
+                        ),
+                        bgcolor=ft.Colors.GREY_100, border_radius=5,
+                        padding=ft.Padding.all(5),
+                    ),
+                    ft.Text("vs"),
+                    ft.Container(
+                        width=320,
+                        height=480,
+                        #scale=ft.Scale(scale=0.8),
+                        content=ft.Column(
+                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                            expand=True,
+                            controls=[
+                                npc_card,
+                            ],
+                        ),
+                        bgcolor=ft.Colors.GREY_100, border_radius=5,
+                        padding=ft.Padding.all(5),
+                    ),
+                ]
+            ),
+            actions=[
+                ft.TextButton("Close", on_click=lambda e: self.page.pop_dialog())
+            ]
+        )
+        self.page.show_dialog(mock_battle_dialog)
     async def create(self):
         """画面作成"""
-        def toggle_button(caller):
-            """ページ切り替え"""
-            upper_menu.content.controls[0].bgcolor = ft.Colors.GREY
-            upper_menu.content.controls[1].bgcolor = ft.Colors.GREY
-            upper_menu.content.controls[2].bgcolor = ft.Colors.GREY
-            upper_menu.content.controls[3].bgcolor = ft.Colors.GREY
-            lower_screen.controls[0].visible = False
-            lower_screen.controls[1].visible = False
-            lower_screen.controls[2].visible = False
-            lower_screen.controls[3].visible = False
-            if caller == "mock":
-                upper_menu.content.controls[0].bgcolor = ft.Colors.BLUE
-                lower_screen.controls[0].visible = True
-            elif caller == "unimplemented1":
-                upper_menu.content.controls[1].bgcolor = ft.Colors.BLUE
-                lower_screen.controls[1].visible = True
-            elif caller == "unimplemented2":
-                upper_menu.content.controls[2].bgcolor = ft.Colors.BLUE
-                lower_screen.controls[2].visible = True
-            else:
-                upper_menu.content.controls[3].bgcolor = ft.Colors.BLUE
-                lower_screen.controls[3].visible = True
-            self.page.update()
         def select_npc_by_rank(rank):
             """対戦相手選択処理"""
             nonlocal selected_single_mock_npc_card_id
@@ -282,11 +338,11 @@ class Battle:
                         controls=[
                             ft.ShaderMask(      #バックグラウンド
                                 width=738,
-                                height=784-160,
+                                height=784,
                                 content=ft.Container(
                                     border=ft.Border.all(0),
                                     width=738,
-                                    height=784-160,
+                                    height=784,
                                     alignment=ft.Alignment.CENTER,
                                     bgcolor=ft.Colors.ON_PRIMARY,
                                     content=None,
@@ -302,7 +358,7 @@ class Battle:
                             ),
                             ft.Row(
                                 width=738,
-                                height=784-160,
+                                height=784,
                                 alignment=ft.MainAxisAlignment.CENTER,
                                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                                 controls=[
@@ -356,147 +412,11 @@ class Battle:
                         padding=ft.Padding.all(0),
                         content=ft.Button(
                             "模擬戦開始", 
-                            #on_click=lambda x:self.popup_powerup_dialog(selected_single_mock_player_card_id, selected_single_mock_npc_card_id)
+                            on_click=lambda x:self.popup_mock_battle_dialog(selected_single_mock_player_card_id, selected_single_mock_npc_card_id)
                         )
                     ),
                 ],
             )
-            ########################################
-            # 未実装1のページ作成
-            ########################################
-            ########################################
-            # 未実装2のページ作成
-            ########################################
-            ########################################
-            # 未実装3のページ作成
-            ########################################
-            upper_menu = ft.Container(
-                alignment=ft.Alignment.CENTER,
-                width=738,
-                height=150,
-                bgcolor=ft.Colors.LIGHT_BLUE,
-                border_radius=50,
-                content=ft.Row(
-                    spacing=0,
-                    alignment=ft.MainAxisAlignment.CENTER,
-                    expand=True,
-                    controls=[
-                        ft.Container(
-                            bgcolor=ft.Colors.GREY,
-                            content=ft.Stack(
-                                alignment=ft.Alignment.CENTER,
-                                controls=[
-                                    ft.Image(
-                                        src="battle_mock.png",
-                                        width=150,
-                                        height=150,
-                                    ),
-                                    ft.Text("模擬戦", size=30, color=ft.Colors.WHITE),
-                                ],
-                            ),
-                            tooltip="所有するカード同士での1vs1のバトルを行います。",
-                            on_click=lambda:toggle_button("mock"),
-                        ),
-                        ft.Container(
-                            bgcolor=ft.Colors.GREY,
-                            content=ft.Stack(
-                                alignment=ft.Alignment.CENTER,
-                                controls=[
-                                    ft.Icon(
-                                        ft.Icons.BLOCK,
-                                        color=ft.Colors.BLACK,
-                                        size=150,
-                                    ),
-                                    ft.Text("未実装", size=30, color=ft.Colors.WHITE)
-                                ],
-                            ),
-                            on_click=lambda:toggle_button("unimplemented1"),
-                            disabled=True,
-                        ),
-                        ft.Container(
-                            bgcolor=ft.Colors.GREY,
-                            content=ft.Stack(
-                                alignment=ft.Alignment.CENTER,
-                                controls=[
-                                    ft.Icon(
-                                        ft.Icons.BLOCK,
-                                        color=ft.Colors.BLACK,
-                                        size=150,
-                                    ),
-                                    ft.Text("未実装", size=30, color=ft.Colors.WHITE)
-                                ],
-                            ),
-                            on_click=lambda:toggle_button("unimplemented2"),
-                            disabled=True,
-                        ),
-                        ft.Container(
-                            bgcolor=ft.Colors.GREY,
-                            content=ft.Stack(
-                                alignment=ft.Alignment.CENTER,
-                                controls=[
-                                    ft.Icon(
-                                        ft.Icons.BLOCK,
-                                        color=ft.Colors.BLACK,
-                                        size=150,
-                                    ),
-                                    ft.Text("未実装", size=30, color=ft.Colors.WHITE)
-                                ],
-                            ),
-                            on_click=lambda:toggle_button("unimplemented3"),
-                            disabled=True,
-                        ),
-                    ]
-                )
-            )
-            lower_screen = ft.Stack(
-                controls=[
-                    ft.Container(       #模擬戦(シングル)
-                        alignment=ft.Alignment.CENTER,
-                        width=738,
-                        height=720,
-                        bgcolor=ft.Colors.with_opacity(0.15, ft.Colors.GREY),
-                        border_radius=8,
-                        border=ft.Border.all(width=1, color=ft.Colors.GREY),
-                        visible=False,
-                        content=single_mock,
-                    ),
-                    ft.Container(       #未実装
-                        alignment=ft.Alignment.CENTER,
-                        width=738,
-                        height=720,
-                        bgcolor=ft.Colors.ORANGE,
-                        border_radius=8,
-                        border=ft.Border.all(width=1, color=ft.Colors.GREY),
-                        visible=False,
-                    ),
-                    ft.Container(       #未実装
-                        alignment=ft.Alignment.CENTER,
-                        width=738,
-                        height=720,
-                        bgcolor=ft.Colors.GREEN,
-                        border_radius=8,
-                        border=ft.Border.all(width=1, color=ft.Colors.GREY),
-                        visible=False,
-                    ),
-                    ft.Container(       #未実装
-                        alignment=ft.Alignment.CENTER,
-                        width=738,
-                        height=720,
-                        bgcolor=ft.Colors.PURPLE,
-                        border_radius=8,
-                        border=ft.Border.all(width=1, color=ft.Colors.GREY),
-                        visible=False,
-                    ),
-                ]
-            )
-            battle_tab = ft.Column(
-                controls=[
-                    upper_menu,
-                    lower_screen,
-                ],
-            )
-            #1つ目を選択しておく
-            toggle_button("mock"),
         finally:
             # ローディングオーバーレイを非表示（例外が起きても必ず閉じる）
             try:
@@ -504,4 +424,4 @@ class Battle:
                 self.page.update()
             except Exception:
                 pass
-        return battle_tab
+        return single_mock
