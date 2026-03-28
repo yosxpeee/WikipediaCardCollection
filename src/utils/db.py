@@ -113,7 +113,7 @@ def get_random_card_by_rank(rank):
     conn = sqlite3.connect('cards.db')
     cursor = conn.cursor()
     data = []
-    sql = f"""SELECT * FROM gacha_cards WHERE rank == {int(rank)} ORDER BY RANDOM() LIMIT 1"""
+    sql = f"""SELECT * FROM gacha_cards WHERE rank == {int(rank)} AND isSozai == 0 ORDER BY RANDOM() LIMIT 1"""
     cursor.execute(sql)
     for item in cursor:
         data.append(item)
