@@ -36,120 +36,57 @@ class MockBattle:
             return create_card_image(data_for_image, True), data_for_image
         async def mock_battle(player_data, npc_data):
             """模擬戦（非同期でUI更新しながら進行）"""
-            #print(f"########## {player_data['title']} vs {npc_data['title']} ##########")
             player_hp = int(player_data["HP"])
             npc_hp = int(npc_data["HP"])
             # 参照しやすいようにバーオブジェクトを取得
-            try:
-                row = mock_battle_dialog.content.controls[0]
-                player_bar = row.controls[0].controls[1]
-                npc_bar = row.controls[2].controls[1]
-                # log column: mock_battle_dialog.content.controls[1].content.controls[1]
-                try:
-                    log_col = mock_battle_dialog.content.controls[1].content.controls[2]
-                except Exception:
-                    log_col = None
-                # store max HP for normalization
-                if player_bar is not None:
-                    player_bar._max_hp = int(player_data["HP"]) if str(player_data["HP"]).isdigit() else int(player_data["HP"])
-                if npc_bar is not None:
-                    npc_bar._max_hp = int(npc_data["HP"]) if str(npc_data["HP"]).isdigit() else int(npc_data["HP"])
-            except Exception:
-                player_bar = None
-                npc_bar = None
-
+            row = mock_battle_dialog.content.controls[0]
+            player_bar = row.controls[0].controls[1]
+            npc_bar = row.controls[2].controls[1]
+            log_col = mock_battle_dialog.content.controls[1].content.controls[2]
+            if player_bar is not None:
+                player_bar._max_hp = int(player_data["HP"]) if str(player_data["HP"]).isdigit() else int(player_data["HP"])
+            if npc_bar is not None:
+                npc_bar._max_hp = int(npc_data["HP"]) if str(npc_data["HP"]).isdigit() else int(npc_data["HP"])
             for turn in range(30):
-                #print(f"#################### turn {turn+1}")
                 npc_dmg = calc_damage(player_data, npc_data, npc_hp)
-                #print(f"プレイヤー>NPCへのダメージ: {int(npc_dmg)}")
                 npc_hp -= int(npc_dmg)
                 if npc_hp <= 0:
                     npc_hp = 0
                     if npc_bar is not None:
-                        try:
-                            npc_bar.value = 0.0
-                        except Exception:
-                            npc_bar.value = 0
+                        npc_bar.value = 0.0
                     msg = f"Turn {turn+1}: プレイヤーの攻撃、NPCへ{int(npc_dmg)}ダメージを与えた。(NPCの残HP: 0)"
-                    #print(msg)
-                    #print("Winner: プレイヤー")
                     if log_col is not None:
-                        try:
-                            log_col.controls.append(ft.Text(msg))
-                        except Exception:
-                            pass
-                    # 更新してダイアログに反映
-                    try:
-                        if npc_bar is not None:
-                            # page.update でまとめて反映
-                            pass
-                        self.page.update()
-                    except Exception:
-                        pass
+                        log_col.controls.append(ft.Text(msg))
+                    self.page.update()
                     break
                 else:
                     if npc_bar is not None:
-                        try:
-                            max_hp = getattr(npc_bar, '_max_hp', None) or int(npc_data["HP"])
-                            npc_bar.value = max(0.0, float(npc_hp) / float(max_hp))
-                        except Exception:
-                            npc_bar.value = max(0, npc_hp)
+                        max_hp = getattr(npc_bar, '_max_hp', None) or int(npc_data["HP"])
+                        npc_bar.value = max(0.0, float(npc_hp) / float(max_hp))
                     msg = f"Turn {turn+1}: プレイヤーの攻撃、NPCへ{int(npc_dmg)}ダメージを与えた。(NPCの残HP: {npc_hp})"
-                    #print(msg)
                     if log_col is not None:
-                        try:
-                            log_col.controls.append(ft.Text(msg))
-                        except Exception:
-                            pass
-                    try:
-                        self.page.update()
-                    except Exception:
-                        pass
-
+                        log_col.controls.append(ft.Text(msg))
+                    self.page.update()
                 await asyncio.sleep(0.15)
-
                 player_dmg = calc_damage(npc_data, player_data, player_hp)
-                #print(f"NPC>プレイヤーへのダメージ: {int(player_dmg)}")
                 player_hp -= int(player_dmg)
                 if player_hp <= 0:
                     player_hp = 0
                     if player_bar is not None:
-                        try:
-                            player_bar.value = 0.0
-                        except Exception:
-                            player_bar.value = 0
+                        player_bar.value = 0.0
                     msg = f"Turn {turn+1}: NPCの攻撃、プレイヤーへ{int(player_dmg)}のダメージを与えた。(プレイヤーの残HP: 0)"
-                    #print(msg)
-                    #print("Winner: NPC")
                     if log_col is not None:
-                        try:
-                            log_col.controls.append(ft.Text(msg))
-                        except Exception:
-                            pass
-                    try:
-                        self.page.update()
-                    except Exception:
-                        pass
+                        log_col.controls.append(ft.Text(msg))
+                    self.page.update()
                     break
                 else:
                     if player_bar is not None:
-                        try:
-                            max_hp = getattr(player_bar, '_max_hp', None) or int(player_data["HP"])
-                            player_bar.value = max(0.0, float(player_hp) / float(max_hp))
-                        except Exception:
-                            player_bar.value = max(0, player_hp)
+                        max_hp = getattr(player_bar, '_max_hp', None) or int(player_data["HP"])
+                        player_bar.value = max(0.0, float(player_hp) / float(max_hp))
                     msg = f"Turn {turn+1}: NPCの攻撃、プレイヤーへ{int(player_dmg)}のダメージを与えた。(Playerの残HP: {player_hp})"
-                    #print(msg)
                     if log_col is not None:
-                        try:
-                            log_col.controls.append(ft.Text(msg))
-                        except Exception:
-                            pass
-                    try:
-                        self.page.update()
-                    except Exception:
-                        pass
-
+                        log_col.controls.append(ft.Text(msg))
+                    self.page.update()
                 await asyncio.sleep(0.15)
         if player_id == -1:
             return
