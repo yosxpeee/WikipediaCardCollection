@@ -2,7 +2,7 @@ import flet as ft
 import asyncio
 from utils.db import get_cards_by_rankid, get_random_card_by_rank, get_card_from_id
 from utils.ui import create_card_image
-from utils.utils import rank_to_rankid, rankid_to_rank
+from utils.utils import rank_to_rankid, rankid_to_rank, calc_damage
 
 class MockBattle:
     def __init__(self, page):
@@ -33,61 +33,112 @@ class MockBattle:
                 "resourceDEF": data[0][14],
                 "resourceRANK": rank_origin,
             }
-            return create_card_image(data_for_image, True)
+            return create_card_image(data_for_image, True), data_for_image
+        def mock_battle(player_data, npc_data):
+            """模擬戦"""
+            print(f"########## {player_data["title"]} vs {npc_data["title"]} ##########")
+            player_hp = int(player_data["HP"])
+            npc_hp = int(npc_data["HP"])
+            for turn in range(30):
+                print(f"#################### turn {turn+1}")
+                npc_dmg = calc_damage(player_data, npc_data, npc_hp)
+                print(f"プレイヤー>NPCへのダメージ: {int(npc_dmg)}")
+                npc_hp -= int(npc_dmg)
+                if npc_hp <= 0:
+                    mock_battle_dialog.content.controls[0].controls[2].controls[1].value = 0
+                    mock_battle_dialog.content.controls[0].controls[2].controls[1].update()
+                    print(f"プレイヤーのHP: {player_hp} | NPCのHP: 0")
+                    print("プレイヤーの勝利")
+                    break
+                else:
+                    mock_battle_dialog.content.controls[0].controls[2].controls[1].value = npc_hp
+                    mock_battle_dialog.content.controls[0].controls[2].controls[1].update()
+                    print(f"プレイヤーのHP: {player_hp} | NPCのHP: {npc_hp}")
+                player_dmg = calc_damage(npc_data, player_data, player_hp)
+                print(f"NPC>プレイヤーへのダメージ: {int(player_dmg)}")
+                player_hp -= int(player_dmg)
+                if player_hp <= 0:
+                    mock_battle_dialog.content.controls[0].controls[0].controls[1].value = 0
+                    mock_battle_dialog.content.controls[0].controls[0].controls[1].update()
+                    print(f"プレイヤーのHP: 0 | NPCのHP: {npc_hp}")
+                    print("NPCの勝利")
+                    break
+                else:
+                    mock_battle_dialog.content.controls[0].controls[0].controls[1].value = player_hp
+                    mock_battle_dialog.content.controls[0].controls[0].controls[1].update()
+                    print(f"プレイヤーのHP: {player_hp} | NPCのHP: {npc_hp}")
         if player_id == -1:
             return
         if npc_id == -1:
             return
         #プレイヤーカードの取得
-        player_card = create_card_image_from_id(get_card_from_id(player_id))
-        npc_card = create_card_image_from_id(get_card_from_id(npc_id))
+        player_card, player_data = create_card_image_from_id(get_card_from_id(player_id))
+        npc_card, npc_data = create_card_image_from_id(get_card_from_id(npc_id))
         mock_battle_dialog = ft.AlertDialog(
             modal=True,
             expand=True,
             content_padding=ft.Padding.all(10),
             title=ft.Text("模擬戦"),
-            content=ft.Row(
-                spacing=0,
+            content=ft.Column(
                 alignment=ft.MainAxisAlignment.CENTER,
-                vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                #horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
-                    ft.Container(
-                        width=320,
-                        height=480,
-                        #scale=ft.Scale(scale=0.8),
-                        content=ft.Column(
-                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                            expand=True,
-                            controls=[
-                                player_card
-                            ],
-                        ),
-                        bgcolor=ft.Colors.GREY_100, border_radius=5,
-                        padding=ft.Padding.all(5),
+                    ft.Row(
+                        spacing=0,
+                        alignment=ft.MainAxisAlignment.CENTER,
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                        controls=[
+                            ft.Column(
+                                controls=[
+                                    ft.Container(
+                                        width=320,
+                                        height=480,
+                                        content=ft.Column(
+                                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                                            expand=True,
+                                            controls=[
+                                                player_card,
+                                            ],
+                                        ),
+                                        bgcolor=ft.Colors.GREY_100, border_radius=5,
+                                        padding=ft.Padding.all(5),
+                                    ),
+                                    ft.ProgressBar(width=320, value=int(player_data["HP"])),
+                                ],
+                            ),
+                            ft.Text("vs"),
+                            ft.Column(
+                                controls=[
+                                    ft.Container(
+                                        width=320,
+                                        height=480,
+                                        content=ft.Column(
+                                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                                            expand=True,
+                                            controls=[
+                                                npc_card,
+                                            ],
+                                        ),
+                                        bgcolor=ft.Colors.GREY_100, border_radius=5,
+                                        padding=ft.Padding.all(5),
+                                    ),
+                                    ft.ProgressBar(width=320, value=int(npc_data["HP"])),
+                                ],
+                            ),
+                        ],
                     ),
-                    ft.Text("vs"),
                     ft.Container(
-                        width=320,
-                        height=480,
-                        #scale=ft.Scale(scale=0.8),
-                        content=ft.Column(
-                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                            expand=True,
-                            controls=[
-                                npc_card,
-                            ],
-                        ),
-                        bgcolor=ft.Colors.GREY_100, border_radius=5,
-                        padding=ft.Padding.all(5),
-                    ),
-                ]
+                        width=640,
+                        content=ft.Text("ログ"),
+                    )
+                ],
             ),
             actions=[
                 ft.TextButton("Close", on_click=lambda e: self.page.pop_dialog())
             ]
         )
         self.page.show_dialog(mock_battle_dialog)
+        mock_battle(player_data, npc_data)
     async def create(self):
         """画面作成"""
         def select_npc_by_rank(rank):

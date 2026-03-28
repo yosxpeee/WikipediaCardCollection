@@ -4,7 +4,7 @@ import asyncio
 from zukan import Zukan
 from gacha import Gacha
 from powerup import PowerUp
-from battle import MockBattle
+from mockbattle import MockBattle
 from setting import Setting
 
 from utils.db import initialize_db
