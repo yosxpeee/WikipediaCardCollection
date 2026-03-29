@@ -21,7 +21,7 @@ class Gacha:
                 random_url = f"https://ja.wikipedia.org/w/api.php?format=json&action=query&list=random&rnnamespace=0&rnlimit={n}"
                 j = await fetch_json(random_url)
             except:
-                pass
+                return []
             if "error" in j or j == {}:
                 return []
             return j.get("query", {}).get("random", [])
@@ -57,8 +57,12 @@ class Gacha:
             return j
         async def _get_summary(t_quote):
             """記事の概要取得"""
-            summary_url = f"https://ja.wikipedia.org/api/rest_v1/page/summary/{t_quote}"
-            j = await fetch_json(summary_url)
+            j = {}
+            try:
+                summary_url = f"https://ja.wikipedia.org/api/rest_v1/page/summary/{t_quote}"
+                j = await fetch_json(summary_url)
+            except :
+                return "ERROR"
             if "status" in j:
                 return "ERROR"
             return j.get("extract", "")

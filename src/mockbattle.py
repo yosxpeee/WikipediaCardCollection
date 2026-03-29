@@ -13,6 +13,8 @@ class MockBattle:
     def popup_mock_battle_dialog(self, player_id, npc_id):
         """模擬戦のダイアログ表示"""
         def create_card_image_from_id(data):
+            """カードイメージ作成"""
+            #Note: データ自体も欲しいので、utilsにある関数は呼ばず個別実装
             rank = rankid_to_rank(data[0][5], 0)
             rank_origin = rankid_to_rank(data[0][15], 0)
             data_for_image = {
@@ -54,11 +56,11 @@ class MockBattle:
                     msg = f"Turn {turn+1}: プレイヤーの攻撃、対戦相手へ{int(npc_dmg)}ダメージを与えた。(対戦相手の残HP: 0)"
                     log_col.controls.append(ft.Text(msg))
                     self.page.update()
-                    await asyncio.sleep(0.15)
+                    await asyncio.sleep(0.30)
                     msg = f"Turn {turn+1}: プレイヤーの勝利！！"
                     log_col.controls.append(ft.Text(msg, color=ft.Colors.WHITE, bgcolor=ft.Colors.BLUE))
                     self.page.update()
-                    await asyncio.sleep(0.15)
+                    await asyncio.sleep(0.30)
                     break
                 else:
                     max_hp = getattr(npc_bar, '_max_hp', None) or int(npc_data["HP"])
@@ -66,7 +68,7 @@ class MockBattle:
                     msg = f"Turn {turn+1}: プレイヤーの攻撃、対戦相手へ{int(npc_dmg)}ダメージを与えた。(対戦相手の残HP: {npc_hp})"
                     log_col.controls.append(ft.Text(msg))
                     self.page.update()
-                await asyncio.sleep(0.15)
+                await asyncio.sleep(0.30)
                 player_dmg = calc_damage(self.page.debug, npc_data, player_data, player_hp)
                 player_hp -= int(player_dmg)
                 if player_hp <= 0:
@@ -75,11 +77,11 @@ class MockBattle:
                     msg = f"Turn {turn+1}: 対戦相手の攻撃、プレイヤーへ{int(player_dmg)}のダメージを与えた。(プレイヤーの残HP: 0)"
                     log_col.controls.append(ft.Text(msg))
                     self.page.update()
-                    await asyncio.sleep(0.15)
+                    await asyncio.sleep(0.30)
                     msg = f"Turn {turn+1}: 対戦相手の勝利！！"
                     log_col.controls.append(ft.Text(msg, color=ft.Colors.WHITE, bgcolor=ft.Colors.RED))
                     self.page.update()
-                    await asyncio.sleep(0.15)
+                    await asyncio.sleep(0.30)
                     break
                 else:
                     max_hp = getattr(player_bar, '_max_hp', None) or int(player_data["HP"])
@@ -87,29 +89,30 @@ class MockBattle:
                     msg = f"Turn {turn+1}: 対戦相手の攻撃、プレイヤーへ{int(player_dmg)}のダメージを与えた。(プレイヤーの残HP: {player_hp})"
                     log_col.controls.append(ft.Text(msg))
                     self.page.update()
-                await asyncio.sleep(0.15)
-            # 30ターンかけても両方HPが残った場合はHPの多いほうを勝ちとする。HPも同じなら引き分け
+                await asyncio.sleep(0.30)
+            # 10ターンかけても両方HPが残った場合はHPの多いほうを勝ちとする。HPも同じなら引き分け
             if player_hp != 0 and npc_hp != 0:
                 if player_hp > npc_hp:
                     msg = f"判定：プレイヤーの勝利"
                     log_col.controls.append(ft.Text(msg, color=ft.Colors.WHITE, bgcolor=ft.Colors.BLUE))
-                    await asyncio.sleep(0.15)
+                    await asyncio.sleep(0.30)
                 elif player_hp < npc_hp:
                     msg = f"判定：対戦相手の勝利"
                     log_col.controls.append(ft.Text(msg, color=ft.Colors.WHITE, bgcolor=ft.Colors.RED))
-                    await asyncio.sleep(0.15)
+                    await asyncio.sleep(0.30)
                 else:
                     msg = f"判定：引き分け"
                     log_col.controls.append(ft.Text(msg, color=ft.Colors.WHITE, bgcolor=ft.Colors.GREY))
-                    await asyncio.sleep(0.15)
+                    await asyncio.sleep(0.30)
             mock_battle_dialog.actions[0].disabled = False
             self.page.update()
         if player_id == -1:
             return
         if npc_id == -1:
             return
-        #プレイヤーカードの取得
+        # プレイヤーカードの取得
         player_card, player_data = create_card_image_from_id(get_card_from_id(player_id))
+        # 対戦相手カードの取得
         npc_card, npc_data = create_card_image_from_id(get_card_from_id(npc_id))
         mock_battle_dialog = ft.AlertDialog(
             modal=True,
@@ -167,17 +170,18 @@ class MockBattle:
                     ft.Container(
                         width=640,
                         height=300,
-                        bgcolor=ft.Colors.with_opacity(0.25, ft.Colors.GREY),
+                        bgcolor=ft.Colors.with_opacity(0.25, ft.Colors.GREY_100),
                         content=ft.Column(
                             spacing=0,
                             controls=[
                                 ft.Text("＜＜＜戦闘ログ＞＞＞"),
-                                ft.Divider(height=1),
+                                ft.Divider(color=ft.Colors.GREY, height=1),
                                 ft.ListView(
                                     width=640,
                                     height=280,
                                     spacing=0,
                                     auto_scroll=True,
+                                    scroll=ft.ScrollMode.AUTO,
                                     controls=[],
                                 ),
                             ],
@@ -242,212 +246,14 @@ class MockBattle:
             selected_single_mock_npc_text = ft.Text("",no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS, bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.ORANGE))
             # コンテナ参照リスト（ハイライト更新用）
             target_containers = []
-            # 左側：ランク別タブの ListView を作成
-            tab_views = []
-            for rk in ranks:
-                lv = ft.ListView(
-                    expand=True, 
-                    spacing=0, 
-                    auto_scroll=False, 
-                    controls=[]
-                )
-                # フィルタ/ソート/検索UIを個別に生成してから表示データを構築する
-                sort_dd = ft.Dropdown(
-                    margin=ft.Margin.all(0),
-                    border_color=ft.Colors.GREY,
-                    value="id",
-                    options=[
-                        ft.DropdownOption(key="id",   text="ID順"),
-                        ft.DropdownOption(key="name", text="名前順"),
-                        ft.DropdownOption(key="HP",   text="HP順"),
-                        ft.DropdownOption(key="ATK",  text="ATK順"),
-                        ft.DropdownOption(key="DEF",  text="DEF順"),
-                    ],
-                    editable=False,
-                )
-                sort_rg = ft.RadioGroup(
-                    content=ft.Column(
-                        spacing=0,
-                        scale=ft.Scale(scale=0.75),
-                        controls=[
-                            ft.Radio(label="昇順", value="asc"), 
-                            ft.Radio(label="降順", value="desc")
-                        ]
-                    ),
-                    value="asc",
-                )
-                search_tf = ft.TextField(
-                    value="",
-                    label="カード名検索",
-                    label_style=ft.TextStyle(size=14),
-                    border_color=ft.Colors.GREY,
-                    min_lines=1, 
-                    max_lines=1, 
-                    height=36,
-                    text_size=13,
-                    suffix_icon=ft.IconButton(
-                        icon=ft.Icons.BACKSPACE, 
-                        scale=ft.Scale(scale=0.75), 
-                        opacity=0.5,
-                    ),
-                    expand=True,
-                    
-                )
-                def build_row_cont(row):
-                    cid = row[0]
-                    name = row[2] or ""
-                    hp = row[9] if row[9] is not None else "-"
-                    atk = row[10] if row[10] is not None else "-"
-                    deff = row[11] if row[11] is not None else "-"
-                    rank = rankid_to_rank(row[5], row[7])
-                    cont = ft.Container(
-                        padding=ft.Padding(top=0, left=6, right=6, bottom=0),
-                        bgcolor=None,
-                        content=ft.Row(
-                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                            controls=[
-                                ft.Text(str(cid).ljust(8, " "), font_family="Consolas"),
-                                ft.Container(width=10),
-                                ft.Text(name, expand=True, tooltip=f"[{rank}] {name}", no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
-                                ft.Container(width=10),
-                                ft.Text(str(hp).ljust(5, " "), font_family="Consolas"),
-                                ft.Text(str(atk).ljust(5, " "), font_family="Consolas"),
-                                ft.Text(str(deff).ljust(5, " "), font_family="Consolas"),
-                            ],
-                        ),
-                    )
-                    def _on_target_click(e, cid=cid, name=name, rk=rk, cont=cont):
-                        nonlocal selected_single_mock_player_card_id
-                        selected_single_mock_player_card_id = cid
-                        selected_single_mock_player_text.value = f"{cid} [{rk}] {name}"
-                        selected_single_mock_player_text.update()
-                        for c in target_containers:
-                            c.bgcolor = None
-                            try:
-                                c.content.controls[0].color = None
-                                c.content.controls[2].color = None
-                                c.content.controls[4].color = None
-                                c.content.controls[5].color = None
-                                c.content.controls[6].color = None
-                            except Exception:
-                                pass
-                            c.update()
-                        cont.bgcolor = ft.Colors.YELLOW_100
-                        try:
-                            cont.content.controls[0].color = ft.Colors.BLACK
-                            cont.content.controls[2].color = ft.Colors.BLACK
-                            cont.content.controls[4].color = ft.Colors.BLACK
-                            cont.content.controls[5].color = ft.Colors.BLACK
-                            cont.content.controls[6].color = ft.Colors.BLACK
-                        except Exception:
-                            pass
-                        cont.update()
-                    cont.on_click = _on_target_click
-                    return cont
-                def refresh_lv(e=None, rk=rk, lv=lv, sort_dd=sort_dd, sort_rg=sort_rg, search_tf=search_tf):
-                    rows = all_cards_by_rank.get(rk, [])
-                    q = (search_tf.value or "").strip().lower()
-                    key = sort_dd.value or "id"
-                    order_desc = (sort_rg.value == "desc")
-                    # フィルタ
-                    filtered = []
-                    for row in rows:
-                        name = (row[2] or "").lower()
-                        if q == "" or q in name:
-                            filtered.append(row)
-                    # ソート
-                    def keyfunc(r):
-                        try:
-                            if key == "id":
-                                return int(r[0])
-                            if key == "name":
-                                return (r[2] or "").lower()
-                            if key == "HP":
-                                return int(r[9]) if r[9] is not None and str(r[9]).isdigit() else -1
-                            if key == "ATK":
-                                return int(r[10]) if r[10] is not None and str(r[10]).isdigit() else -1
-                            if key == "DEF":
-                                return int(r[11]) if r[11] is not None and str(r[11]).isdigit() else -1
-                        except Exception:
-                            return 0
-                        return 0
-                    filtered.sort(key=keyfunc, reverse=order_desc)
-                    # 再構築
-                    lv.controls.clear()
-                    for row in filtered:
-                        cont = build_row_cont(row)
-                        lv.controls.append(cont)
-                        target_containers.append(cont)
-                    if len(lv.controls) == 0:
-                        lv.controls.append(ft.Container(padding=ft.Padding.all(8), content=ft.Text("対象が見つかりません")))
-                # sort_ui に実際のコントロールを渡す
-                sort_ui = ft.Row(
-                    spacing=4,
-                    alignment=ft.MainAxisAlignment.CENTER,
-                    controls=[sort_dd, sort_rg, search_tf],
-                )
-                header = ft.Container(
-                    padding=ft.Padding.all(6),
-                    bgcolor=None,
-                    content=ft.Row(
-                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                        controls=[
-                            ft.Text("ID".ljust(8, " "), font_family="Consolas", bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.WHITE)),
-                            ft.Container(width=10),
-                            ft.Text("カード名",expand=True, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS, bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.WHITE)),
-                            ft.Container(width=10),
-                            ft.Text("HP".ljust(5, " "), font_family="Consolas", bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.WHITE)),
-                            ft.Text("ATK".ljust(5, " "), font_family="Consolas", bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.WHITE)),
-                            ft.Text("DEF".ljust(5, " "), font_family="Consolas", bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.WHITE)),
-                        ],
-                    )
-                )
-                tab_views.append(
-                    ft.Container(
-                        alignment=ft.Alignment.CENTER,
-                        content=ft.Column(
-                            spacing=1,
-                            controls=[
-                                sort_ui, 
-                                ft.Divider(height=1), 
-                                header, 
-                                ft.Divider(height=1), 
-                                lv
-                            ],
-                        ), 
-                    ),
-                )
-                # 初期表示を構築
-                # イベントに bind
-                sort_dd.on_select = refresh_lv      #選んだ時
-                sort_rg.on_change = refresh_lv      #切り替わったとき
-                search_tf.on_submit = refresh_lv    #入力後にEnterを押したとき
-                # クリアボタンの挙動を設定（クリックで入力を消して即時リフレッシュ）
-                def _on_search_clear(e, tf=search_tf, ref=refresh_lv):
-                    try:
-                        tf.value = ""
-                        ref()
-                        tf.update()
-                    except Exception:
-                        pass
-                if hasattr(search_tf, 'suffix_icon') and search_tf.suffix_icon is not None:
-                    try:
-                        search_tf.suffix_icon.on_click = _on_search_clear
-                    except Exception:
-                        pass
-                refresh_lv()
-            target_tab = ft.Tabs(
-                selected_index=0,
-                length=len(ranks),
-                expand=True,
-                content=ft.Column(
-                    expand=True,
-                    controls=[
-                        ft.TabBar(tab_alignment=ft.TabAlignment.CENTER, tabs=[ft.Tab(label=r) for r in ranks]),
-                        ft.TabBarView(expand=True, controls=tab_views),
-                    ],
-                ),
-            )
+            # 左側：ランク別タブの ListView を作成（共通化）
+            from utils.ui import create_ranked_tabs
+            def _on_player_selected(cid, name, rk):
+                nonlocal selected_single_mock_player_card_id
+                selected_single_mock_player_card_id = cid
+                selected_single_mock_player_text.value = f"{cid} [{rk}] {name}"
+                selected_single_mock_player_text.update()
+            target_tab = create_ranked_tabs(ranks, all_cards_by_rank, on_select_callback=_on_player_selected)
             # 模擬戦のページ本体
             single_mock = ft.Column(
                 controls=[

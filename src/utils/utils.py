@@ -117,6 +117,7 @@ def calc_damage(debug, id1_data, id2_data, id2_hp):
     """戦闘共通のダメージ計算"""
     defence_rnd = random.triangular(0.7, 1.3)
     wariai_rnd = random.triangular(0.05, 0.10)
+    debug_print(debug, f"{id1_data["title"]} > {id2_data["title"]}")
     debug_print(debug, f"ランダム装甲: {defence_rnd}, 割合係数: {wariai_rnd}")
     if int(id2_data["DEF"])*defence_rnd - int(id1_data["ATK"]) < 0:
         #DEF*ランダム(0.7～1.3)-ATKして+200
@@ -128,3 +129,27 @@ def calc_damage(debug, id1_data, id2_data, id2_hp):
         debug_print(debug, "割合+100")
         id2_damage = id2_hp*wariai_rnd + 100
     return id2_damage
+
+def create_card_image_data(data):
+    """カード画像作成用のデータを作る"""
+    rank = rankid_to_rank(data[5], data[7])
+    rank_origin = rankid_to_rank(data[15], data[7])
+    card_data = {
+        "id": data[0],
+        "pageId": data[1],
+        "title": data[2],
+        "pageUrl": data[3],
+        "imageUrl": data[4],
+        "rank": rank,
+        "quality": data[6],
+        "isSozai": data[7],
+        "extract": data[8],
+        "HP": data[9],
+        "ATK": data[10],
+        "DEF": data[11],
+        "favorite": data[12],
+        "resourceATK": data[13],
+        "resourceDEF": data[14],
+        "resourceRANK": rank_origin,
+    }
+    return card_data

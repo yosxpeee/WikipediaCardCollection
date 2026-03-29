@@ -2,6 +2,195 @@ import flet as ft
 import webbrowser
 
 from utils.db import update_favorite
+from utils.utils import rankid_to_rank
+
+def create_ranked_tabs(ranks, all_cards_by_rank, on_select_callback=None):
+    """ランク別のタブ付きカード選択リストを作成して返す。
+
+    Args:
+        ranks: ランクのリスト（例: ["LR","UR",...]
+        all_cards_by_rank: dict mapping rank->rows (DB行リスト)
+        on_select_callback: 呼ばれるコールバック (cid, name, rank)
+
+    Returns:
+        ft.Tabs オブジェクト
+    """
+    tab_views = []
+    target_containers = []
+    for rk in ranks:
+        lv = ft.ListView(
+            expand=True,
+            spacing=0,
+            auto_scroll=False,
+            controls=[],
+        )
+        sort_dd = ft.Dropdown(
+            margin=ft.Margin.all(0),
+            border_color=ft.Colors.GREY,
+            value="id",
+            options=[
+                ft.DropdownOption(key="id", text="ID順"),
+                ft.DropdownOption(key="name", text="名前順"),
+                ft.DropdownOption(key="HP", text="HP順"),
+                ft.DropdownOption(key="ATK", text="ATK順"),
+                ft.DropdownOption(key="DEF", text="DEF順"),
+            ],
+            editable=False,
+        )
+        sort_rg = ft.RadioGroup(
+            content=ft.Column(
+                spacing=0,
+                scale=ft.Scale(scale=0.75),
+                controls=[ft.Radio(label="昇順", value="asc"), ft.Radio(label="降順", value="desc")],
+            ),
+            value="asc",
+        )
+        search_tf = ft.TextField(
+            value="",
+            label="カード名検索",
+            label_style=ft.TextStyle(size=14),
+            border_color=ft.Colors.GREY,
+            min_lines=1,
+            max_lines=1,
+            height=36,
+            text_size=13,
+            suffix_icon=ft.IconButton(icon=ft.Icons.BACKSPACE, scale=ft.Scale(scale=0.75), opacity=0.5,),
+            expand=True,
+        )
+        def build_row_cont(row):
+            cid = row[0]
+            name = row[2] or ""
+            hp = row[9] if row[9] is not None else "-"
+            atk = row[10] if row[10] is not None else "-"
+            deff = row[11] if row[11] is not None else "-"
+            rank = rankid_to_rank(row[5], row[7])
+            cont = ft.Container(
+                padding=ft.Padding(top=0, left=6, right=6, bottom=0),
+                bgcolor=None,
+                content=ft.Row(
+                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                    controls=[
+                        ft.Text(str(cid).ljust(8, " "), font_family="Consolas"),
+                        ft.Container(width=10),
+                        ft.Text(name, expand=True, tooltip=f"[{rank}] {name}", no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
+                        ft.Container(width=10),
+                        ft.Text(str(hp).ljust(5, " "), font_family="Consolas"),
+                        ft.Text(str(atk).ljust(5, " "), font_family="Consolas"),
+                        ft.Text(str(deff).ljust(5, " "), font_family="Consolas"),
+                    ],
+                ),
+            )
+            def _on_target_click(e, cid=cid, name=name, rk=rk, cont=cont):
+                for c in target_containers:
+                    c.bgcolor = None
+                    try:
+                        c.content.controls[0].color = None
+                        c.content.controls[2].color = None
+                        c.content.controls[4].color = None
+                        c.content.controls[5].color = None
+                        c.content.controls[6].color = None
+                    except Exception:
+                        pass
+                    c.update()
+                cont.bgcolor = ft.Colors.YELLOW_100
+                try:
+                    cont.content.controls[0].color = ft.Colors.BLACK
+                    cont.content.controls[2].color = ft.Colors.BLACK
+                    cont.content.controls[4].color = ft.Colors.BLACK
+                    cont.content.controls[5].color = ft.Colors.BLACK
+                    cont.content.controls[6].color = ft.Colors.BLACK
+                except Exception:
+                    pass
+                cont.update()
+                if callable(on_select_callback):
+                    try:
+                        on_select_callback(cid, name, rk)
+                    except Exception:
+                        pass
+            cont.on_click = _on_target_click
+            return cont
+        def refresh_lv(e=None, rk=rk, lv=lv, sort_dd=sort_dd, sort_rg=sort_rg, search_tf=search_tf):
+            rows = all_cards_by_rank.get(rk, [])
+            q = (search_tf.value or "").strip().lower()
+            key = sort_dd.value or "id"
+            order_desc = (sort_rg.value == "desc")
+            filtered = []
+            for row in rows:
+                name = (row[2] or "").lower()
+                if q == "" or q in name:
+                    filtered.append(row)
+            def keyfunc(r):
+                try:
+                    if key == "id":
+                        return int(r[0])
+                    if key == "name":
+                        return (r[2] or "").lower()
+                    if key == "HP":
+                        return int(r[9]) if r[9] is not None and str(r[9]).isdigit() else -1
+                    if key == "ATK":
+                        return int(r[10]) if r[10] is not None and str(r[10]).isdigit() else -1
+                    if key == "DEF":
+                        return int(r[11]) if r[11] is not None and str(r[11]).isdigit() else -1
+                except Exception:
+                    return 0
+                return 0
+            filtered.sort(key=keyfunc, reverse=order_desc)
+            lv.controls.clear()
+            for row in filtered:
+                cont = build_row_cont(row)
+                lv.controls.append(cont)
+                target_containers.append(cont)
+            if len(lv.controls) == 0:
+                lv.controls.append(ft.Container(padding=ft.Padding.all(8), content=ft.Text("対象が見つかりません")))
+        sort_ui = ft.Row(spacing=4, alignment=ft.MainAxisAlignment.CENTER, controls=[sort_dd, sort_rg, search_tf])
+        header = ft.Container(
+            padding=ft.Padding.all(6),
+            bgcolor=None,
+            content=ft.Row(
+                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                controls=[
+                    ft.Text("ID".ljust(8, " "), font_family="Consolas", bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.WHITE)),
+                    ft.Container(width=10),
+                    ft.Text("カード名", expand=True, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS, bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.WHITE)),
+                    ft.Container(width=10),
+                    ft.Text("HP".ljust(5, " "), font_family="Consolas", bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.WHITE)),
+                    ft.Text("ATK".ljust(5, " "), font_family="Consolas", bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.WHITE)),
+                    ft.Text("DEF".ljust(5, " "), font_family="Consolas", bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.WHITE)),
+                ],
+            ),
+        )
+        tab_views.append(
+            ft.Container(
+                alignment=ft.Alignment.CENTER,
+                content=ft.Column(spacing=1, controls=[sort_ui, ft.Divider(height=1), header, ft.Divider(height=1), lv]),
+            )
+        )
+        sort_dd.on_select = refresh_lv
+        sort_rg.on_change = refresh_lv
+        search_tf.on_submit = refresh_lv
+        def _on_search_clear(e, tf=search_tf, ref=refresh_lv):
+            try:
+                tf.value = ""
+                ref()
+                tf.update()
+            except Exception:
+                pass
+        if hasattr(search_tf, 'suffix_icon') and search_tf.suffix_icon is not None:
+            try:
+                search_tf.suffix_icon.on_click = _on_search_clear
+            except Exception:
+                pass
+        refresh_lv()
+    tabs = ft.Tabs(
+        selected_index=0,
+        length=len(ranks),
+        expand=True,
+        content=ft.Column(
+            expand=True,
+            controls=[ft.TabBar(tab_alignment=ft.TabAlignment.CENTER, tabs=[ft.Tab(label=r) for r in ranks]), ft.TabBarView(expand=True, controls=tab_views)],
+        ),
+    )
+    return tabs
 
 def get_card_color(rank, isSozai):
     """ランクからカードの色を決める"""
@@ -23,6 +212,7 @@ def get_card_color(rank, isSozai):
         else: #C
             color = ft.Colors.LIME_900
     return color
+
 def create_card_image(data, isShow, isFbButton, on_fav_changed=None):
     """カードイメージの作成"""
     def _on_fav_click(e):

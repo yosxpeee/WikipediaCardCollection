@@ -2,7 +2,7 @@ import flet as ft
 import asyncio
 from bs4 import BeautifulSoup
 
-from utils.utils import do_api, rankid_to_rank
+from utils.utils import do_api, rankid_to_rank, create_card_image_data
 from utils.db import get_all_cards, update_favorite
 from utils.ui import create_card_image
 
@@ -99,26 +99,9 @@ class Zukan:
             for idx in range(start, end):
                 row_data = filtered_data[idx]
                 # ランクを先に計算
+                row_data_for_image = create_card_image_data(row_data)
                 rank = rankid_to_rank(row_data[5], row_data[7])
                 rank_origin = rankid_to_rank(row_data[15], row_data[7])
-                row_data_for_image = {
-                    "id": row_data[0],
-                    "pageId": row_data[1],
-                    "title": row_data[2],
-                    "pageUrl": row_data[3],
-                    "imageUrl": row_data[4],
-                    "rank": rank,
-                    "quality": row_data[6],
-                    "isSozai": row_data[7],
-                    "extract": row_data[8],
-                    "HP": row_data[9],
-                    "ATK": row_data[10],
-                    "DEF": row_data[11],
-                    "favorite": row_data[12],
-                    "resourceATK": row_data[13],
-                    "resourceDEF": row_data[14],
-                    "resourceRANK": rank_origin,
-                }
                 num_text = str(row_data[0]).ljust(8, " ")
                 pageid_text = str(row_data[1]).ljust(8, " ")
                 rank_text = str(rank).ljust(4, " ")
