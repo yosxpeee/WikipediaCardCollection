@@ -1,6 +1,6 @@
 import flet as ft
 import asyncio
-from utils.db import get_cards_by_rankid, get_random_card_by_rank, get_card_from_id
+from utils.db import get_cards_by_rankid, get_random_card_by_rank, get_card_from_id, get_cards_by_favorite
 from utils.ui import create_card_image
 from utils.utils import rank_to_rankid, rankid_to_rank, calc_damage
 
@@ -43,49 +43,43 @@ class MockBattle:
             player_bar = row.controls[0].controls[1]
             npc_bar = row.controls[2].controls[1]
             log_col = mock_battle_dialog.content.controls[1].content.controls[2]
-            if player_bar is not None:
-                player_bar._max_hp = int(player_data["HP"]) if str(player_data["HP"]).isdigit() else int(player_data["HP"])
-            if npc_bar is not None:
-                npc_bar._max_hp = int(npc_data["HP"]) if str(npc_data["HP"]).isdigit() else int(npc_data["HP"])
+            player_bar._max_hp = int(player_data["HP"]) if str(player_data["HP"]).isdigit() else int(player_data["HP"])
+            npc_bar._max_hp = int(npc_data["HP"]) if str(npc_data["HP"]).isdigit() else int(npc_data["HP"])
             for turn in range(30):
                 npc_dmg = calc_damage(player_data, npc_data, npc_hp)
                 npc_hp -= int(npc_dmg)
                 if npc_hp <= 0:
                     npc_hp = 0
-                    if npc_bar is not None:
-                        npc_bar.value = 0.0
+                    npc_bar.value = 0.0
                     msg = f"Turn {turn+1}: プレイヤーの攻撃、NPCへ{int(npc_dmg)}ダメージを与えた。(NPCの残HP: 0)"
-                    if log_col is not None:
-                        log_col.controls.append(ft.Text(msg))
+                    log_col.controls.append(ft.Text(msg))
+                    msg = f"Turn {turn+1}: プレイヤーの勝利！！"
+                    log_col.controls.append(ft.Text(msg))
                     self.page.update()
                     break
                 else:
-                    if npc_bar is not None:
-                        max_hp = getattr(npc_bar, '_max_hp', None) or int(npc_data["HP"])
-                        npc_bar.value = max(0.0, float(npc_hp) / float(max_hp))
+                    max_hp = getattr(npc_bar, '_max_hp', None) or int(npc_data["HP"])
+                    npc_bar.value = max(0.0, float(npc_hp) / float(max_hp))
                     msg = f"Turn {turn+1}: プレイヤーの攻撃、NPCへ{int(npc_dmg)}ダメージを与えた。(NPCの残HP: {npc_hp})"
-                    if log_col is not None:
-                        log_col.controls.append(ft.Text(msg))
+                    log_col.controls.append(ft.Text(msg))
                     self.page.update()
                 await asyncio.sleep(0.15)
                 player_dmg = calc_damage(npc_data, player_data, player_hp)
                 player_hp -= int(player_dmg)
                 if player_hp <= 0:
                     player_hp = 0
-                    if player_bar is not None:
-                        player_bar.value = 0.0
+                    player_bar.value = 0.0
                     msg = f"Turn {turn+1}: NPCの攻撃、プレイヤーへ{int(player_dmg)}のダメージを与えた。(プレイヤーの残HP: 0)"
-                    if log_col is not None:
-                        log_col.controls.append(ft.Text(msg))
+                    log_col.controls.append(ft.Text(msg))
+                    msg = f"Turn {turn+1}: NPCの勝利！！"
+                    log_col.controls.append(ft.Text(msg))
                     self.page.update()
                     break
                 else:
-                    if player_bar is not None:
-                        max_hp = getattr(player_bar, '_max_hp', None) or int(player_data["HP"])
-                        player_bar.value = max(0.0, float(player_hp) / float(max_hp))
+                    max_hp = getattr(player_bar, '_max_hp', None) or int(player_data["HP"])
+                    player_bar.value = max(0.0, float(player_hp) / float(max_hp))
                     msg = f"Turn {turn+1}: NPCの攻撃、プレイヤーへ{int(player_dmg)}のダメージを与えた。(Playerの残HP: {player_hp})"
-                    if log_col is not None:
-                        log_col.controls.append(ft.Text(msg))
+                    log_col.controls.append(ft.Text(msg))
                     self.page.update()
                 await asyncio.sleep(0.15)
         if player_id == -1:
@@ -207,12 +201,15 @@ class MockBattle:
             # 模擬戦（シングル）のページ作成
             ########################################
             # DB からカードを非同期で取得（ランクごとに分割して取得）
-            ranks = ["LR", "UR", "SSR", "SR", "R", "UC", "C"]
+            ranks = ["LR", "UR", "SSR", "SR", "R", "UC", "C", "★"]
             # ランクごとにDBから必要な行だけ取得してメモリを分割する
             all_cards_by_rank = {}
             for rk in ranks:
-                rid = rank_to_rankid(rk)
-                rows = await asyncio.to_thread(get_cards_by_rankid, rid, 0)
+                if rk == "★":
+                    rows = await asyncio.to_thread(get_cards_by_favorite)
+                else:
+                    rid = rank_to_rankid(rk)
+                    rows = await asyncio.to_thread(get_cards_by_rankid, rid, 0)
                 all_cards_by_rank[rk] = rows
             # 表示用テキスト
             selected_single_mock_player_text = ft.Text("",no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS, bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.GREY_500))
@@ -276,6 +273,7 @@ class MockBattle:
                     hp = row[9] if row[9] is not None else "-"
                     atk = row[10] if row[10] is not None else "-"
                     deff = row[11] if row[11] is not None else "-"
+                    rank = rankid_to_rank(row[5], row[7])
                     cont = ft.Container(
                         padding=ft.Padding(top=0, left=6, right=6, bottom=0),
                         bgcolor=None,
@@ -284,7 +282,7 @@ class MockBattle:
                             controls=[
                                 ft.Text(str(cid).ljust(8, " "), font_family="Consolas"),
                                 ft.Container(width=10),
-                                ft.Text(name, expand=True, tooltip=name, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
+                                ft.Text(name, expand=True, tooltip=f"[{rank}] {name}", no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
                                 ft.Container(width=10),
                                 ft.Text(str(hp).ljust(5, " "), font_family="Consolas"),
                                 ft.Text(str(atk).ljust(5, " "), font_family="Consolas"),

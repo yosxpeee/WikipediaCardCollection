@@ -108,6 +108,18 @@ def get_card_from_pageid(pageid):
     conn.close()
     return data
 
+def get_cards_by_favorite():
+    """素材以外のお気に入り登録済みのカードを取得"""
+    conn = sqlite3.connect('cards.db')
+    cursor = conn.cursor()
+    data = []
+    sql = f"""SELECT * FROM gacha_cards WHERE favorite == 1 AND isSozai == 0"""
+    cursor.execute(sql)
+    for item in cursor:
+        data.append(item)
+    conn.close()
+    return data
+
 def get_random_card_by_rank(rank):
     """指定ランクの中からランダムに1件取得"""
     conn = sqlite3.connect('cards.db')

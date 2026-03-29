@@ -1,6 +1,6 @@
 import flet as ft
 import asyncio
-from utils.db import get_card_from_id, rankup_card, get_cards_by_rankid, get_cards_by_sozai
+from utils.db import get_card_from_id, rankup_card, get_cards_by_rankid, get_cards_by_sozai, get_cards_by_favorite
 from utils.utils import RANK_TABLE, rankid_to_rank, rank_to_rankid, calc_status
 from utils.ui import get_card_color, create_card_image
 
@@ -252,12 +252,15 @@ class PowerUp:
         selected_sozai_id = -1
         try:
             # DB からカードを非同期で取得（ランクごとに分割して取得）
-            ranks = ["UR", "SSR", "SR", "R", "UC", "C"]
+            ranks = ["UR", "SSR", "SR", "R", "UC", "C", "★"]
             # ランクごとにDBから必要な行だけ取得してメモリを分割する
             all_cards_by_rank = {}
             for rk in ranks:
-                rid = rank_to_rankid(rk)
-                rows = await asyncio.to_thread(get_cards_by_rankid, rid, 0)
+                if rk == "★":
+                    rows = await asyncio.to_thread(get_cards_by_favorite)
+                else:
+                    rid = rank_to_rankid(rk)
+                    rows = await asyncio.to_thread(get_cards_by_rankid, rid, 0)
                 all_cards_by_rank[rk] = rows
             # 素材一覧は別途取得しておく
             sozai_all = await asyncio.to_thread(get_cards_by_sozai, 1)
@@ -324,6 +327,7 @@ class PowerUp:
                     hp = row[9] if row[9] is not None else "-"
                     atk = row[10] if row[10] is not None else "-"
                     deff = row[11] if row[11] is not None else "-"
+                    rank = rankid_to_rank(row[5], row[7])
                     cont = ft.Container(
                         padding=ft.Padding(top=0, left=6, right=6, bottom=0),
                         bgcolor=None,
@@ -332,7 +336,7 @@ class PowerUp:
                             controls=[
                                 ft.Text(str(cid).ljust(8, " "), font_family="Consolas"),
                                 ft.Container(width=10),
-                                ft.Text(name, expand=True, tooltip=name, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
+                                ft.Text(name, expand=True, tooltip=f"[{rank}] {name}", no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
                                 ft.Container(width=10),
                                 ft.Text(str(hp).ljust(5, " "), font_family="Consolas"),
                                 ft.Text(str(atk).ljust(5, " "), font_family="Consolas"),
