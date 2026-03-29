@@ -5,6 +5,7 @@ from zukan import Zukan
 from gacha import Gacha
 from powerup import PowerUp
 from mockbattle import MockBattle
+from sortie import Sortie
 from setting import Setting
 
 from utils.db import initialize_db
@@ -75,6 +76,25 @@ async def main(page: ft.Page):
             tabs_widget.update()
             ov = page.overlay[1]
             ov.visible = False
+        async def __load_and_set_sortie():
+            """出撃タブのロード"""
+            try:
+                content = await sortie.create()
+                tab_bar_view.controls[4] = ft.Container(
+                    content=content,
+                    alignment=ft.Alignment.CENTER,
+                )
+                tab_bar_view.update()
+            except Exception as ex:
+                tab_bar_view.controls[4] = ft.Column([
+                    ft.Text("読み込みに失敗しました。"),
+                    ft.Text(str(ex)),
+                ])
+                tab_bar_view.update()
+            tabs_widget.disabled = False
+            tabs_widget.update()
+            ov = page.overlay[1]
+            ov.visible = False
         # コントロール取得
         nonlocal last_tab_index
         tabs_widget = e.control
@@ -86,12 +106,14 @@ async def main(page: ft.Page):
             tab_bar_view.controls[1] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             tab_bar_view.controls[2] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             tab_bar_view.controls[3] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
+            tab_bar_view.controls[4] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             tab_bar_view.update()
         # 図鑑タブに切り替えたとき
         if e.control.selected_index == 1:
             # 強化、模擬戦のタブの中身をクリア（メモリ節約）
             tab_bar_view.controls[2] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             tab_bar_view.controls[3] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
+            tab_bar_view.controls[4] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             # オーバーレイを即表示して画面操作をブロック
             ov = page.overlay[1]
             ov.visible = True
@@ -113,9 +135,10 @@ async def main(page: ft.Page):
                 tabs_widget.update()
         # 強化タブに切り替えたとき
         if e.control.selected_index == 2:
-            # 図鑑、模擬戦の中身をクリアしておく（メモリ節約）
+            # リロードが必要なタブの中身をクリアしておく（メモリ節約）
             tab_bar_view.controls[1] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             tab_bar_view.controls[3] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
+            tab_bar_view.controls[4] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             # 図鑑と同じオーバーレイを表示して読み込み中に UI を覆う
             overlay = page.overlay[1]
             overlay.visible = True
@@ -137,9 +160,10 @@ async def main(page: ft.Page):
                 tabs_widget.update()
         # 模擬戦のタブに切り替えたとき
         if e.control.selected_index == 3:
-            # 図鑑・強化の中身をクリアしておく（メモリ節約）
+            # リロードが必要なタブの中身をクリアしておく（メモリ節約）
             tab_bar_view.controls[1] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             tab_bar_view.controls[2] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
+            tab_bar_view.controls[4] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             # 図鑑と同じオーバーレイを表示して読み込み中に UI を覆う
             overlay = page.overlay[1]
             overlay.visible = True
@@ -159,12 +183,38 @@ async def main(page: ft.Page):
             except Exception:
                 tabs_widget.disabled = False
                 tabs_widget.update()
-        # 設定タブに切り替えたとき
+        # 出撃タブに切り替えたとき
         if e.control.selected_index == 4:
-            # 図鑑・強化、模擬戦の中身をクリアしておく（メモリ節約）
+            # リロードが必要なタブの中身をクリアしておく（メモリ節約）
             tab_bar_view.controls[1] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             tab_bar_view.controls[2] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             tab_bar_view.controls[3] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
+            # 図鑑と同じオーバーレイを表示して読み込み中に UI を覆う
+            overlay = page.overlay[1]
+            overlay.visible = True
+            page.update()
+            # 読み込み中はタブ切替を禁止
+            tabs_widget.disabled = True
+            tabs_widget.update()
+            # 非同期で Sortie.create() を呼んで差し替える
+            try:
+                sortie = Sortie(page)
+                tab_bar_view.controls[4] = ft.Container(
+                    content=ft.Text("読み込み中...", size=18),
+                    alignment=ft.Alignment.CENTER,
+                )
+                tab_bar_view.update()
+                asyncio.create_task(__load_and_set_sortie())
+            except Exception:
+                tabs_widget.disabled = False
+                tabs_widget.update()
+        # 設定タブに切り替えたとき
+        if e.control.selected_index == 5:
+            # リロードが必要なタブの中身をクリアしておく（メモリ節約）
+            tab_bar_view.controls[1] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
+            tab_bar_view.controls[2] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
+            tab_bar_view.controls[3] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
+            tab_bar_view.controls[4] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             tab_bar_view.update()
         # 最後に last_tab_index を更新
         last_tab_index = e.control.selected_index
@@ -255,7 +305,7 @@ async def main(page: ft.Page):
     page.controls.append(
         ft.Tabs(
             selected_index=0,
-            length=5,
+            length=6,
             expand=True,
             on_change=_change_tabs,
             content=ft.Column(
@@ -335,6 +385,22 @@ async def main(page: ft.Page):
                                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                                     controls=[
                                         ft.Image(
+                                            "icon_battle_mock.svg", 
+                                            color=ft.Colors.ON_SURFACE,
+                                            width=24, 
+                                            height=24
+                                        ),
+                                        ft.Text("出撃"),
+                                    ],
+                                ),
+                            ),
+                            ft.Tab(
+                                label=ft.Column(
+                                    spacing=2,
+                                    alignment=ft.MainAxisAlignment.CENTER,
+                                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                                    controls=[
+                                        ft.Image(
                                             "icon_settings.svg", 
                                             color=ft.Colors.ON_SURFACE,
                                             width=24, 
@@ -362,6 +428,10 @@ async def main(page: ft.Page):
                                 content=None,
                             ),
                             ft.Container(   # 模擬戦
+                                alignment=ft.Alignment.CENTER,
+                                content=None,
+                            ),
+                            ft.Container(   # 出撃
                                 alignment=ft.Alignment.CENTER,
                                 content=None,
                             ),
