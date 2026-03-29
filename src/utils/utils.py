@@ -117,6 +117,7 @@ def calc_damage(debug, id1_data, id2_data, id2_hp):
     """戦闘共通のダメージ計算"""
     defence_rnd = random.triangular(0.7, 1.3)
     wariai_rnd = random.triangular(0.05, 0.10)
+    debug_print(debug, f"{id1_data["title"]} > {id2_data["title"]}")
     debug_print(debug, f"ランダム装甲: {defence_rnd}, 割合係数: {wariai_rnd}")
     if int(id2_data["DEF"])*defence_rnd - int(id1_data["ATK"]) < 0:
         #DEF*ランダム(0.7～1.3)-ATKして+200

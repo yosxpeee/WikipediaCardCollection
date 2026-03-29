@@ -54,11 +54,11 @@ class MockBattle:
                     msg = f"Turn {turn+1}: プレイヤーの攻撃、対戦相手へ{int(npc_dmg)}ダメージを与えた。(対戦相手の残HP: 0)"
                     log_col.controls.append(ft.Text(msg))
                     self.page.update()
-                    await asyncio.sleep(0.15)
+                    await asyncio.sleep(0.30)
                     msg = f"Turn {turn+1}: プレイヤーの勝利！！"
                     log_col.controls.append(ft.Text(msg, color=ft.Colors.WHITE, bgcolor=ft.Colors.BLUE))
                     self.page.update()
-                    await asyncio.sleep(0.15)
+                    await asyncio.sleep(0.30)
                     break
                 else:
                     max_hp = getattr(npc_bar, '_max_hp', None) or int(npc_data["HP"])
@@ -66,7 +66,7 @@ class MockBattle:
                     msg = f"Turn {turn+1}: プレイヤーの攻撃、対戦相手へ{int(npc_dmg)}ダメージを与えた。(対戦相手の残HP: {npc_hp})"
                     log_col.controls.append(ft.Text(msg))
                     self.page.update()
-                await asyncio.sleep(0.15)
+                await asyncio.sleep(0.30)
                 player_dmg = calc_damage(self.page.debug, npc_data, player_data, player_hp)
                 player_hp -= int(player_dmg)
                 if player_hp <= 0:
@@ -75,11 +75,11 @@ class MockBattle:
                     msg = f"Turn {turn+1}: 対戦相手の攻撃、プレイヤーへ{int(player_dmg)}のダメージを与えた。(プレイヤーの残HP: 0)"
                     log_col.controls.append(ft.Text(msg))
                     self.page.update()
-                    await asyncio.sleep(0.15)
+                    await asyncio.sleep(0.30)
                     msg = f"Turn {turn+1}: 対戦相手の勝利！！"
                     log_col.controls.append(ft.Text(msg, color=ft.Colors.WHITE, bgcolor=ft.Colors.RED))
                     self.page.update()
-                    await asyncio.sleep(0.15)
+                    await asyncio.sleep(0.30)
                     break
                 else:
                     max_hp = getattr(player_bar, '_max_hp', None) or int(player_data["HP"])
@@ -87,21 +87,21 @@ class MockBattle:
                     msg = f"Turn {turn+1}: 対戦相手の攻撃、プレイヤーへ{int(player_dmg)}のダメージを与えた。(プレイヤーの残HP: {player_hp})"
                     log_col.controls.append(ft.Text(msg))
                     self.page.update()
-                await asyncio.sleep(0.15)
+                await asyncio.sleep(0.30)
             # 30ターンかけても両方HPが残った場合はHPの多いほうを勝ちとする。HPも同じなら引き分け
             if player_hp != 0 and npc_hp != 0:
                 if player_hp > npc_hp:
                     msg = f"判定：プレイヤーの勝利"
                     log_col.controls.append(ft.Text(msg, color=ft.Colors.WHITE, bgcolor=ft.Colors.BLUE))
-                    await asyncio.sleep(0.15)
+                    await asyncio.sleep(0.30)
                 elif player_hp < npc_hp:
                     msg = f"判定：対戦相手の勝利"
                     log_col.controls.append(ft.Text(msg, color=ft.Colors.WHITE, bgcolor=ft.Colors.RED))
-                    await asyncio.sleep(0.15)
+                    await asyncio.sleep(0.30)
                 else:
                     msg = f"判定：引き分け"
                     log_col.controls.append(ft.Text(msg, color=ft.Colors.WHITE, bgcolor=ft.Colors.GREY))
-                    await asyncio.sleep(0.15)
+                    await asyncio.sleep(0.30)
             mock_battle_dialog.actions[0].disabled = False
             self.page.update()
         if player_id == -1:
@@ -178,6 +178,7 @@ class MockBattle:
                                     height=280,
                                     spacing=0,
                                     auto_scroll=True,
+                                    scroll=ft.ScrollMode.AUTO,
                                     controls=[],
                                 ),
                             ],
