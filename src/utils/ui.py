@@ -4,7 +4,6 @@ import webbrowser
 from utils.db import update_favorite
 from utils.utils import rankid_to_rank
 
-
 def create_ranked_tabs(ranks, all_cards_by_rank, on_select_callback=None):
     """ランク別のタブ付きカード選択リストを作成して返す。
 
@@ -58,8 +57,6 @@ def create_ranked_tabs(ranks, all_cards_by_rank, on_select_callback=None):
             suffix_icon=ft.IconButton(icon=ft.Icons.BACKSPACE, scale=ft.Scale(scale=0.75), opacity=0.5,),
             expand=True,
         )
-
-
         def build_row_cont(row):
             cid = row[0]
             name = row[2] or ""
@@ -83,7 +80,6 @@ def create_ranked_tabs(ranks, all_cards_by_rank, on_select_callback=None):
                     ],
                 ),
             )
-
             def _on_target_click(e, cid=cid, name=name, rk=rk, cont=cont):
                 for c in target_containers:
                     c.bgcolor = None
@@ -111,10 +107,8 @@ def create_ranked_tabs(ranks, all_cards_by_rank, on_select_callback=None):
                         on_select_callback(cid, name, rk)
                     except Exception:
                         pass
-
             cont.on_click = _on_target_click
             return cont
-
         def refresh_lv(e=None, rk=rk, lv=lv, sort_dd=sort_dd, sort_rg=sort_rg, search_tf=search_tf):
             rows = all_cards_by_rank.get(rk, [])
             q = (search_tf.value or "").strip().lower()
@@ -125,7 +119,6 @@ def create_ranked_tabs(ranks, all_cards_by_rank, on_select_callback=None):
                 name = (row[2] or "").lower()
                 if q == "" or q in name:
                     filtered.append(row)
-
             def keyfunc(r):
                 try:
                     if key == "id":
@@ -141,7 +134,6 @@ def create_ranked_tabs(ranks, all_cards_by_rank, on_select_callback=None):
                 except Exception:
                     return 0
                 return 0
-
             filtered.sort(key=keyfunc, reverse=order_desc)
             lv.controls.clear()
             for row in filtered:
@@ -150,7 +142,6 @@ def create_ranked_tabs(ranks, all_cards_by_rank, on_select_callback=None):
                 target_containers.append(cont)
             if len(lv.controls) == 0:
                 lv.controls.append(ft.Container(padding=ft.Padding.all(8), content=ft.Text("対象が見つかりません")))
-
         sort_ui = ft.Row(spacing=4, alignment=ft.MainAxisAlignment.CENTER, controls=[sort_dd, sort_rg, search_tf])
         header = ft.Container(
             padding=ft.Padding.all(6),
@@ -168,18 +159,15 @@ def create_ranked_tabs(ranks, all_cards_by_rank, on_select_callback=None):
                 ],
             ),
         )
-
         tab_views.append(
             ft.Container(
                 alignment=ft.Alignment.CENTER,
                 content=ft.Column(spacing=1, controls=[sort_ui, ft.Divider(height=1), header, ft.Divider(height=1), lv]),
             )
         )
-
         sort_dd.on_select = refresh_lv
         sort_rg.on_change = refresh_lv
         search_tf.on_submit = refresh_lv
-
         def _on_search_clear(e, tf=search_tf, ref=refresh_lv):
             try:
                 tf.value = ""
@@ -187,15 +175,12 @@ def create_ranked_tabs(ranks, all_cards_by_rank, on_select_callback=None):
                 tf.update()
             except Exception:
                 pass
-
         if hasattr(search_tf, 'suffix_icon') and search_tf.suffix_icon is not None:
             try:
                 search_tf.suffix_icon.on_click = _on_search_clear
             except Exception:
                 pass
-
         refresh_lv()
-
     tabs = ft.Tabs(
         selected_index=0,
         length=len(ranks),
@@ -227,6 +212,7 @@ def get_card_color(rank, isSozai):
         else: #C
             color = ft.Colors.LIME_900
     return color
+
 def create_card_image(data, isShow, isFbButton, on_fav_changed=None):
     """カードイメージの作成"""
     def _on_fav_click(e):

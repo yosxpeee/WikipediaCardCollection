@@ -276,13 +276,11 @@ class PowerUp:
             sozai_containers = []
             # 左側：ランク別タブの ListView を作成（共通化）
             from utils.ui import create_ranked_tabs
-
             def _on_target_selected(cid, name, rk):
                 nonlocal selected_target_id
                 selected_target_id = cid
                 selected_target_text.value = f"{cid} [{rk}] {name}"
                 selected_target_text.update()
-
             target_tab = create_ranked_tabs(ranks, all_cards_by_rank, on_select_callback=_on_target_selected)
             # 右側：素材一覧（isSozai == 1）
             sozai_lv = ft.ListView(
