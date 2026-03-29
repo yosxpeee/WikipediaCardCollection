@@ -167,12 +167,12 @@ class MockBattle:
                     ft.Container(
                         width=640,
                         height=300,
-                        bgcolor=ft.Colors.with_opacity(0.25, ft.Colors.GREY),
+                        bgcolor=ft.Colors.with_opacity(0.25, ft.Colors.GREY_100),
                         content=ft.Column(
                             spacing=0,
                             controls=[
                                 ft.Text("＜＜＜戦闘ログ＞＞＞"),
-                                ft.Divider(height=1),
+                                ft.Divider(color=ft.Colors.GREY, height=1),
                                 ft.ListView(
                                     width=640,
                                     height=280,
