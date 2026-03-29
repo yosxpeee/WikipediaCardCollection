@@ -181,6 +181,7 @@ async def main(page: ft.Page):
     page.window.resizable = False
     page.window.maximizable = False
     page.window.visible = True
+    page.window.icon = "icon.ico" 
     page.title = "Wikipedia Card Collection"
     page.debug = DEBUG_MODE
     # ダークテーマ対応：初期化

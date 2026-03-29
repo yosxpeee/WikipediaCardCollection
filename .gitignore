@@ -162,6 +162,7 @@ cython_debug/
 # Flet
 storage/
 
-# 参考ソースなど
+# アプリで生成されるファイル
 *.db
 settings.json
+icon.ico

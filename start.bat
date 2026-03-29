@@ -7,6 +7,7 @@ if not exist .venv (
     uv pip install BeautifulSoup4
     uv pip install requests
     uv pip install pyinstaller
+    uv pip install Pillow
     uv pip install flet==0.83.0
     uv run flet --version
     uv run flet run --hidden
