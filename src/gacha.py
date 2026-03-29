@@ -224,7 +224,7 @@ class Gacha:
                         debug_print(self.page.debug, "記事情報取得失敗。リトライ")
                         break
                     extract  = await _get_summary(t_quote) #概要
-                    if extract == "ERROR" or :
+                    if extract == "ERROR":
                         debug_print(self.page.debug, "記事概要取得失敗。リトライ")
                         break
                     if rank_data == {} :
