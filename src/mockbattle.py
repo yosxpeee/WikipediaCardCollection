@@ -33,7 +33,7 @@ class MockBattle:
                 "resourceDEF": data[0][14],
                 "resourceRANK": rank_origin,
             }
-            return create_card_image(data_for_image, True), data_for_image
+            return create_card_image(data_for_image, True, False), data_for_image
         async def mock_battle(player_data, npc_data):
             """模擬戦（非同期でUI更新しながら進行）"""
             player_hp = int(player_data["HP"])

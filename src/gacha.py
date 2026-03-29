@@ -357,7 +357,7 @@ class Gacha:
             )
             grid_controls.append(c)
         # Stack の表示用コントロール群
-        stack_controls = [create_card_image(get_card_list[i], i == selected_index) for i in range(10)]
+        stack_controls = [create_card_image(get_card_list[i], i == selected_index, True) for i in range(10)]
         self.dialog = ft.AlertDialog(
             modal=True,
             title=ft.Text("ガチャ結果"),

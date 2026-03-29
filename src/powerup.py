@@ -142,7 +142,7 @@ class PowerUp:
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                     expand=True,
                     controls=[
-                        create_card_image(row_data_for_image, True),
+                        create_card_image(row_data_for_image, True, False),
                     ],
                 ),
                 bgcolor=ft.Colors.GREY_100, border_radius=5,

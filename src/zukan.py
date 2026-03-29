@@ -47,7 +47,7 @@ class Zukan:
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                     expand=True,
                     controls=[
-                        create_card_image(data, True, on_fav_changed),
+                        create_card_image(data, True, True, on_fav_changed),
                     ],
                 ),
                 bgcolor=ft.Colors.GREY_100, border_radius=5,

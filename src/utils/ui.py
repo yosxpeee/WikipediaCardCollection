@@ -23,7 +23,7 @@ def get_card_color(rank, isSozai):
         else: #C
             color = ft.Colors.LIME_900
     return color
-def create_card_image(data, isShow, on_fav_changed=None):
+def create_card_image(data, isShow, isFbButton, on_fav_changed=None):
     """カードイメージの作成"""
     def _on_fav_click(e):
         """お気に入りボタンクリックの処理"""
@@ -223,7 +223,7 @@ def create_card_image(data, isShow, on_fav_changed=None):
                         width=310,
                         height=40,
                         alignment=ft.Alignment.TOP_RIGHT,
-                        content=fav_icon,
+                        content=fav_icon if isFbButton == True else None,
                     ),
                     ft.Container(
                         width=310,
