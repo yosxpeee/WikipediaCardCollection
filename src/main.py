@@ -211,7 +211,7 @@ async def main(page: ft.Page):
                         ft.Image("gacha_spin3.png", scale=ft.Scale(scale_x=0.88, scale_y=0.88), visible=True),
                         ft.Image("gacha_spin4.png", scale=ft.Scale(scale_x=0.88, scale_y=0.88), visible=True),
                         ft.Image("gacha_spin5.png", scale=ft.Scale(scale_x=0.88, scale_y=0.88), visible=True),
-                    ]
+                    ],
                 ),
                 ft.Column(
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER, 
