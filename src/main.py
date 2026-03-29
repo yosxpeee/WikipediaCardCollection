@@ -13,10 +13,11 @@ from utils.manage_settings import get_dark_theme
 DEBUG_MODE = False
 
 async def main(page: ft.Page):
-    # event: タブ切り替え
+    """メイン"""
     def _change_tabs(e):
-        # 図鑑タブのロード
+        """タブの切り替え"""
         async def __load_and_set_zukan():
+            """図鑑タブのロード"""
             try:
                 content = await zukan.create()
                 tab_bar_view.controls[1] = ft.Container(
@@ -35,8 +36,8 @@ async def main(page: ft.Page):
             ov = page.overlay[1]
             ov.visible = False
             page.update()
-        # 強化タブのロード
         async def __load_and_set_powerup():
+            """強化タブのロード"""
             try:
                 content = await powerup.create()
                 tab_bar_view.controls[2] = ft.Container(
@@ -55,8 +56,8 @@ async def main(page: ft.Page):
             ov = page.overlay[1]
             ov.visible = False
             page.update()
-        # 模擬戦タブのロード
         async def __load_and_set_battle():
+            """模擬戦タブのロード"""
             try:
                 content = await battle.create()
                 tab_bar_view.controls[3] = ft.Container(
@@ -246,7 +247,6 @@ async def main(page: ft.Page):
     # ガチャタブ、設定タブの中身のクラス生成
     gacha = Gacha(page)
     setting = Setting(page)
-    #battle = MockBattle(page)
     # DB がない場合初期作成する
     initialize_db()
     # ページに要素追加
