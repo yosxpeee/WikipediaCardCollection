@@ -1,69 +1,32 @@
-# Wikipediacardcollection app
+# Wikipedia Card Collection
 
-## Run the app
+## 概要
+なんか巷で流行ったWikigachaもどきのアプリです。  
+面白半分で作ったので怒られたら消します()
 
-### uv
+## 実行方法
+生pythonで実行するときはstart.batを実行してください。  
+初回起動の場合各種インストールが行われてアプリが起動します。  
+初回以降はインストールをスキップしてアプリが起動します。
 
-Run as a desktop app:
+## ゲーム内容
+### ガチャ
+10連ガチャします。  
+本家と違って10回ごとにSR以上、とかありません。強いのが欲しければガチ引きしてください。  
+カードのステータスは本家と全然違います。  
+また、素材カードが存在します(詳細は後述)。
 
-```bash
-uv run flet run
-```
+### 図鑑
+手に入れたカードのギャラリーみたいなもんです。  
+各種フィルタやソート実装済み。お気に入り登録もできます。
 
-Run as a web app:
+### 強化
+本家にはない要素です。  
+素材としてカテゴライズされているカードを食わせることでランクを上げることができます。
 
-```bash
-uv run flet run --web
-```
+### 模擬戦
+手持ちのカード同士で1vs1のシングルマッチを行います。  
+こちらも本家とはダメージの計算式が全然違います。
 
-For more details on running the app, refer to the [Getting Started Guide](https://docs.flet.dev/).
-
-## Build the app
-
-### Android
-
-```bash
-flet build apk -v
-```
-
-For more details on building and signing `.apk` or `.aab`, refer to the [Android Packaging Guide](https://docs.flet.dev/publish/android/).
-
-### iOS
-
-```bash
-flet build ipa -v
-```
-
-For more details on building and signing `.ipa`, refer to the [iOS Packaging Guide](https://docs.flet.dev/publish/ios/).
-
-### macOS
-
-```bash
-flet build macos -v
-```
-
-For more details on building macOS package, refer to the [macOS Packaging Guide](https://docs.flet.dev/publish/macos/).
-
-### Linux
-
-```bash
-flet build linux -v
-```
-
-For more details on building Linux package, refer to the [Linux Packaging Guide](https://docs.flet.dev/publish/linux/).
-
-### Windows
-
-```bash
-flet build windows -v
-```
-
-For more details on building Windows package, refer to the [Windows Packaging Guide](https://docs.flet.dev/publish/windows/).
-
-### Web
-
-```bash
-flet build web -v
-```
-
-For more details on building Web app, refer to the [Web Packaging Guide](https://docs.flet.dev/publish/web/).
+### 設定
+ダークモードとライトモードの切り替えができます。
