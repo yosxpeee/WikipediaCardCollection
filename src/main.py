@@ -250,6 +250,7 @@ async def main(page: ft.Page):
     # DB がない場合初期作成する
     initialize_db()
     # ページに要素追加
+    page.update()
     page.controls.append(
         ft.Tabs(
             selected_index=0,
@@ -262,11 +263,86 @@ async def main(page: ft.Page):
                     ft.TabBar(
                         tab_alignment=ft.TabAlignment.CENTER,
                         tabs=[
-                            ft.Tab(label="ガチャ", icon=ft.Icons.SHOPPING_BAG),
-                            ft.Tab(label="図鑑", icon=ft.Icons.ARTICLE),
-                            ft.Tab(label="強化", icon=ft.Icons.ADD_MODERATOR),
-                            ft.Tab(label="模擬戦", icon=ft.Icons.BATCH_PREDICTION),
-                            ft.Tab(label="設定", icon=ft.Icons.SETTINGS),
+                            ft.Tab(
+                                label=ft.Column(
+                                    spacing=2,
+                                    alignment=ft.MainAxisAlignment.CENTER,
+                                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                                    controls=[
+                                        ft.Image(
+                                            "icon_gacha.svg", 
+                                            color=ft.Colors.ON_SURFACE,
+                                            width=24, 
+                                            height=24
+                                        ),
+                                        ft.Text("ガチャ"),
+                                    ],
+                                ),
+                            ),
+                            ft.Tab(
+                                label=ft.Column(
+                                    spacing=2,
+                                    alignment=ft.MainAxisAlignment.CENTER,
+                                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                                    controls=[
+                                        ft.Image(
+                                            "icon_zukan.svg", 
+                                            color=ft.Colors.ON_SURFACE,
+                                            width=24, 
+                                            height=24
+                                        ),
+                                        ft.Text("図鑑"),
+                                    ],
+                                ),
+                            ),
+                            ft.Tab(
+                                label=ft.Column(
+                                    spacing=2,
+                                    alignment=ft.MainAxisAlignment.CENTER,
+                                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                                    controls=[
+                                        ft.Image(
+                                            "icon_powerup.svg", 
+                                            color=ft.Colors.ON_SURFACE,
+                                            width=24, 
+                                            height=24
+                                        ),
+                                        ft.Text("強化"),
+                                    ],
+                                ),
+                            ),
+                            ft.Tab(
+                                label=ft.Column(
+                                    spacing=2,
+                                    alignment=ft.MainAxisAlignment.CENTER,
+                                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                                    controls=[
+                                        ft.Image(
+                                            "icon_battle_mock.svg", 
+                                            color=ft.Colors.ON_SURFACE,
+                                            width=24, 
+                                            height=24
+                                        ),
+                                        ft.Text("模擬戦"),
+                                    ],
+                                ),
+                            ),
+                            ft.Tab(
+                                label=ft.Column(
+                                    spacing=2,
+                                    alignment=ft.MainAxisAlignment.CENTER,
+                                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                                    controls=[
+                                        ft.Image(
+                                            "icon_settings.svg", 
+                                            color=ft.Colors.ON_SURFACE,
+                                            width=24, 
+                                            height=24
+                                        ),
+                                        ft.Text("設定"),
+                                    ],
+                                ),
+                            ),
                         ],
                     ),
                     ft.TabBarView(
