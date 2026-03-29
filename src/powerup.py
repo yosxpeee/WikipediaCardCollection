@@ -1,7 +1,7 @@
 import flet as ft
 import asyncio
 from utils.db import get_card_from_id, rankup_card, get_cards_by_rankid, get_cards_by_sozai, get_cards_by_favorite
-from utils.utils import RANK_TABLE, debug_print, rankid_to_rank, rank_to_rankid, calc_status
+from utils.utils import RANK_TABLE, debug_print, rankid_to_rank, rank_to_rankid, calc_status, create_card_image_data
 from utils.ui import get_card_color, create_card_image
 
 class PowerUp:
@@ -111,26 +111,7 @@ class PowerUp:
         self.page.update()
         # 完了通知POP(完了後のカードイメージを出力する)
         row_data = get_card_from_id(target_id)
-        rank = rankid_to_rank(row_data[0][5], 0)
-        rank_origin = rankid_to_rank(row_data[0][15], 0)
-        row_data_for_image = {
-            "id": row_data[0][0],
-            "pageId": row_data[0][1],
-            "title": row_data[0][2],
-            "pageUrl": row_data[0][3],
-            "imageUrl": row_data[0][4],
-            "rank": rank,
-            "quality": row_data[0][6],
-            "isSozai": row_data[0][7],
-            "extract": row_data[0][8],
-            "HP": row_data[0][9],
-            "ATK": row_data[0][10],
-            "DEF": row_data[0][11],
-            "favorite": row_data[0][12],
-            "resourceATK": row_data[0][13],
-            "resourceDEF": row_data[0][14],
-            "resourceRANK": rank_origin,
-        }
+        row_data_for_image = create_card_image_data(row_data[0])
         self.close_button = ft.TextButton("Close", on_click=lambda e: self.page.pop_dialog())
         complete_dialog = ft.AlertDialog(
             modal=True,

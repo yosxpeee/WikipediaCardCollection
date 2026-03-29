@@ -13,6 +13,8 @@ class MockBattle:
     def popup_mock_battle_dialog(self, player_id, npc_id):
         """模擬戦のダイアログ表示"""
         def create_card_image_from_id(data):
+            """カードイメージ作成"""
+            #Note: データ自体も欲しいので、utilsにある関数は呼ばず個別実装
             rank = rankid_to_rank(data[0][5], 0)
             rank_origin = rankid_to_rank(data[0][15], 0)
             data_for_image = {

@@ -129,3 +129,27 @@ def calc_damage(debug, id1_data, id2_data, id2_hp):
         debug_print(debug, "割合+100")
         id2_damage = id2_hp*wariai_rnd + 100
     return id2_damage
+
+def create_card_image_data(data):
+    """カード画像作成用のデータを作る"""
+    rank = rankid_to_rank(data[5], data[7])
+    rank_origin = rankid_to_rank(data[15], data[7])
+    card_data = {
+        "id": data[0],
+        "pageId": data[1],
+        "title": data[2],
+        "pageUrl": data[3],
+        "imageUrl": data[4],
+        "rank": rank,
+        "quality": data[6],
+        "isSozai": data[7],
+        "extract": data[8],
+        "HP": data[9],
+        "ATK": data[10],
+        "DEF": data[11],
+        "favorite": data[12],
+        "resourceATK": data[13],
+        "resourceDEF": data[14],
+        "resourceRANK": rank_origin,
+    }
+    return card_data
