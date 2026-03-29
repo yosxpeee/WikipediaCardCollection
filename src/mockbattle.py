@@ -90,7 +90,7 @@ class MockBattle:
                     log_col.controls.append(ft.Text(msg))
                     self.page.update()
                 await asyncio.sleep(0.30)
-            # 30ターンかけても両方HPが残った場合はHPの多いほうを勝ちとする。HPも同じなら引き分け
+            # 10ターンかけても両方HPが残った場合はHPの多いほうを勝ちとする。HPも同じなら引き分け
             if player_hp != 0 and npc_hp != 0:
                 if player_hp > npc_hp:
                     msg = f"判定：プレイヤーの勝利"
@@ -110,8 +110,9 @@ class MockBattle:
             return
         if npc_id == -1:
             return
-        #プレイヤーカードの取得
+        # プレイヤーカードの取得
         player_card, player_data = create_card_image_from_id(get_card_from_id(player_id))
+        # 対戦相手カードの取得
         npc_card, npc_data = create_card_image_from_id(get_card_from_id(npc_id))
         mock_battle_dialog = ft.AlertDialog(
             modal=True,
