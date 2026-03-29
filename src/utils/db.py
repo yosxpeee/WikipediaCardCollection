@@ -39,10 +39,7 @@ def save_cards(cards):
         cursor.execute('''
             INSERT INTO gacha_cards (pageId, title, pageUrl, imageUrl, rank, quality, isSozai, extract, HP, ATK, DEF, favorite, resourceATK, resourceDEF, resourceRANK) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (card['pageId'], card['title'], card['pageUrl'], card['imageUrl'], rank_to_rankid(card['rank']), card['quality'], card['isSozai'], card['extract'], card['HP'], card['ATK'], card['DEF'], 0, card['resourceATK'], card['resourceDEF'], rank_to_rankid(card['resourceRANK'])))
-        try:
-            card['id'] = cursor.lastrowid
-        except Exception:
-            pass
+        card['id'] = cursor.lastrowid
     conn.commit()
     # 断片化を防ぎたいのでバキュームする
     cursor.execute('''VACUUM''')
@@ -136,25 +133,21 @@ def update_favorite(card_id, value):
     """お気に入り状態の更新"""
     conn = sqlite3.connect('cards.db')
     cursor = conn.cursor()
-    try:
-        cursor.execute('''UPDATE gacha_cards SET favorite = ? WHERE id = ?''', (int(value), int(card_id)))
-        conn.commit()
-    except Exception:
-        pass
-    finally:
-        conn.close()
+    cursor.execute(
+        '''UPDATE gacha_cards SET favorite = ? WHERE id = ?''',
+        (int(value), int(card_id))
+    )
+    conn.commit()
+    conn.close()
 
 def rankup_card(target_id, next_rankid, atk, defence, hp, sozai_id):
     """カードのランクアップ"""
     conn = sqlite3.connect('cards.db')
     cursor = conn.cursor()
-    try:
-        cursor.execute(
-            '''UPDATE gacha_cards SET rank = ?, HP= ?, ATK = ?, DEF = ? WHERE id = ?''',
-            (str(next_rankid), str(hp), str(atk), str(defence), int(target_id))
-        )
-        cursor.execute(f"""DELETE FROM gacha_cards WHERE id = {int(sozai_id)}""")
-        conn.commit()
-    except Exception as e:
-        print(e)
+    cursor.execute(
+        '''UPDATE gacha_cards SET rank = ?, HP= ?, ATK = ?, DEF = ? WHERE id = ?''',
+        (str(next_rankid), str(hp), str(atk), str(defence), int(target_id))
+    )
+    cursor.execute(f"""DELETE FROM gacha_cards WHERE id = {int(sozai_id)}""")
+    conn.commit()
     conn.close()

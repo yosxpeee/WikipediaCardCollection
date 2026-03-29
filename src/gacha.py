@@ -2,7 +2,7 @@ import flet as ft
 import urllib.parse
 import asyncio
 
-from utils.utils import fetch_json, calc_status, rankid_to_rank
+from utils.utils import debug_print, fetch_json, calc_status, rankid_to_rank
 from utils.db import save_cards, get_card_from_pageid
 from utils.ui import get_card_color, create_card_image
 
@@ -35,7 +35,7 @@ class Gacha:
                     j = await fetch_json(rank_url)
                     break
                 except Exception as e:
-                    print("エラー。3秒後にリトライします。")
+                    debug_print(self.page.debug, "エラー。3秒後にリトライします。")
                     j = {}
                     await asyncio.sleep(3)
                     n+=1
@@ -50,7 +50,7 @@ class Gacha:
                     j = await fetch_json(info_url)
                     break
                 except Exception as e:
-                    print("エラー。3秒後にリトライします。")
+                    debug_print(self.page.debug, "エラー。3秒後にリトライします。")
                     j = {}
                     await asyncio.sleep(3)
                     n+=1
@@ -165,7 +165,7 @@ class Gacha:
         while True:
             if count >= num:
                 break
-            # デバッグ：テスト用にdata固定
+            # デバッグ用のdata固定
             #if count == 0:
             #    randList = [{"id":"2717179", "title":"印象"}] #素材(ソフトリダイレクト)
             #    randList = [{"id":"4059891", "title":"コニャ"}] #素材(500エラーになる)
@@ -179,7 +179,8 @@ class Gacha:
             #    randList = [{"id":"1492869", "title":"キンシャサノキセキ"}] #SSR
             #    randList = [{"id":"1855047", "title":"新宿駅"}] #UR
             #    randList = [{"id":"228773",  "title":"ディープインパクト (競走馬)"}] #LR
-            #    randList = [{"id":"68326",   "title":"平宗盛"}]
+            #    randList = [{"id":"6205",   "title":"大和_(戦艦)"}] #UR
+            #    randList = [{"id":"24163",   "title":"武蔵_(戦艦)"}] #UR
             #else:
             #    randList = await _get_random(10-count)
             #randList = []
@@ -216,11 +217,11 @@ class Gacha:
                     rank_data = await _get_rank_data(t_quote) #Rank
                     info_data = await _get_info_data(t_quote) #info
                     if info_data == {}:
-                        print("記事情報取得失敗。リトライ")
+                        debug_print(self.page.debug, "記事情報取得失敗。リトライ")
                         break
                     extract  = await _get_summary(t_quote) #概要
                     if extract == "ERROR":
-                        print("記事概要取得失敗。リトライ")
+                        debug_print(self.page.debug, "記事概要取得失敗。リトライ")
                         break
                     if rank_data == {} :
                         #評価されていない場合はCとみなす
@@ -230,7 +231,7 @@ class Gacha:
                         try:
                             quality = float(rank_data["result"]["ja"]["quality"])
                         except Exception:
-                            print("ランクデータ読取失敗。リトライ")
+                            debug_print(self.page.debug, "ランクデータ読取失敗。リトライ")
                             break
                         if quality == 100:
                             rank = "LR"
@@ -256,7 +257,7 @@ class Gacha:
                         else:
                             isSozai = 0
                     except :
-                        print("カテゴリ取得失敗。リトライ")
+                        debug_print(self.page.debug, "カテゴリ取得失敗。リトライ")
                         break
                     try:
                         # リソース取得
@@ -266,7 +267,7 @@ class Gacha:
                             if info_data["query"]["pages"][p_str]["pageviews"][dayView] != None:
                                 a_resource = a_resource + info_data["query"]["pages"][p_str]["pageviews"][dayView]
                     except:
-                        print("リソース取得失敗。リトライ")
+                        debug_print(self.page.debug, "リソース取得失敗。リトライ")
                         break
                     try:
                         # URL取得
@@ -277,7 +278,7 @@ class Gacha:
                         full_url = info_data["query"]["pages"][p_str]["fullurl"]
                         query = True
                     except:
-                        print("URL取得失敗。リトライ")
+                        debug_print(self.page.debug, "URL取得失敗。リトライ")
                         break
                 if query:
                     if isSozai == 0:
@@ -286,23 +287,21 @@ class Gacha:
                         defence = -1
                         atk = -1
                         hitPoint = -1
-                    # ↓デバッグ用にしばらく残す
-                    print("#########################################################")
+                    debug_print(self.page.debug, "#########################################################")
                     if isSozai == 1:
-                        print(f"{pageid}: {title} [{rank}] ({quality}) (素材)")
+                        debug_print(self.page.debug, f"{pageid}: {title} [{rank}] ({quality}) (素材)")
                     else:
-                        print(f"{pageid}: {title} [{rank}] ({quality})")
-                    print(f"Page URL: {full_url}")
+                        debug_print(self.page.debug, f"{pageid}: {title} [{rank}] ({quality})")
+                    debug_print(self.page.debug, f"Page URL: {full_url}")
                     if extract == "":
-                        print("概要: なし")
+                        debug_print(self.page.debug, "概要: なし")
                     else:
-                        print(f"概要: {extract}")
-                    print(f"画像URL: {image_url}")
-                    print(f"HP :{hitPoint}")
-                    print(f"ATK:{atk} ({a_resource})")
-                    print(f"DEF:{defence} ({d_resource})")
-                    print("#########################################################")
-                    # ↑デバッグ用にしばらく残す
+                        debug_print(self.page.debug, f"概要: {extract}")
+                    debug_print(self.page.debug, f"画像URL: {image_url}")
+                    debug_print(self.page.debug, f"HP :{hitPoint}")
+                    debug_print(self.page.debug, f"ATK:{atk} ({a_resource})")
+                    debug_print(self.page.debug, f"DEF:{defence} ({d_resource})")
+                    debug_print(self.page.debug, "#########################################################")
                     get_card_list.append({
                         "pageId": pageid,
                         "title": title,

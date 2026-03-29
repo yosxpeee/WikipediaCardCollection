@@ -1,7 +1,7 @@
 import flet as ft
 import asyncio
 from utils.db import get_card_from_id, rankup_card, get_cards_by_rankid, get_cards_by_sozai, get_cards_by_favorite
-from utils.utils import RANK_TABLE, rankid_to_rank, rank_to_rankid, calc_status
+from utils.utils import RANK_TABLE, debug_print, rankid_to_rank, rank_to_rankid, calc_status
 from utils.ui import get_card_color, create_card_image
 
 class PowerUp:
@@ -186,7 +186,7 @@ class PowerUp:
         sozai_data = get_card_from_id(sozai_id)
         sozai_title = sozai_data[0][2]
         # 強化シミュレート
-        print(f"#################### {data[0][2]} 強化シミュレート")
+        debug_print(self.page.debug, f"#################### {data[0][2]} 強化シミュレート")
         simulate_data = []
         defence = 0
         atk     = 0
@@ -194,7 +194,8 @@ class PowerUp:
         for r in RANK_TABLE:
             if r >= next_rankid:
                 defence, atk, hp = calc_status(d_resource, a_resource, rankid_to_rank(r, 0))
-                print(f"{rankid_to_rank(r, 0)} | ATK:{atk} DEF:{defence} HP:{hp}")
+                if self.page.debug:
+                    debug_print(self.page.debug, f"{rankid_to_rank(r, 0)} | ATK:{atk} DEF:{defence} HP:{hp}")
                 if r == next_rankid:
                     simulate_data.append(
                         ft.Text(

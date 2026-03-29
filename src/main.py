@@ -10,6 +10,8 @@ from setting import Setting
 from utils.db import initialize_db
 from utils.manage_settings import get_dark_theme
 
+DEBUG_MODE = False
+
 async def main(page: ft.Page):
     # event: タブ切り替え
     def _change_tabs(e):
@@ -179,6 +181,7 @@ async def main(page: ft.Page):
     page.window.maximizable = False
     page.window.visible = True
     page.title = "Wikipedia Card Collection"
+    page.debug = DEBUG_MODE
     # ダークテーマ対応：初期化
     dark_theme_enabled = get_dark_theme()
     if dark_theme_enabled:
