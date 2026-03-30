@@ -103,25 +103,33 @@ class Sortie:
                                                                 ),
                                                                 ft.Container(
                                                                     width=360,
-                                                                    alignment=ft.Alignment.CENTER,
+                                                                    alignment=ft.Alignment.TOP_LEFT,
                                                                     content=ft.Text("ああああaaaaaaaあああああaaaaaaaaaaaaaaaああaaaaaaaaaaaaあaaaああああ",no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
                                                                 ),
                                                             ],
                                                         ),
                                                         ft.Row(
+                                                            margin=ft.Margin.all(2),
                                                             controls=[
-                                                                ft.Image(
+                                                                ft.Container(
+                                                                    alignment=ft.Alignment.CENTER,
+                                                                    border=ft.Border.all(2),
+                                                                    bgcolor=ft.Colors.ON_PRIMARY,
                                                                     width=100,
                                                                     height=74,
-                                                                    src="icon.png",
-                                                                    fit=ft.BoxFit.CONTAIN,
+                                                                    content=ft.Image(
+                                                                        width=100,
+                                                                        height=74,
+                                                                        src="icon.png",
+                                                                        fit=ft.BoxFit.CONTAIN,
+                                                                    ),
                                                                 ),
                                                                 ft.Column(
                                                                     spacing=0,
                                                                     controls=[
-                                                                        ft.Text("HP : 11111"),
-                                                                        ft.Text("DEF: 11111"),
-                                                                        ft.Text("ATK: 11111"),
+                                                                        ft.Text("HP : 11111".ljust(10),font_family="Consolas", size=16),
+                                                                        ft.Text("DEF: 11111".ljust(10),font_family="Consolas", size=16),
+                                                                        ft.Text("ATK: 11111".ljust(10),font_family="Consolas", size=16),
                                                                     ],
                                                                 ),
                                                             ],
@@ -131,7 +139,54 @@ class Sortie:
                                                 border_radius=8,
                                                 border=ft.Border.all(1, color=ft.Colors.GREY),
                                             ),
-                                            _create_card_panel(),
+                                            ft.Container(
+                                                width=400,
+                                                height=100,
+                                                bgcolor=ft.Colors.ON_PRIMARY,
+                                                content=ft.Column(
+                                                    spacing=0,
+                                                    controls=[
+                                                        ft.Row(
+                                                            spacing=0,
+                                                            controls=[
+                                                                ft.Container(
+                                                                    width=40,
+                                                                    alignment=ft.Alignment.CENTER,
+                                                                    content=ft.Text("C"),
+                                                                ),
+                                                                ft.Container(
+                                                                    width=360,
+                                                                    alignment=ft.Alignment.TOP_LEFT,
+                                                                    content=ft.Text("ああaaaああああ",no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
+                                                                ),
+                                                            ],
+                                                        ),
+                                                        ft.Row(
+                                                            margin=ft.Margin.all(2),
+                                                            controls=[
+                                                                ft.Container(
+                                                                    alignment=ft.Alignment.CENTER,
+                                                                    border=ft.Border.all(2),
+                                                                    bgcolor=ft.Colors.ON_PRIMARY,
+                                                                    width=100,
+                                                                    height=74,
+                                                                    content=ft.Text("NO IMAGE")
+                                                                ),
+                                                                ft.Column(
+                                                                    spacing=0,
+                                                                    controls=[
+                                                                        ft.Text("HP : 1111".ljust(10),font_family="Consolas", size=16),
+                                                                        ft.Text("DEF: 1111".ljust(10),font_family="Consolas", size=16),
+                                                                        ft.Text("ATK: 1111".ljust(10),font_family="Consolas", size=16),
+                                                                    ],
+                                                                ),
+                                                            ],
+                                                        ),
+                                                    ],
+                                                ),
+                                                border_radius=8,
+                                                border=ft.Border.all(1, color=ft.Colors.GREY),
+                                            ),
                                             _create_card_panel(),
                                             _create_card_panel(),
                                             _create_card_panel(),
