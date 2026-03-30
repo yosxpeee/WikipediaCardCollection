@@ -1,11 +1,11 @@
 [project]
-name = "wikipediacardcollection"
-version = "0.1.0"
-description = ""
+name = "Wikipedia Card Collection"
+version = "0.1.1"
+description = "Wikigachaもどきのデスクトップアプリ"
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [
-    { name = "Flet developer", email = "you@example.com" }
+    { name = "yosxpeee", email = "yosxpeee@gmail.com" }
 ]
 dependencies = [
     "flet>=0.83.0",
@@ -19,10 +19,10 @@ dev = [
 ]
 
 [tool.flet]
-org = "com.mycompany"
-product = "wikipediacardcollection"
-company = "Flet"
-copyright = "Copyright (C) 2023-2026 by Flet"
+org = "https://github.com/yosxpeee"
+product = "Wikipedia Card Collection"
+company = "yosxpeee"
+copyright = "Copyright (C) 2023-2026 by yosxpeee"
 
 [tool.flet.app]
 path = "src"
