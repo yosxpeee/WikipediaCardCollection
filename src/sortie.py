@@ -14,6 +14,7 @@ class Sortie:
         self.current_formation = -1
         self.current_select_card = {}
         self.current_formation_dialog = None
+        self.accordion_opened = "NORMAL"
     async def create(self):
         """画面作成"""
         def _set_current_formation(no):
@@ -23,7 +24,7 @@ class Sortie:
             """編成用画面のダイアログ作成"""
             formation_dialog = ft.AlertDialog(
                 modal=True,
-                title=f"編成：{self.current_formation}",
+                title=f"編成：{self.current_formation+1}",
                 content=ft.Container(
                     width=700,
                     expand=True,
@@ -38,7 +39,7 @@ class Sortie:
         def _create_blank_panel(no):
             """編成の空パネル作成"""
             return ft.Container(
-                width=400,
+                width=300,
                 height=100,
                 bgcolor=ft.Colors.ON_PRIMARY,
                 content=ft.Text("未配置"),
@@ -53,13 +54,19 @@ class Sortie:
         def _expansion_tile_control(level, toggle):
             """"アコーディオンメニュー制御"""
             if toggle:
-                #print(f"{level} が オープンされた")
+                #print(f"{level} を オープンしようとした")
                 for item in sortie_tab.controls[1].controls[1].controls:
                     if item.title != level:
                         item.expanded = False
+                    else:
+                        self.accordion_opened = level
             else:
-                #print(f"{level} が クローズされた")
-                pass
+                #print(f"{level} を クローズしようとした")
+                if level == self.accordion_opened:
+                    for item in sortie_tab.controls[1].controls[1].controls:
+                        if item.title == level:
+                            item.expanded = True
+
         def _create_level_ui(level, opened):
             return ft.ExpansionTile(
                 width=320,
@@ -79,7 +86,7 @@ class Sortie:
                 on_change=lambda x:_expansion_tile_control(level, x.data),
             )
         def _on_target_selected(id, name, rk, hp, atk, deff):
-            print(f"編成対象：{self.current_formation}")
+            print(f"編成対象：{self.current_formation+1}")
             print(f"{id}, {name}, {rk}, {hp}, {atk}, {deff}")
             #current_select_cardに入れる処理
             return
@@ -128,7 +135,7 @@ class Sortie:
                         controls=[
                             ft.Container(
                                 alignment=ft.Alignment.CENTER,
-                                width=400,
+                                width=300,
                                 content=ft.Text("編成"),
                             ),
                             ft.Container(
@@ -147,19 +154,19 @@ class Sortie:
                                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                                 controls=[
                                     ft.GridView(
-                                        width=400,
+                                        width=300,
                                         height=600,
-                                        child_aspect_ratio=4,
+                                        child_aspect_ratio=3,
                                         runs_count=1,
                                         run_spacing=0,
                                         spacing=0,
                                         controls=[
+                                            _create_blank_panel(0),
                                             _create_blank_panel(1),
                                             _create_blank_panel(2),
                                             _create_blank_panel(3),
                                             _create_blank_panel(4),
                                             _create_blank_panel(5),
-                                            _create_blank_panel(6),
                                         ],
                                     ),
                                 ],

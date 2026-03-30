@@ -529,7 +529,7 @@ def create_card_image(data, isShow, isFbButton, on_fav_changed=None):
 
 def create_sortie_formation_image():
     ft.Container(
-        width=400,
+        width=300,
         height=100,
         bgcolor=ft.Colors.ON_PRIMARY,
         content=ft.Column(
@@ -544,7 +544,7 @@ def create_sortie_formation_image():
                             content=ft.Text("SSR"),
                         ),
                         ft.Container(
-                            width=360,
+                            width=260,
                             alignment=ft.Alignment.TOP_LEFT,
                             content=ft.Text("ああああaaaaaaaあああああaaaaaaaaaaaaaaaああaaaaaaaaaaaaあaaaああああ",no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
                         ),
@@ -552,20 +552,8 @@ def create_sortie_formation_image():
                 ),
                 ft.Row(
                     margin=ft.Margin.all(2),
+                    alignment=ft.MainAxisAlignment.END,
                     controls=[
-                        ft.Container(
-                            alignment=ft.Alignment.CENTER,
-                            border=ft.Border.all(2),
-                            bgcolor=ft.Colors.ON_PRIMARY,
-                            width=100,
-                            height=74,
-                            content=ft.Image(
-                                width=100,
-                                height=74,
-                                src="icon.png",
-                                fit=ft.BoxFit.CONTAIN,
-                            ),
-                        ),
                         ft.Column(
                             spacing=0,
                             controls=[
@@ -574,6 +562,24 @@ def create_sortie_formation_image():
                                 ft.Text("ATK: 11111".ljust(10),font_family="Consolas", size=16),
                             ],
                         ),
+                        ft.Container(
+                            height=10,
+                            expand=True,
+                        ),
+                        ft.Container(
+                            alignment=ft.Alignment.CENTER,
+                            border=ft.Border.all(2),
+                            bgcolor=ft.Colors.ON_PRIMARY,
+                            width=74,
+                            height=74,
+                            content=ft.Image(
+                                width=100,
+                                height=74,
+                                src="icon.png",
+                                fit=ft.BoxFit.CONTAIN,
+                            ),
+                        ),
+                        
                     ],
                 ),
             ],
@@ -582,7 +588,7 @@ def create_sortie_formation_image():
         border=ft.Border.all(1, color=ft.Colors.GREY),
     ),
     ft.Container(
-        width=400,
+        width=300,
         height=100,
         bgcolor=ft.Colors.ON_PRIMARY,
         content=ft.Column(
@@ -597,7 +603,7 @@ def create_sortie_formation_image():
                             content=ft.Text("C"),
                         ),
                         ft.Container(
-                            width=360,
+                            width=260,
                             alignment=ft.Alignment.TOP_LEFT,
                             content=ft.Text("ああaaaああああ",no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
                         ),
