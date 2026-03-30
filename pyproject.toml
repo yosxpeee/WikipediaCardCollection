@@ -22,7 +22,7 @@ dev = [
 org = "https://github.com/yosxpeee"
 product = "Wikipedia Card Collection"
 company = "yosxpeee"
-copyright = "Copyright (C) 2023-2026 by yosxpeee"
+copyright = "Copyright (C) 2026 by yosxpeee"
 
 [tool.flet.app]
 path = "src"
