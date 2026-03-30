@@ -1,5 +1,5 @@
 [project]
-name = "Wikipedia Card Collection"
+name = "WikipediaCardCollection"
 version = "0.1.1"
 description = "Wikigachaもどきのデスクトップアプリ"
 readme = "README.md"
