@@ -27,33 +27,21 @@ class Gacha:
             return j.get("query", {}).get("random", [])
         async def _get_rank_data(t_quote):
             """ランク取得"""
-            n = 0
             j = {}
-            while n < 5:
-                try:
-                    rank_url = f"https://api.wikirank.net/api.php?name={t_quote}&lang=ja"
-                    j = await fetch_json(rank_url)
-                    break
-                except Exception as e:
-                    debug_print(self.page.debug, "エラー。3秒後にリトライします。")
-                    j = {}
-                    await asyncio.sleep(3)
-                    n+=1
+            try:
+                rank_url = f"https://api.wikirank.net/api.php?name={t_quote}&lang=ja"
+                j = await fetch_json(rank_url)
+            except Exception as e:
+                return {}
             return j
         async def _get_info_data(t_quote):
             """記事の情報取得"""
-            n = 0
             j = {}
-            while n < 5:
-                try:
-                    info_url = f"https://ja.wikipedia.org/w/api.php?format=json&action=query&titles={t_quote}&prop=info%7Cpageimages%7Cpageprops%7Cpageviews%7Ccategories&inprop=url%7Ctalkid&pithumbsize=600"
-                    j = await fetch_json(info_url)
-                    break
-                except Exception as e:
-                    debug_print(self.page.debug, "エラー。3秒後にリトライします。")
-                    j = {}
-                    await asyncio.sleep(3)
-                    n+=1
+            try:
+                info_url = f"https://ja.wikipedia.org/w/api.php?format=json&action=query&titles={t_quote}&prop=info%7Cpageimages%7Cpageprops%7Cpageviews%7Ccategories&inprop=url%7Ctalkid&pithumbsize=600"
+                j = await fetch_json(info_url)
+            except Exception as e:
+                return {}
             return j
         async def _get_summary(t_quote):
             """記事の概要取得"""
@@ -153,13 +141,10 @@ class Gacha:
         # overlay[0] は gacha のオーバーレイ（counter + progress）
         self.loading_overlay.visible = True
         # 初期化：counter と progress を 0 にする
-        try:
-            col = self.loading_overlay.content
-            if hasattr(col, 'controls') and len(col.controls) >= 2:
-                col.controls[1].controls[1].value = f"ガチャを回しています... 0/{num}"
-                col.controls[1].controls[2].value = 0
-        except Exception:
-            pass
+        col = self.loading_overlay.content
+        if hasattr(col, 'controls') and len(col.controls) >= 2:
+            col.controls[1].controls[1].value = f"ガチャを回しています... 0/{num}"
+            col.controls[1].controls[2].value = 0
         self.page.update()
         count = 0
         get_card_list = []
@@ -188,6 +173,8 @@ class Gacha:
             #else:
             #    randList = await _get_random(10-count)
             #randList = []
+            col.controls[1].controls[3].value = f"ランダム記事取得中..."
+            col.controls[1].controls[3].update()
             randList = await _get_random(10-count)
             if randList == []:
                 force_stopped = True
@@ -218,11 +205,20 @@ class Gacha:
                 else:
                     #かぶってない場合は通常処理(APIコールしてデータ取得)
                     t_quote = urllib.parse.quote(title)
+                    col.controls[1].controls[3].value = f"ランクデータ取得中..."
+                    col.controls[1].controls[3].update()
                     rank_data = await _get_rank_data(t_quote) #Rank
+                    if rank_data == {}:
+                        debug_print(self.page.debug, "ランクデータ取得失敗。リトライ")
+                        break
+                    col.controls[1].controls[3].value = f"記事情報取得中..."
+                    col.controls[1].controls[3].update()
                     info_data = await _get_info_data(t_quote) #info
                     if info_data == {}:
                         debug_print(self.page.debug, "記事情報取得失敗。リトライ")
                         break
+                    col.controls[1].controls[3].value = f"記事概要取得中..."
+                    col.controls[1].controls[3].update()
                     extract  = await _get_summary(t_quote) #概要
                     if extract == "ERROR":
                         debug_print(self.page.debug, "記事概要取得失敗。リトライ")

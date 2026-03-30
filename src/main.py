@@ -246,6 +246,7 @@ async def main(page: ft.Page):
     # オーバーレイ [0]：ガチャ用ローディング画面（進捗バー＋カウンタ）
     gacha_overlay_counter = ft.Text("0/0", size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE)
     gacha_overlay_progress = ft.ProgressBar(width=300, height=12, value=0)
+    gacha_overlay_msg_text = ft.Text("進捗表示")
     gacha_overlay = ft.Container(
         visible=False,
         expand=True,
@@ -268,9 +269,10 @@ async def main(page: ft.Page):
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER, 
                     alignment=ft.MainAxisAlignment.CENTER, spacing=12,
                     controls=[
-                        ft.Container(width=20, height=585),
+                        ft.Container(width=20, height=645), #位置調整用
                         gacha_overlay_counter,
                         gacha_overlay_progress,
+                        gacha_overlay_msg_text,
                     ],
                 ),
             ],
