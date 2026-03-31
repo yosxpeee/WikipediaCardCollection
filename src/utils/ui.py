@@ -10,7 +10,7 @@ def create_ranked_tabs(ranks, all_cards_by_rank, on_select_callback=None):
     Args:
         ranks: ランクのリスト（例: ["LR","UR",...]
         all_cards_by_rank: dict mapping rank->rows (DB行リスト)
-        on_select_callback: 呼ばれるコールバック (cid, name, rank)
+        on_select_callback: 呼ばれるコールバック (cid, name, rank...)
 
     Returns:
         ft.Tabs オブジェクト
@@ -529,8 +529,10 @@ def create_card_image(data, isShow, isFbButton, on_fav_changed=None):
     return view
 
 def create_sortie_formation_image(data):
+    """出撃タブ：編成用カードイメージ作成"""
     card_image = None
     if data["image"] == "" or data["image"] == None:
+        #画像あり
         card_image = ft.Container(
             alignment=ft.Alignment.CENTER,
             border=ft.Border.all(2),
@@ -540,6 +542,7 @@ def create_sortie_formation_image(data):
             content=ft.Text("NO IMAGE"),
         )
     else:
+        #画像なし
         card_image = ft.Container(
             alignment=ft.Alignment.CENTER,
             border=ft.Border.all(2),

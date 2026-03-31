@@ -246,7 +246,7 @@ async def main(page: ft.Page):
     # オーバーレイ [0]：ガチャ用ローディング画面（進捗バー＋カウンタ）
     gacha_overlay_counter = ft.Text("0/0", size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE)
     gacha_overlay_progress = ft.ProgressBar(width=300, height=12, value=0)
-    gacha_overlay_msg_text = ft.Text("進捗表示")
+    gacha_overlay_msg_text = ft.Text("進捗表示", color=ft.Colors.WHITE)
     gacha_overlay = ft.Container(
         visible=False,
         expand=True,

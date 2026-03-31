@@ -19,41 +19,56 @@ class Gacha:
             j = {}
             try:
                 random_url = f"https://ja.wikipedia.org/w/api.php?format=json&action=query&list=random&rnnamespace=0&rnlimit={n}"
-                j = await fetch_json(random_url)
-            except:
+                debug_print(self.page.debug, f"get random url: {random_url}")
+                j = await fetch_json(self.page.debug, random_url)
+                if "error" in j or j == {}:
+                    debug_print(self.page.debug, f"エラーデータ: {j}")
+                    return []
+                return j.get("query", {}).get("random", [])
+            except Exception as e:
+                debug_print(self.page.debug, f"例外発生 error={e}")
                 return []
-            if "error" in j or j == {}:
-                return []
-            return j.get("query", {}).get("random", [])
         async def _get_rank_data(t_quote):
             """ランク取得"""
             j = {}
             try:
                 rank_url = f"https://api.wikirank.net/api.php?name={t_quote}&lang=ja"
-                j = await fetch_json(rank_url)
+                debug_print(self.page.debug, f"get rank data url: {rank_url}")
+                j = await fetch_json(self.page.debug, rank_url)
+                if j.get("result", "") == "not found":
+                    debug_print(self.page.debug, f"エラーデータ: {j}")
+                    #Note:この場合live.wikirank.netのほうから取るという手もなくはないが、APIがない。
+                    return {}
+                return j
             except Exception as e:
+                debug_print(self.page.debug, f"例外発生 error={e}")
                 return {}
-            return j
         async def _get_info_data(t_quote):
             """記事の情報取得"""
             j = {}
             try:
                 info_url = f"https://ja.wikipedia.org/w/api.php?format=json&action=query&titles={t_quote}&prop=info%7Cpageimages%7Cpageprops%7Cpageviews%7Ccategories&inprop=url%7Ctalkid&pithumbsize=600"
-                j = await fetch_json(info_url)
+                debug_print(self.page.debug, f"get info data url: {info_url}")
+                j = await fetch_json(self.page.debug, info_url)
+                #Note:ここでjの中身を参照していないので、↓の処理で例外がでる。
+                return j
             except Exception as e:
+                debug_print(self.page.debug, f"例外発生 error={e}")
                 return {}
-            return j
         async def _get_summary(t_quote):
             """記事の概要取得"""
             j = {}
             try:
                 summary_url = f"https://ja.wikipedia.org/api/rest_v1/page/summary/{t_quote}"
-                j = await fetch_json(summary_url)
-            except :
+                debug_print(self.page.debug, f"get summary url: {summary_url}")
+                j = await fetch_json(self.page.debug, summary_url)
+                if "status" in j:
+                    debug_print(self.page.debug, f"エラーデータ: {j}")
+                    return "ERROR"
+                return j.get("extract", "")
+            except Exception as e:
+                debug_print(self.page.debug, f"例外発生 error={e}")
                 return "ERROR"
-            if "status" in j:
-                return "ERROR"
-            return j.get("extract", "")
         def _make_thumb_content(idx, selected):
             """サムネイルのコンテンツを生成するヘルパー"""
             color = get_card_color(get_card_list[idx]["rank"], get_card_list[idx]["isSozai"])
@@ -154,28 +169,24 @@ class Gacha:
         while True:
             if count >= num:
                 break
-            # デバッグ用のdata固定
-            #if count == 0:
-            #    randList = [{"id":"2717179", "title":"印象"}] #素材(ソフトリダイレクト)
-            #    randList = [{"id":"4059891", "title":"コニャ"}] #素材(500エラーになる)
-            #    randList = [{"id":"1610365", "title":"1-(5-ホスホリボシル)-5-((5-ホスホリボシルアミノ)メチリデンアミノ)イミダゾール-4-カルボキサミドイソメラーゼ"}] #素材(バカ長い名前)
-            #    randList = [{"id":"1662965", "title":"鎌倉山 (曖昧さ回避)"}] #素材
-            #    randList = [{"id":"4690122", "title":"2024年アメリカ合衆国選挙"}] #C (svg画像)
-            #    randList = [{"id":"673688",  "title":"カール9世 (スウェーデン王)"}] #C（tif画像）
-            #    randList = [{"id":"24342",   "title":"ソロモン"}] #UC
-            #    randList = [{"id":"139036",  "title":"宇宙空母ブルーノア"}] #R
-            #    randList = [{"id":"371",     "title":"愛媛県"}] #SR
-            #    randList = [{"id":"1492869", "title":"キンシャサノキセキ"}] #SSR
-            #    randList = [{"id":"1855047", "title":"新宿駅"}] #UR
-            #    randList = [{"id":"228773",  "title":"ディープインパクト (競走馬)"}] #LR
-            #    randList = [{"id":"6205",   "title":"大和_(戦艦)"}] #UR
-            #    randList = [{"id":"24163",   "title":"武蔵_(戦艦)"}] #UR
-            #else:
-            #    randList = await _get_random(10-count)
-            #randList = []
             col.controls[1].controls[3].value = f"ランダム記事取得中..."
             col.controls[1].controls[3].update()
             randList = await _get_random(10-count)
+            # デバッグ用のdata固定
+            #    randList[0] = {"id":"4059891", "title":"コニャ"}                      #素材(500エラーになる)
+            #    randList[0] = {"id":"1662965", "title":"鎌倉山 (曖昧さ回避)"}         #素材(曖昧さ回避)
+            #    randList[0] = {"id":"2717179", "title":"印象"}                        #素材(ソフトリダイレクト)
+            #    randList[0] = {"id":"1610365", "title":"1-(5-ホスホリボシル)-5-((5-ホスホリボシルアミノ)メチリデンアミノ)イミダゾール-4-カルボキサミドイソメラーゼ"} #素材(バカ長い名前)
+            #    randList[0] = {"id":"4690122", "title":"2024年アメリカ合衆国選挙"}    #C (svg画像)
+            #    randList[0] = {"id":"673688",  "title":"カール9世 (スウェーデン王)"}  #C（tif画像）
+            #    randList[0] = {"id":"24342",   "title":"ソロモン"}                    #UC
+            #    randList[0] = {"id":"139036",  "title":"宇宙空母ブルーノア"}          #R
+            #    randList[0] = {"id":"371",     "title":"愛媛県"}                      #SR
+            #    randList[0] = {"id":"1492869", "title":"キンシャサノキセキ"}          #SSR
+            #    randList[0] = {"id":"1855047", "title":"新宿駅"}                      #UR
+            #    randList[0] = {"id":"228773",  "title":"ディープインパクト (競走馬)"} #LR
+            #    randList[0] = {"id":"6205",    "title":"大和_(戦艦)"}                 #UR
+            #    randList[0] = {"id":"24163",   "title":"武蔵_(戦艦)"}                 #UR
             if randList == []:
                 force_stopped = True
                 break
@@ -210,43 +221,39 @@ class Gacha:
                     rank_data = await _get_rank_data(t_quote) #Rank
                     if rank_data == {}:
                         debug_print(self.page.debug, "ランクデータ取得失敗。リトライ")
-                        break
+                        continue
                     col.controls[1].controls[3].value = f"記事情報取得中..."
                     col.controls[1].controls[3].update()
                     info_data = await _get_info_data(t_quote) #info
                     if info_data == {}:
                         debug_print(self.page.debug, "記事情報取得失敗。リトライ")
-                        break
+                        continue
                     col.controls[1].controls[3].value = f"記事概要取得中..."
                     col.controls[1].controls[3].update()
                     extract  = await _get_summary(t_quote) #概要
                     if extract == "ERROR":
                         debug_print(self.page.debug, "記事概要取得失敗。リトライ")
-                        break
-                    if rank_data == {} :
-                        #評価されていない場合はCとみなす
-                        quality = 0
-                        rank = "C"
+                        continue
+                    try:
+                        quality = float(rank_data["result"]["ja"]["quality"])
+                    except Exception:
+                        debug_print(self.page.debug, "ランクデータ読取失敗。リトライ")
+                        debug_print(self.page.debug, f"Failed data: {rank_data}")
+                        continue
+                    if quality == 100:
+                        rank = "LR"
+                    elif quality >= 90:
+                        rank = "UR"
+                    elif quality >= 80:
+                        rank = "SSR"
+                    elif quality >= 60:
+                        rank = "SR"
+                    elif quality >= 35:
+                        rank = "R"
+                    elif quality >= 20:
+                        rank = "UC"
                     else:
-                        try:
-                            quality = float(rank_data["result"]["ja"]["quality"])
-                        except Exception:
-                            debug_print(self.page.debug, "ランクデータ読取失敗。リトライ")
-                            break
-                        if quality == 100:
-                            rank = "LR"
-                        elif quality >= 90:
-                            rank = "UR"
-                        elif quality >= 80:
-                            rank = "SSR"
-                        elif quality >= 60:
-                            rank = "SR"
-                        elif quality >= 35:
-                            rank = "R"
-                        elif quality >= 20:
-                            rank = "UC"
-                        else:
-                            rank = "C"
+                        rank = "C"
                     p_str = str(pageid)
                     # 素材判定
                     try:
@@ -258,6 +265,7 @@ class Gacha:
                             isSozai = 0
                     except :
                         debug_print(self.page.debug, "カテゴリ取得失敗。リトライ")
+                        debug_print(self.page.debug, f"Failed data: {info_data}")
                         break
                     try:
                         # リソース取得
@@ -268,6 +276,7 @@ class Gacha:
                                 a_resource = a_resource + info_data["query"]["pages"][p_str]["pageviews"][dayView]
                     except:
                         debug_print(self.page.debug, "リソース取得失敗。リトライ")
+                        debug_print(self.page.debug, f"Failed data: {info_data}")
                         break
                     try:
                         # URL取得
@@ -279,6 +288,7 @@ class Gacha:
                         query = True
                     except:
                         debug_print(self.page.debug, "URL取得失敗。リトライ")
+                        debug_print(self.page.debug, f"Failed data: {info_data}")
                         break
                 if query:
                     if isSozai == 0:

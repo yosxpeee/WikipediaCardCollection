@@ -141,8 +141,7 @@ class PowerUp:
         tab_bar_view.update()
         # 非同期で再読み込みを実行（UI スレッドをブロックしない）
         asyncio.create_task(_reload_powerup_tab())
-        # Note:
-        # タブ切替は再読み込みタスク内で元に戻すためここでは戻さない
+        # Note:タブ切替は再読み込みタスク内で元に戻すためここでは戻さない
         # （create() の完了後に表示更新される想定）
     def popup_powerup_dialog(self, target_id, sozai_id):
         """強化の確認画面表示"""

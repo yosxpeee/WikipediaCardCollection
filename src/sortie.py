@@ -25,8 +25,10 @@ class Sortie:
             """編成しようとしているカードのリセット"""
             self.current_select_card = {}
         def _set_current_select_card_to_formation(no, data):
+            """選択したカードを編成に組み込む"""
             self.current_formation[no] = data
         def _load_sortie_formation_image(data):
+            """編成用カードイメージをロードする"""
             sortie_tab.controls[1].controls[0].controls[0].controls[self.current_formation_no].content = create_sortie_formation_image(data)
             sortie_tab.update()
         def _create_formation_dialog():
@@ -63,20 +65,19 @@ class Sortie:
         def _expansion_tile_control(level, toggle):
             """"アコーディオンメニュー制御"""
             if toggle:
-                #print(f"{level} を オープンしようとした")
                 for item in sortie_tab.controls[1].controls[1].controls:
                     if item.title != level:
                         item.expanded = False
                     else:
                         self.accordion_opened = level
             else:
-                #print(f"{level} を クローズしようとした")
                 if level == self.accordion_opened:
                     for item in sortie_tab.controls[1].controls[1].controls:
                         if item.title == level:
                             item.expanded = True
 
         def _create_level_ui(level, opened):
+            """レベルデザイン"""
             return ft.ExpansionTile(
                 width=320,
                 title=level,
@@ -128,7 +129,6 @@ class Sortie:
             "OK", 
             on_click=lambda e: {
                 _set_current_select_card_to_formation(self.current_formation_no, self.current_select_card),
-                #ここに図柄の差し替えを入れる
                 _load_sortie_formation_image(self.current_select_card),
                 _set_current_formation(-1),
                 _reset_current_select_card(),
@@ -229,7 +229,7 @@ class Sortie:
                     ),
                 ],
             )
-            #Note：以前に編成したデータをそっくり読みだして編成を再現する必要がある
+            #Note:以前に編成したデータをそっくり読みだして編成を再現する必要がある
 
         finally:
             # ローディングオーバーレイを非表示（例外が起きても必ず閉じる）

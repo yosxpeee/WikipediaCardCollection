@@ -1,7 +1,7 @@
 import requests
 import asyncio
 import random
-import random
+from requests.exceptions import Timeout
 
 # static tables
 HEADER = {
@@ -24,21 +24,29 @@ def debug_print(debug, msg):
     if debug:
         print(msg)
 
-def do_api(url):
-    """HTTPリクエスト(API)"""
+def do_api(debug, url, timeout=None):
+    """HTTPリクエスト(API)
+    timeout: seconds for requests.get; if provided, do_api will raise on timeout instead of retrying.
+    """
     while True:
         try:
-            response = requests.get(url, headers=HEADER)
+            response = requests.get(url, headers=HEADER, timeout=timeout)
             response.raise_for_status()  # エラー時にすぐ分かる
             break
+        except Timeout as e:
+            debug_print(debug, f"リクエストタイムアウト: sec={timeout} error={e}")
+            break
         except Exception as e:
-            pass
+            debug_print(debug, f"例外発生: error={e}")
+            break
     return response
 
-async def fetch_json(url, key_path=None):
-    """非同期でブロッキングなHTTP呼び出しをスレッドで実行するヘルパー"""
+async def fetch_json(debug, url, key_path=None):
+    """非同期でブロッキングなHTTP呼び出しをスレッドで実行するヘルパー
+    全体のタイムアウトは15秒。
+    """
     def _call():
-        r = do_api(url)
+        r = do_api(debug, url, timeout=15)
         j = r.json()
         if key_path is None:
             return j
@@ -46,7 +54,8 @@ async def fetch_json(url, key_path=None):
         for k in key_path:
             v = v.get(k, {})
         return v
-    return await asyncio.to_thread(_call)
+    # スレッド実行全体に対する保護（念のため）
+    return await asyncio.wait_for(asyncio.to_thread(_call), timeout=15)
 
 def rankid_to_rank(rankId, isSozai):
     """rank to rankid"""
