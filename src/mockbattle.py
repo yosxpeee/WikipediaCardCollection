@@ -248,7 +248,7 @@ class MockBattle:
             target_containers = []
             # 左側：ランク別タブの ListView を作成（共通化）
             from utils.ui import create_ranked_tabs
-            def _on_player_selected(cid, name, rk, hp, atk, deff):
+            def _on_player_selected(cid, name, rk, hp, atk, deff, img):
                 nonlocal selected_single_mock_player_card_id
                 selected_single_mock_player_card_id = cid
                 selected_single_mock_player_text.value = f"{cid} [{rk}] {name}"

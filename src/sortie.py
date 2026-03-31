@@ -3,7 +3,7 @@ import asyncio
 
 from utils.utils import RANK_TABLE, debug_print, rankid_to_rank, rank_to_rankid, calc_status, create_card_image_data
 from utils.db import get_card_from_id, rankup_card, get_cards_by_rankid, get_cards_by_sozai, get_cards_by_favorite
-from utils.ui import create_ranked_tabs
+from utils.ui import create_ranked_tabs, create_sortie_formation_image
 
 class Sortie:
     def __init__(self, page):
@@ -11,20 +11,29 @@ class Sortie:
         self.page = page
         # ローディングオーバーレイの参照を保持(図鑑のものを使いまわし)
         self.loading_overlay = page.overlay[1]
-        self.current_formation = -1
+        self.current_formation_no = -1
         self.current_select_card = {}
         self.current_formation_dialog = None
+        self.current_formation = [{},{},{},{},{},{}]
         self.accordion_opened = "NORMAL"
     async def create(self):
         """画面作成"""
         def _set_current_formation(no):
-            """編成しようとしている編隊番号"""
-            self.current_formation = no
+            """編成しようとしている編隊番号を記憶"""
+            self.current_formation_no = no
+        def _reset_current_select_card():
+            """編成しようとしているカードのリセット"""
+            self.current_select_card = {}
+        def _set_current_select_card_to_formation(no, data):
+            self.current_formation[no] = data
+        def _load_sortie_formation_image(data):
+            sortie_tab.controls[1].controls[0].controls[0].controls[self.current_formation_no].content = create_sortie_formation_image(data)
+            sortie_tab.update()
         def _create_formation_dialog():
             """編成用画面のダイアログ作成"""
             formation_dialog = ft.AlertDialog(
                 modal=True,
-                title=f"編成：{self.current_formation+1}",
+                title=f"編成：{self.current_formation_no+1}",
                 content=ft.Container(
                     width=700,
                     expand=True,
@@ -85,10 +94,19 @@ class Sortie:
                 ],
                 on_change=lambda x:_expansion_tile_control(level, x.data),
             )
-        def _on_target_selected(id, name, rk, hp, atk, deff):
-            print(f"編成対象：{self.current_formation+1}")
-            print(f"{id}, {name}, {rk}, {hp}, {atk}, {deff}")
-            #current_select_cardに入れる処理
+        def _on_target_selected(id, name, rk, hp, atk, deff, img):
+            """選んだカード"""
+            print(f"編成対象：{self.current_formation_no+1}")
+            print(f"{id}, {name}, {rk}, {hp}, {atk}, {deff}, {img}")
+            self.current_select_card = {
+                "id"   :id,
+                "title":name,
+                "rank" :rk,
+                "image":img,
+                "HP"   :hp,
+                "ATK"  :atk,
+                "DEF"  :deff,
+            }
             return
         ####################
         # 処理開始
@@ -101,14 +119,19 @@ class Sortie:
             "Cancel", 
             on_click=lambda e:{
                 _set_current_formation(-1), 
+                _reset_current_select_card(),
                 self.page.pop_dialog()
             }
         )
+        aaa = None
         self.ok_button = ft.TextButton(
             "OK", 
             on_click=lambda e: {
+                _set_current_select_card_to_formation(self.current_formation_no, self.current_select_card),
+                #ここに図柄の差し替えを入れる
+                _load_sortie_formation_image(self.current_select_card),
                 _set_current_formation(-1),
-                #Note:反映させる処理をここに入れる・ｗ・
+                _reset_current_select_card(),
                 self.page.pop_dialog()
             }
         )
@@ -160,7 +183,7 @@ class Sortie:
                                         runs_count=1,
                                         run_spacing=0,
                                         spacing=0,
-                                        controls=[
+                                        controls=[      #Note:編成後のデータをそっくり戦闘画面に持っていく必要がある
                                             _create_blank_panel(0),
                                             _create_blank_panel(1),
                                             _create_blank_panel(2),
@@ -195,11 +218,19 @@ class Sortie:
                         vertical_alignment=ft.CrossAxisAlignment.CENTER,
                         expand=True,
                         controls=[
-                            ft.Button("出撃", expand=True),
+                            ft.Button(
+                                "出撃", 
+                                expand=True, 
+                                on_click=lambda x:{
+                                    print(self.current_formation)
+                                }
+                            ),
                         ],
                     ),
                 ],
             )
+            #Note：以前に編成したデータをそっくり読みだして編成を再現する必要がある
+
         finally:
             # ローディングオーバーレイを非表示（例外が起きても必ず閉じる）
             try:

@@ -257,7 +257,7 @@ class PowerUp:
             sozai_containers = []
             # 左側：ランク別タブの ListView を作成（共通化）
             from utils.ui import create_ranked_tabs
-            def _on_target_selected(cid, name, rk, hp, atk, deff):
+            def _on_target_selected(cid, name, rk, hp, atk, deff, img):
                 nonlocal selected_target_id
                 selected_target_id = cid
                 selected_target_text.value = f"{cid} [{rk}] {name}"
