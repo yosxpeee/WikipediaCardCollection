@@ -26,7 +26,7 @@ class Gacha:
                     return []
                 return j.get("query", {}).get("random", [])
             except Exception as e:
-                debug_print(self.page.debug, f"例外発生 error={e}")
+                debug_print(self.page.debug, f"例外発生: error={e}")
                 return []
         async def _get_rank_data(t_quote):
             """ランク取得"""
@@ -41,7 +41,7 @@ class Gacha:
                     return {}
                 return j
             except Exception as e:
-                debug_print(self.page.debug, f"例外発生 error={e}")
+                debug_print(self.page.debug, f"例外発生: error={e}")
                 return {}
         async def _get_info_data(t_quote):
             """記事の情報取得"""
@@ -50,10 +50,10 @@ class Gacha:
                 info_url = f"https://ja.wikipedia.org/w/api.php?format=json&action=query&titles={t_quote}&prop=info%7Cpageimages%7Cpageprops%7Cpageviews%7Ccategories&inprop=url%7Ctalkid&pithumbsize=600"
                 debug_print(self.page.debug, f"get info data url: {info_url}")
                 j = await fetch_json(self.page.debug, info_url)
-                #Note:ここでjの中身を参照していないので、↓の処理で例外がでる。
+                #Note:ここでjの中身を参照していないので、後ろの処理で例外がでる。
                 return j
             except Exception as e:
-                debug_print(self.page.debug, f"例外発生 error={e}")
+                debug_print(self.page.debug, f"例外発生: error={e}")
                 return {}
         async def _get_summary(t_quote):
             """記事の概要取得"""
@@ -67,7 +67,7 @@ class Gacha:
                     return "ERROR"
                 return j.get("extract", "")
             except Exception as e:
-                debug_print(self.page.debug, f"例外発生 error={e}")
+                debug_print(self.page.debug, f"例外発生: error={e}")
                 return "ERROR"
         def _make_thumb_content(idx, selected):
             """サムネイルのコンテンツを生成するヘルパー"""

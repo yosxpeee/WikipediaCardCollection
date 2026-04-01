@@ -21,12 +21,6 @@ class Sortie:
         def _set_current_formation(no):
             """編成しようとしている編隊番号を記憶"""
             self.current_formation_no = no
-        def _reset_current_select_card():
-            """編成しようとしているカードのリセット"""
-            self.current_select_card = {}
-        def _set_current_select_card_to_formation(no, data):
-            """選択したカードを編成に組み込む"""
-            self.current_formation[no] = data
         def _load_sortie_formation_image(data):
             """編成用カードイメージをロードする"""
             sortie_tab.controls[1].controls[0].controls[0].controls[self.current_formation_no].content = create_sortie_formation_image(data)
@@ -109,6 +103,30 @@ class Sortie:
                 "DEF"  :deff,
             }
             return
+        def _cancel_load_formation():
+            """編成ダイアログのキャンセルボタン"""
+            _set_current_formation(-1)
+            self.current_select_card = {}
+            self.page.pop_dialog()
+        def _apply_load_formation():
+            """編成ダイアログのOKボタン"""
+            canceled = False
+            for organized in self.current_formation:
+                if organized == {}:
+                    continue
+                if organized["id"] == self.current_select_card["id"]:
+                    self.page.pop_dialog()
+                    self.page.show_dialog(ft.SnackBar(ft.Text("同一カードを複数枚編成することはできません。"), duration=1500))
+                    _set_current_formation(-1)
+                    self.current_select_card = {}
+                    canceled = True
+                    break
+            if canceled == False:
+                self.current_formation[self.current_formation_no] = self.current_select_card
+                _load_sortie_formation_image(self.current_select_card)
+                _set_current_formation(-1)
+                self.current_select_card = {}
+                self.page.pop_dialog()
         ####################
         # 処理開始
         ####################
@@ -119,20 +137,13 @@ class Sortie:
         self.close_button = ft.TextButton(
             "Cancel", 
             on_click=lambda e:{
-                _set_current_formation(-1), 
-                _reset_current_select_card(),
-                self.page.pop_dialog()
+                _cancel_load_formation()
             }
         )
-        aaa = None
         self.ok_button = ft.TextButton(
             "OK", 
             on_click=lambda e: {
-                _set_current_select_card_to_formation(self.current_formation_no, self.current_select_card),
-                _load_sortie_formation_image(self.current_select_card),
-                _set_current_formation(-1),
-                _reset_current_select_card(),
-                self.page.pop_dialog()
+                _apply_load_formation()
             }
         )
         # ランクごとにDBからカード一覧を取得
