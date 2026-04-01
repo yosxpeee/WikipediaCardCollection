@@ -233,13 +233,13 @@ def create_ranked_tabs(ranks, all_cards_by_rank, on_select_callback=None):
             content=ft.Row(
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                 controls=[
-                    ft.Text("ID".ljust(8, " "), font_family="Consolas", bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.WHITE)),
+                    ft.Text("ID".ljust(8, " "), font_family="Consolas"),
                     ft.Container(width=10),
-                    ft.Text("カード名", expand=True, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS, bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.WHITE)),
+                    ft.Text("カード名", expand=True, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
                     ft.Container(width=10),
-                    ft.Text("HP".ljust(5, " "), font_family="Consolas", bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.WHITE)),
-                    ft.Text("ATK".ljust(5, " "), font_family="Consolas", bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.WHITE)),
-                    ft.Text("DEF".ljust(5, " "), font_family="Consolas", bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.WHITE)),
+                    ft.Text("HP".ljust(5, " "), font_family="Consolas"),
+                    ft.Text("ATK".ljust(5, " "), font_family="Consolas"),
+                    ft.Text("DEF".ljust(5, " "), font_family="Consolas"),
                 ],
             ),
         )

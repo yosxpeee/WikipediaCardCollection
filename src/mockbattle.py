@@ -291,6 +291,7 @@ class MockBattle:
                                         alignment=ft.Alignment.TOP_CENTER,
                                         content=ft.Column(
                                             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                                            spacing=0,
                                             controls=[
                                                 ft.Text("プレイヤー",weight=ft.FontWeight.BOLD), 
                                                 ft.Divider(color=ft.Colors.GREY, height=1), 
@@ -305,17 +306,23 @@ class MockBattle:
                                         content=ft.Column(
                                             width=268,
                                             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                                            spacing=0,
                                             controls=[
                                                 ft.Text("対戦相手",weight=ft.FontWeight.BOLD), 
                                                 ft.Divider(color=ft.Colors.GREY, height=1), 
-                                                ft.Button(ft.Text("  C級からランダムに選ぶ",font_family="Consolas"),on_click=lambda x:select_npc_by_rank("C")),
-                                                ft.Button(ft.Text(" UC級からランダムに選ぶ",font_family="Consolas"),on_click=lambda x:select_npc_by_rank("UC")),
-                                                ft.Button(ft.Text("  R級からランダムに選ぶ",font_family="Consolas"),on_click=lambda x:select_npc_by_rank("R")),
-                                                ft.Button(ft.Text(" SR級からランダムに選ぶ",font_family="Consolas"),on_click=lambda x:select_npc_by_rank("SR")),
-                                                ft.Button(ft.Text("SSR級からランダムに選ぶ",font_family="Consolas"),on_click=lambda x:select_npc_by_rank("SSR")),
-                                                ft.Button(ft.Text(" UR級からランダムに選ぶ",font_family="Consolas"),on_click=lambda x:select_npc_by_rank("UR")),
-                                                ft.Button(ft.Text(" LR級からランダムに選ぶ",font_family="Consolas"),on_click=lambda x:select_npc_by_rank("LR")),
-                                            ]
+                                                ft.Column(
+                                                    margin=ft.Margin.all(10),
+                                                    controls=[
+                                                        ft.Button(ft.Text("  C級からランダムに選ぶ",font_family="Consolas"),on_click=lambda x:select_npc_by_rank("C")),
+                                                        ft.Button(ft.Text(" UC級からランダムに選ぶ",font_family="Consolas"),on_click=lambda x:select_npc_by_rank("UC")),
+                                                        ft.Button(ft.Text("  R級からランダムに選ぶ",font_family="Consolas"),on_click=lambda x:select_npc_by_rank("R")),
+                                                        ft.Button(ft.Text(" SR級からランダムに選ぶ",font_family="Consolas"),on_click=lambda x:select_npc_by_rank("SR")),
+                                                        ft.Button(ft.Text("SSR級からランダムに選ぶ",font_family="Consolas"),on_click=lambda x:select_npc_by_rank("SSR")),
+                                                        ft.Button(ft.Text(" UR級からランダムに選ぶ",font_family="Consolas"),on_click=lambda x:select_npc_by_rank("UR")),
+                                                        ft.Button(ft.Text(" LR級からランダムに選ぶ",font_family="Consolas"),on_click=lambda x:select_npc_by_rank("LR")),
+                                                    ],
+                                                ),
+                                            ],
                                         ),
                                     ),
                                 ],

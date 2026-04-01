@@ -340,6 +340,7 @@ class PowerUp:
                                         alignment=ft.Alignment.TOP_CENTER,
                                         content=ft.Column(
                                             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                                            spacing=0,
                                             controls=[
                                                 ft.Text("対象",weight=ft.FontWeight.BOLD), 
                                                 ft.Divider(color=ft.Colors.GREY, height=1), 
@@ -353,6 +354,7 @@ class PowerUp:
                                         alignment=ft.Alignment.TOP_CENTER,
                                         content=ft.Column(
                                             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                                            spacing=0,
                                             controls=[
                                                 ft.Text(f"素材",weight=ft.FontWeight.BOLD),
                                                 ft.Divider(color=ft.Colors.GREY, height=1),
@@ -367,6 +369,7 @@ class PowerUp:
                                                         ],
                                                     ),
                                                 ),
+                                                ft.Divider(color=ft.Colors.GREY, height=1),
                                                 sozai_lv,
                                             ],
                                         ),
