@@ -1,5 +1,6 @@
 import flet as ft
 import asyncio
+import json
 
 from utils.utils import RANK_TABLE, debug_print, rankid_to_rank, rank_to_rankid, calc_status, create_card_image_data
 from utils.db import get_card_from_id, rankup_card, get_cards_by_rankid, get_cards_by_sozai, get_cards_by_favorite
@@ -21,10 +22,14 @@ class Sortie:
         def _set_current_formation(no):
             """編成しようとしている編隊番号を記憶"""
             self.current_formation_no = no
-        def _load_sortie_formation_image(data):
+        def _load_sortie_formation_image(data, num):
             """編成用カードイメージをロードする"""
-            sortie_tab.controls[1].controls[0].controls[0].controls[self.current_formation_no].content = create_sortie_formation_image(data)
-            sortie_tab.update()
+            sortie_tab.controls[1].controls[0].controls[0].controls[num].content = create_sortie_formation_image(data)
+            self.page.update()
+        def _load_sortie_formation_blank(num):
+            """編成用カードイメージをロードする"""
+            sortie_tab.controls[1].controls[0].controls[0].controls[num].content = ft.Text("未配属")
+            self.page.update()
         def _create_formation_dialog():
             """編成用画面のダイアログ作成"""
             formation_dialog = ft.AlertDialog(
@@ -37,6 +42,7 @@ class Sortie:
                 ),
                 actions=[
                     self.close_button,
+                    self.clear_button,
                     self.ok_button,
                 ],
             )
@@ -84,8 +90,6 @@ class Sortie:
                     ft.FilledButton("Stage 1"),
                     ft.FilledButton("Stage 2"),
                     ft.FilledButton("Stage 3"),
-                    ft.FilledButton("Stage 4"),
-                    ft.FilledButton("Stage 5"),
                 ],
                 on_change=lambda x:_expansion_tile_control(level, x.data),
             )
@@ -108,25 +112,58 @@ class Sortie:
             _set_current_formation(-1)
             self.current_select_card = {}
             self.page.pop_dialog()
+            self.page.update()
+        def _clear_formation():
+            """編成ダイアログのクリアボタン(編成から外す)"""
+            self.current_formation[self.current_formation_no] = {}
+            _load_sortie_formation_blank(self.current_formation_no)
+            _set_current_formation(-1)
+            self.current_select_card = {}
+            with open('formation.json', 'w', encoding='utf-8') as f:
+                json.dump(self.current_formation, f, indent=4, ensure_ascii=False)
+            self.page.pop_dialog()
+            self.page.update()
         def _apply_load_formation():
             """編成ダイアログのOKボタン"""
-            canceled = False
-            for organized in self.current_formation:
+            hit = False
+            for num in range(len(self.current_formation)-1):
+                organized = self.current_formation[num]
                 if organized == {}:
                     continue
                 if organized["id"] == self.current_select_card["id"]:
-                    self.page.pop_dialog()
-                    self.page.show_dialog(ft.SnackBar(ft.Text("同一カードを複数枚編成することはできません。"), duration=1500))
+                    if num != self.current_formation_no:
+                        #現在の選択とは違うところに同じカードがある＝スワップ
+                        if self.current_formation[self.current_formation_no] == {}:
+                            #未配属と入れ替え
+                            self.current_formation[self.current_formation_no] = self.current_select_card
+                            _load_sortie_formation_image(self.current_select_card, self.current_formation_no)
+                            self.current_formation[num] = {}
+                            _load_sortie_formation_blank(num)
+                        else:
+                            #編成済みと入れ替え
+                            tmp = self.current_formation[self.current_formation_no]
+                            self.current_formation[self.current_formation_no] = self.current_formation[num]
+                            _load_sortie_formation_image(self.current_select_card, self.current_formation_no)
+                            self.current_formation[num] = tmp
+                            _load_sortie_formation_image(tmp, num)
                     _set_current_formation(-1)
                     self.current_select_card = {}
-                    canceled = True
+                    with open('formation.json', 'w', encoding='utf-8') as f:
+                        json.dump(self.current_formation, f, indent=4, ensure_ascii=False)
+                    self.page.pop_dialog()
+                    self.page.update()
+                    hit = True
                     break
-            if canceled == False:
+            #当てはまらなければ追加
+            if hit == False:
                 self.current_formation[self.current_formation_no] = self.current_select_card
-                _load_sortie_formation_image(self.current_select_card)
+                _load_sortie_formation_image(self.current_select_card, self.current_formation_no)
                 _set_current_formation(-1)
                 self.current_select_card = {}
+                with open('formation.json', 'w', encoding='utf-8') as f:
+                    json.dump(self.current_formation, f, indent=4, ensure_ascii=False)
                 self.page.pop_dialog()
+                self.page.update()
         ####################
         # 処理開始
         ####################
@@ -135,13 +172,19 @@ class Sortie:
         self.page.update()
         # ダイアログのボタン作成
         self.close_button = ft.TextButton(
-            "Cancel", 
+            "キャンセル", 
             on_click=lambda e:{
                 _cancel_load_formation()
             }
         )
+        self.clear_button = ft.TextButton(
+            "外す", 
+            on_click=lambda e:{
+                _clear_formation()
+            }
+        )
         self.ok_button = ft.TextButton(
-            "OK", 
+            "編成する", 
             on_click=lambda e: {
                 _apply_load_formation()
             }
@@ -240,8 +283,20 @@ class Sortie:
                     ),
                 ],
             )
-            #Note:以前に編成したデータをそっくり読みだして編成を再現する必要がある
-
+            # 以前に編成したデータをそっくり読みだして編成を再現する
+            try:
+                with open('formation.json', 'r', encoding='utf-8') as f:
+                    self.current_formation = json.load(f)
+                    print(self.current_formation)
+                    self.current_formation_no = 0
+                    for data in self.current_formation:
+                        print(data)
+                        if data != {}:
+                            _load_sortie_formation_image(data, self.current_formation_no)
+                        self.current_formation_no += 1
+                    self.current_formation_no = -1
+            except Exception as e:
+                pass
         finally:
             # ローディングオーバーレイを非表示（例外が起きても必ず閉じる）
             try:
