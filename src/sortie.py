@@ -27,7 +27,7 @@ class Sortie:
             sortie_tab.controls[1].controls[0].controls[0].controls[num].content = create_sortie_formation_image(data)
             self.page.update()
         def _load_sortie_formation_blank(num):
-            """編成用カードイメージをロードする"""
+            """編成用カード(未配属)をロードする"""
             sortie_tab.controls[1].controls[0].controls[0].controls[num].content = ft.Text("未配属")
             self.page.update()
         def _create_formation_dialog():
@@ -95,8 +95,8 @@ class Sortie:
             )
         def _on_target_selected(id, name, rk, hp, atk, deff, img):
             """選んだカード"""
-            print(f"編成対象：{self.current_formation_no+1}")
-            print(f"{id}, {name}, {rk}, {hp}, {atk}, {deff}, {img}")
+            #print(f"編成対象：{self.current_formation_no+1}")
+            #print(f"{id}, {name}, {rk}, {hp}, {atk}, {deff}, {img}")
             self.current_select_card = {
                 "id"   :id,
                 "title":name,
@@ -126,7 +126,8 @@ class Sortie:
         def _apply_load_formation():
             """編成ダイアログのOKボタン"""
             hit = False
-            for num in range(len(self.current_formation)-1):
+            for num in range(len(self.current_formation)):
+                print(num)
                 organized = self.current_formation[num]
                 if organized == {}:
                     continue
@@ -135,14 +136,14 @@ class Sortie:
                         #現在の選択とは違うところに同じカードがある＝スワップ
                         if self.current_formation[self.current_formation_no] == {}:
                             #未配属と入れ替え
-                            self.current_formation[self.current_formation_no] = self.current_select_card
-                            _load_sortie_formation_image(self.current_select_card, self.current_formation_no)
                             self.current_formation[num] = {}
                             _load_sortie_formation_blank(num)
+                            self.current_formation[self.current_formation_no] = self.current_select_card
+                            _load_sortie_formation_image(self.current_select_card, self.current_formation_no)
                         else:
                             #編成済みと入れ替え
                             tmp = self.current_formation[self.current_formation_no]
-                            self.current_formation[self.current_formation_no] = self.current_formation[num]
+                            self.current_formation[self.current_formation_no] = self.current_select_card
                             _load_sortie_formation_image(self.current_select_card, self.current_formation_no)
                             self.current_formation[num] = tmp
                             _load_sortie_formation_image(tmp, num)
@@ -287,10 +288,10 @@ class Sortie:
             try:
                 with open('formation.json', 'r', encoding='utf-8') as f:
                     self.current_formation = json.load(f)
-                    print(self.current_formation)
+                    #print(self.current_formation)
                     self.current_formation_no = 0
                     for data in self.current_formation:
-                        print(data)
+                        #print(data)
                         if data != {}:
                             _load_sortie_formation_image(data, self.current_formation_no)
                         self.current_formation_no += 1

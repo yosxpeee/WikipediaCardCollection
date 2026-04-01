@@ -4,6 +4,89 @@ import webbrowser
 from utils.db import update_favorite
 from utils.utils import rankid_to_rank
 
+def get_card_color(rank, isSozai):
+    """ランクからカードの色を決める"""
+    if isSozai == 1:
+        color = ft.Colors.ORANGE
+    else:
+        if rank == "LR":
+            color = ft.Colors.PURPLE
+        elif rank == "UR":
+            color = ft.Colors.YELLOW
+        elif rank == "SSR":
+            color = ft.Colors.RED
+        elif rank == "SR":
+            color = ft.Colors.LIGHT_BLUE
+        elif rank == "R":
+            color = ft.Colors.LIGHT_GREEN
+        elif rank == "UC":
+            color = ft.Colors.GREY
+        else: #C
+            color = ft.Colors.LIME_900
+    return color
+
+def create_rank_text(rank):
+    if rank == "LR":
+        color_gradient = ft.LinearGradient(
+            begin=ft.Alignment.CENTER_LEFT,
+            end=ft.Alignment.CENTER_RIGHT,
+            colors=[
+                ft.Colors.RED,
+                ft.Colors.ORANGE,
+                ft.Colors.YELLOW,
+                ft.Colors.GREEN,
+                ft.Colors.BLUE,
+                ft.Colors.INDIGO,
+                ft.Colors.PURPLE,
+            ],
+        )
+        rank_text = ft.ShaderMask(
+            content=ft.Text(
+                f"{rank}", 
+                size=14,
+                weight=ft.FontWeight.BOLD, 
+                italic=True
+            ),
+            blend_mode=ft.BlendMode.SRC_IN,
+            shader=color_gradient,
+        )
+    elif rank == "SSR" or rank == "UR":
+        color_gradient = ft.LinearGradient(
+            begin=ft.Alignment.CENTER_LEFT,
+            end=ft.Alignment.CENTER_RIGHT,
+            colors=[
+                ft.Colors.GREY,
+                ft.Colors.LIGHT_BLUE,
+                ft.Colors.GREY,
+            ],
+        )
+        rank_text = ft.ShaderMask(
+            content=ft.Text(
+                f"{rank}", 
+                size=14,
+                weight=ft.FontWeight.BOLD, 
+            ),
+            blend_mode=ft.BlendMode.SRC_IN,
+            shader=color_gradient,
+        )
+    elif rank == "R" or rank == "SR":
+        rank_text = ft.Text(
+            f"{rank}",
+            color=ft.Colors.BLACK,
+            weight=ft.FontWeight.BOLD
+        )
+    else:
+        rank_text = ft.Text(
+            f"{rank}",
+            color=ft.Colors.BLACK,
+        )
+    return ft.Container(
+        alignment=ft.Alignment.CENTER,
+        width=40,
+        bgcolor=ft.Colors.GREY_200,
+        content=rank_text,
+    )
+
 def create_ranked_tabs(ranks, all_cards_by_rank, on_select_callback=None):
     """ランク別のタブ付きカード選択リストを作成して返す。
 
@@ -105,7 +188,7 @@ def create_ranked_tabs(ranks, all_cards_by_rank, on_select_callback=None):
                 cont.update()
                 if callable(on_select_callback):
                     try:
-                        on_select_callback(cid, name, rk, hp, atk, deff, img)
+                        on_select_callback(cid, name, rank, hp, atk, deff, img)
                     except Exception:
                         pass
             cont.on_click = _on_target_click
@@ -193,27 +276,6 @@ def create_ranked_tabs(ranks, all_cards_by_rank, on_select_callback=None):
     )
     return tabs
 
-def get_card_color(rank, isSozai):
-    """ランクからカードの色を決める"""
-    if isSozai == 1:
-        color = ft.Colors.ORANGE
-    else:
-        if rank == "LR":
-            color = ft.Colors.PURPLE
-        elif rank == "UR":
-            color = ft.Colors.YELLOW
-        elif rank == "SSR":
-            color = ft.Colors.RED
-        elif rank == "SR":
-            color = ft.Colors.LIGHT_BLUE
-        elif rank == "R":
-            color = ft.Colors.LIGHT_GREEN
-        elif rank == "UC":
-            color = ft.Colors.GREY
-        else: #C
-            color = ft.Colors.LIME_900
-    return color
-
 def create_card_image(data, isShow, isFbButton, on_fav_changed=None):
     """カードイメージの作成"""
     def _on_fav_click(e):
@@ -269,60 +331,6 @@ def create_card_image(data, isShow, isFbButton, on_fav_changed=None):
             ],
         )
     else:
-        color_gradient = ft.LinearGradient(
-            begin=ft.Alignment.CENTER_LEFT,
-            end=ft.Alignment.CENTER_RIGHT,
-            colors=[
-                ft.Colors.RED,
-                ft.Colors.ORANGE,
-                ft.Colors.YELLOW,
-                ft.Colors.GREEN,
-                ft.Colors.BLUE,
-                ft.Colors.INDIGO,
-                ft.Colors.PURPLE,
-            ],
-        )
-        if data["rank"] == "LR":
-            rank_text = ft.ShaderMask(
-                content=ft.Text(
-                    f"{data['rank']}", 
-                    size=14,
-                    weight=ft.FontWeight.BOLD, 
-                    italic=True
-                ),
-                blend_mode=ft.BlendMode.SRC_IN,
-                shader=color_gradient,
-            )
-        elif data["rank"] == "SSR" or data["rank"] == "UR":
-            color_gradient = ft.LinearGradient(
-                begin=ft.Alignment.CENTER_LEFT,
-                end=ft.Alignment.CENTER_RIGHT,
-                colors=[
-                    ft.Colors.GREY,
-                    ft.Colors.LIGHT_BLUE,
-                    ft.Colors.GREY,
-                ],
-            )
-            rank_text = ft.ShaderMask(
-                content=ft.Text(
-                    f"{data['rank']}", 
-                    size=14,
-                    weight=ft.FontWeight.BOLD, 
-                ),
-                blend_mode=ft.BlendMode.SRC_IN,
-                shader=color_gradient,
-            )
-        elif data["rank"] == "R" or data["rank"] == "SR":
-            rank_text = ft.Text(
-                f"{data['rank']}",
-                color=ft.Colors.BLACK,
-                weight=ft.FontWeight.BOLD
-            )
-        else:
-            rank_text = ft.Text(
-                f"{data['rank']}",
-                color=ft.Colors.BLACK,
-            )
         title = ft.Row(
             spacing=0,
             controls=[
@@ -330,7 +338,7 @@ def create_card_image(data, isShow, isFbButton, on_fav_changed=None):
                     alignment=ft.Alignment.CENTER,
                     width=40,
                     bgcolor=ft.Colors.GREY_200,
-                    content=rank_text,
+                    content=create_rank_text(data['rank']),
                 ),
                 ft.Container(
                     width=270,
@@ -535,7 +543,7 @@ def create_sortie_formation_image(data):
         #画像あり
         card_image = ft.Container(
             alignment=ft.Alignment.CENTER,
-            border=ft.Border.all(2),
+            border=ft.Border.all(2, color=get_card_color(data["rank"], 0)),
             bgcolor=ft.Colors.ON_PRIMARY,
             width=74,
             height=74,
@@ -545,7 +553,7 @@ def create_sortie_formation_image(data):
         #画像なし
         card_image = ft.Container(
             alignment=ft.Alignment.CENTER,
-            border=ft.Border.all(2),
+            border=ft.Border.all(2, color=get_card_color(data["rank"], 0)),
             bgcolor=ft.Colors.ON_PRIMARY,
             width=74,
             height=74,
@@ -565,7 +573,7 @@ def create_sortie_formation_image(data):
                     ft.Container(
                         width=40,
                         alignment=ft.Alignment.CENTER,
-                        content=ft.Text(data["rank"]),
+                        content=create_rank_text(data['rank']),
                     ),
                     ft.Container(
                         width=260,
