@@ -107,6 +107,14 @@ class Sortie:
                 "DEF"  :deff,
             }
             return
+        def _formation_dialog_common_update():
+            """編成ダイアログの共通更新処理"""
+            _set_current_formation(-1)
+            self.current_select_card = {}
+            with open('formation.json', 'w', encoding='utf-8') as f:
+                json.dump(self.current_formation, f, indent=4, ensure_ascii=False)
+            self.page.pop_dialog()
+            self.page.update()
         def _cancel_load_formation():
             """編成ダイアログのキャンセルボタン"""
             _set_current_formation(-1)
@@ -117,17 +125,12 @@ class Sortie:
             """編成ダイアログのクリアボタン(編成から外す)"""
             self.current_formation[self.current_formation_no] = {}
             _load_sortie_formation_blank(self.current_formation_no)
-            _set_current_formation(-1)
-            self.current_select_card = {}
-            with open('formation.json', 'w', encoding='utf-8') as f:
-                json.dump(self.current_formation, f, indent=4, ensure_ascii=False)
-            self.page.pop_dialog()
-            self.page.update()
+            _formation_dialog_common_update()
         def _apply_load_formation():
             """編成ダイアログのOKボタン"""
             hit = False
             for num in range(len(self.current_formation)):
-                print(num)
+                #print(num)
                 organized = self.current_formation[num]
                 if organized == {}:
                     continue
@@ -147,24 +150,14 @@ class Sortie:
                             _load_sortie_formation_image(self.current_select_card, self.current_formation_no)
                             self.current_formation[num] = tmp
                             _load_sortie_formation_image(tmp, num)
-                    _set_current_formation(-1)
-                    self.current_select_card = {}
-                    with open('formation.json', 'w', encoding='utf-8') as f:
-                        json.dump(self.current_formation, f, indent=4, ensure_ascii=False)
-                    self.page.pop_dialog()
-                    self.page.update()
+                    _formation_dialog_common_update()
                     hit = True
                     break
             #当てはまらなければ追加
             if hit == False:
                 self.current_formation[self.current_formation_no] = self.current_select_card
                 _load_sortie_formation_image(self.current_select_card, self.current_formation_no)
-                _set_current_formation(-1)
-                self.current_select_card = {}
-                with open('formation.json', 'w', encoding='utf-8') as f:
-                    json.dump(self.current_formation, f, indent=4, ensure_ascii=False)
-                self.page.pop_dialog()
-                self.page.update()
+                _formation_dialog_common_update()
         ####################
         # 処理開始
         ####################
@@ -205,7 +198,7 @@ class Sortie:
             sortie_tab = ft.Column(
                 alignment=ft.MainAxisAlignment.START,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                spacing=0,
+                spacing=4,
                 controls=[
                     ft.Row(
                         alignment=ft.MainAxisAlignment.CENTER,
@@ -223,6 +216,7 @@ class Sortie:
                             ),
                         ],
                     ),
+                    ft.Divider(height=1,),
                     ft.Row(
                         alignment=ft.MainAxisAlignment.CENTER,
                         vertical_alignment=ft.CrossAxisAlignment.CENTER,
@@ -264,6 +258,28 @@ class Sortie:
                                     _create_level_ui("TORMENT", False),   #LR
                                     _create_level_ui("LUNATIC", False),   #LR+ (まともにやったら勝てないだろうからどうするかね)
                                 ],
+                            ),
+                        ],
+                    ),
+                    ft.Row(
+                        alignment=ft.MainAxisAlignment.CENTER,
+                        vertical_alignment=ft.CrossAxisAlignment.START,
+                        controls=[
+                            ft.Container(
+                                width=630,
+                                border=ft.Border.all(2),
+                                border_radius=8,
+                                content=ft.Column(
+                                    alignment=ft.MainAxisAlignment.START,
+                                    horizontal_alignment=ft.CrossAxisAlignment.START,
+                                    spacing=0,
+                                    width=620,
+                                    margin=ft.Margin.all(5),
+                                    controls=[
+                                        ft.Text("<<< 注意事項 >>>"),
+                                        ft.Text("出撃には6枚のカードを編成すること（必須条件）。")
+                                    ],
+                                ),
                             ),
                         ],
                     ),
