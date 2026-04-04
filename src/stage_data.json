@@ -1,0 +1,46 @@
+{
+	"NORMAL": {
+		"Stage 1": {
+			"description": "ステージの概要",
+			"enemies": [99990001, 99990001, 99990001, 99990001, 99990001, 99990001],
+			"reward":  [99995001]
+		},
+		"Stage 2": {},
+		"Stage 3": {}
+	},
+	"HARD": {
+		"Stage 1": {},
+		"Stage 2": {},
+		"Stage 3": {}
+	},
+	"VERY HARD": {
+		"Stage 1": {},
+		"Stage 2": {},
+		"Stage 3": {}
+	},
+	"HARD CORE": {
+		"Stage 1": {},
+		"Stage 2": {},
+		"Stage 3": {}
+	},
+	"EXTREME": {
+		"Stage 1": {},
+		"Stage 2": {},
+		"Stage 3": {}
+	},
+	"INSANE": {
+		"Stage 1": {},
+		"Stage 2": {},
+		"Stage 3": {}
+	},
+	"TORMENT": {
+		"Stage 1": {},
+		"Stage 2": {},
+		"Stage 3": {}
+	},
+	"LUNATIC": {
+		"Stage 1": {},
+		"Stage 2": {},
+		"Stage 3": {}
+	}
+}

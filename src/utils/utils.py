@@ -126,18 +126,35 @@ def calc_damage(debug, id1_data, id2_data, id2_hp):
     """戦闘共通のダメージ計算"""
     defence_rnd = random.triangular(0.7, 1.3)
     wariai_rnd = random.triangular(0.05, 0.10)
+    type = "normal"
+    #回避を計算する(ダメージ0)
+    avoid_rnd = int(random.triangular(1, 100))
+    print(f"回避係数: {avoid_rnd}")
+    if avoid_rnd >= 50 and avoid_rnd <= 52:
+        debug_print(debug, "相手が回避")
+        type = "avoid"
+        return 0, type
+    #クリティカルを計算する(1.5倍)
+    critical_rnd = int(random.triangular(1, 100))
+    print(f"CRI係数: {critical_rnd}")
+    if critical_rnd >= 50 and critical_rnd <= 54:
+        debug_print(debug, "クリティカルダメージ発生")
+        critical_damage_rate = 1.5
+        type = "critical"
+    else:
+        critical_damage_rate = 1
     debug_print(debug, f"{id1_data["title"]} > {id2_data["title"]}")
     debug_print(debug, f"ランダム装甲: {defence_rnd}, 割合係数: {wariai_rnd}")
-    if int(id2_data["DEF"])*defence_rnd - int(id1_data["ATK"]) < 0:
+    if int(id2_data["DEF"])*defence_rnd - int(id1_data["ATK"])*critical_damage_rate < 0:
         #DEF*ランダム(0.7～1.3)-ATKして+200
         debug_print(debug, "実ダメージ")
-        id2_damage = abs(int(id2_data["DEF"])*defence_rnd - int(id1_data["ATK"])) + 200
+        id2_damage = abs(int(id2_data["DEF"])*defence_rnd - int(id1_data["ATK"])*critical_damage_rate) + 200
     else:
         #DEF-ATKでマイナスにならない（装甲抜けなかった）場合は割合ダメージ(5%～10%)+100
         #(艦これと違って割合ダメでも倒せるようにする)
         debug_print(debug, "割合+100")
-        id2_damage = id2_hp*wariai_rnd + 100
-    return id2_damage
+        id2_damage = int(id2_hp*wariai_rnd*critical_damage_rate) + 100
+    return id2_damage, type
 
 def create_card_image_data(data):
     """カード画像作成用のデータを作る"""

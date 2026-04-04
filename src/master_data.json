@@ -1,0 +1,36 @@
+[
+	{
+		"pageid": 99990001, 
+		"title": "残留思念",  
+		"pageUrl": "", 
+		"imageUrl": "kari.png", 
+		"rank": "0", 
+		"quality": "0", 
+		"isSozai": 0,
+		"extract": "命は燃え尽きたが消えずに残り続けているもの",
+		"HP": "3500", 
+		"ATK": "500", 
+		"DEF": "500",
+		"favorite": 0,
+		"resourceATK": 0,
+		"resourceDEF": 0,
+		"resourceRANK": 0
+	},
+	{
+		"pageid": 99995001, 
+		"title": "報酬アイテム - マテリアル", 
+		"pageUrl": "", 
+		"imageUrl": "kari.png", 
+		"rank": "0", 
+		"quality": "0", 
+		"isSozai": 1,
+		"extract": "強化素材",
+		"HP": "-", 
+		"ATK": "-", 
+		"DEF": "-",
+		"favorite": 0,
+		"resourceATK": 0,
+		"resourceDEF": 0,
+		"resourceRANK": 0
+	}
+]

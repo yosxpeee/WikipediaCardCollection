@@ -24,11 +24,11 @@ class Sortie:
             self.current_formation_no = no
         def _load_sortie_formation_image(data, num):
             """編成用カードイメージをロードする"""
-            sortie_tab.controls[1].controls[0].controls[0].controls[num].content = create_sortie_formation_image(data)
+            sortie_tab.controls[2].controls[0].controls[0].controls[num].content = create_sortie_formation_image(data)
             self.page.update()
         def _load_sortie_formation_blank(num):
             """編成用カード(未配属)をロードする"""
-            sortie_tab.controls[1].controls[0].controls[0].controls[num].content = ft.Text("未配属")
+            sortie_tab.controls[2].controls[0].controls[0].controls[num].content = ft.Text("未配属")
             self.page.update()
         def _create_formation_dialog():
             """編成用画面のダイアログ作成"""
@@ -65,14 +65,14 @@ class Sortie:
         def _expansion_tile_control(level, toggle):
             """"アコーディオンメニュー制御"""
             if toggle:
-                for item in sortie_tab.controls[1].controls[1].controls:
+                for item in sortie_tab.controls[2].controls[1].controls:
                     if item.title != level:
                         item.expanded = False
                     else:
                         self.accordion_opened = level
             else:
                 if level == self.accordion_opened:
-                    for item in sortie_tab.controls[1].controls[1].controls:
+                    for item in sortie_tab.controls[2].controls[1].controls:
                         if item.title == level:
                             item.expanded = True
 
@@ -249,14 +249,14 @@ class Sortie:
                                 width=320,
                                 height=600,
                                 controls=[
-                                    _create_level_ui("NORMAL", True),     #C
-                                    _create_level_ui("HARD", False),      #UC
+                                    _create_level_ui("NORMAL",    True ), #C
+                                    _create_level_ui("HARD",      False), #UC
                                     _create_level_ui("VERY HARD", False), #R
                                     _create_level_ui("HARD CORE", False), #SR
-                                    _create_level_ui("EXTREME", False),   #SSR
-                                    _create_level_ui("INSANE", False),    #UR
-                                    _create_level_ui("TORMENT", False),   #LR
-                                    _create_level_ui("LUNATIC", False),   #LR+ (まともにやったら勝てないだろうからどうするかね)
+                                    _create_level_ui("EXTREME",   False), #SSR
+                                    _create_level_ui("INSANE",    False), #UR
+                                    _create_level_ui("TORMENT",   False), #LR
+                                    _create_level_ui("LUNATIC",   False), #LR+ (まともにやったら勝てないだろうからどうするかね)
                                 ],
                             ),
                         ],
@@ -285,13 +285,15 @@ class Sortie:
                     ),
                     ft.Row(
                         width=720,
+                        height=50,
                         alignment=ft.MainAxisAlignment.CENTER,
-                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                        vertical_alignment=ft.CrossAxisAlignment.START,
                         expand=True,
                         controls=[
                             ft.Button(
                                 "出撃", 
                                 expand=True, 
+                                height=50,
                                 on_click=lambda x:{
                                     print(self.current_formation)
                                 }
@@ -321,4 +323,41 @@ class Sortie:
                 self.page.update()
             except Exception:
                 pass
-        return sortie_tab
+        # 他タブと雰囲気を揃えた淡い背景グラデーションでラップして返す
+        view = ft.Stack(
+            controls=[
+                ft.ShaderMask(
+                    content=ft.Container(
+                        border=ft.Border.all(0),
+                        width=738,
+                        height=910,
+                        alignment=ft.Alignment.CENTER,
+                        bgcolor=ft.Colors.ON_PRIMARY,
+                        content=None,
+                    ),
+                    blend_mode=ft.BlendMode.SRC_IN,
+                    shader=ft.RadialGradient(
+                        center=ft.Alignment.CENTER,
+                        radius=0.5,
+                        colors=[
+                            ft.Colors.with_opacity(0.5, ft.Colors.ON_PRIMARY),
+                            ft.Colors.with_opacity(0.5, ft.Colors.PRIMARY_CONTAINER),
+                            ft.Colors.with_opacity(0.5, ft.Colors.ON_PRIMARY),
+                            ft.Colors.with_opacity(0.5, ft.Colors.PRIMARY_CONTAINER),
+                            ft.Colors.with_opacity(0.5, ft.Colors.ON_PRIMARY),
+                        ],
+                        stops=[0.2, 0.4, 0.6, 0.8, 1.0],
+                        tile_mode=ft.GradientTileMode.REPEATED,
+                    ),
+                ),
+                ft.Container(
+                    content=sortie_tab,
+                ),
+            ],
+        )
+        return view
+
+#MEMO:
+#敵の特殊攻撃
+#・ダブルアタック：1.1倍x2
+#・マルチアタック：0.75倍を3体に
