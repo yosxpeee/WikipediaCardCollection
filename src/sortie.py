@@ -25,11 +25,11 @@ class Sortie:
             self.current_formation_no = no
         def _load_sortie_formation_image(data, num):
             """編成用カードイメージをロードする"""
-            sortie_tab.controls[2].controls[0].controls[0].controls[num].content = create_sortie_formation_image(data, False)
+            sortie_tab.controls[3].controls[0].controls[0].controls[num].content = create_sortie_formation_image(data, False)
             self.page.update()
         def _load_sortie_formation_blank(num):
             """編成用カード(未配属)をロードする"""
-            sortie_tab.controls[2].controls[0].controls[0].controls[num].content = ft.Text("未配属")
+            sortie_tab.controls[3].controls[0].controls[0].controls[num].content = ft.Text("未配属")
             self.page.update()
         def _create_formation_dialog():
             """編成用画面のダイアログ作成"""
@@ -42,9 +42,9 @@ class Sortie:
                     content=create_ranked_tabs(ranks, all_cards_by_rank, on_select_callback=_on_target_selected),
                 ),
                 actions=[
-                    self.close_button,
-                    self.clear_button,
-                    self.ok_button,
+                    self.formation_close_button,
+                    self.formation_clear_button,
+                    self.formation_ok_button,
                 ],
             )
             self.current_formation_dialog = formation_dialog
@@ -66,18 +66,71 @@ class Sortie:
         def _expansion_tile_control(level, toggle):
             """"アコーディオンメニュー制御"""
             if toggle:
-                for item in sortie_tab.controls[2].controls[1].controls:
+                for item in sortie_tab.controls[3].controls[1].controls:
                     if item.title != level:
                         item.expanded = False
                     else:
                         self.accordion_opened = level
             else:
                 if level == self.accordion_opened:
-                    for item in sortie_tab.controls[2].controls[1].controls:
+                    for item in sortie_tab.controls[3].controls[1].controls:
                         if item.title == level:
                             item.expanded = True
-        def _load_enemies(data):
-            print(data)
+        def _create_formation_grid(formation_data):
+            data = []
+            for info in formation_data:
+                image = create_sortie_formation_image(info, True)
+                data.append(image)
+            return ft.GridView(
+                width=200,
+                height=600,
+                child_aspect_ratio=2,
+                runs_count=1,
+                run_spacing=0,
+                spacing=0,
+                controls=[
+                    data[0],
+                    data[1],
+                    data[2],
+                    data[3],
+                    data[4],
+                    data[5],
+                ],
+            )
+        def _start_battle(data):
+            num = 0
+            for enemy_id in data["enemies"]:
+                for enemy in master_data:
+                    if enemy_id == enemy["pageid"]:
+                        image_data = {
+                            "id"   :enemy["pageid"],
+                            "title":enemy["title"],
+                            "rank" :rankid_to_rank(enemy["rank"], 0),
+                            "image":enemy["imageUrl"],
+                            "HP"   :enemy["HP"],
+                            "ATK"  :enemy["ATK"],
+                            "DEF"  :enemy["DEF"],
+                        }
+                        self.current_enemies_formation[num] = image_data
+                        num = num + 1
+                        break
+            grid_player = _create_formation_grid(self.current_formation)
+            grid_enemy = _create_formation_grid(self.current_enemies_formation)
+            battle_dialog = ft.AlertDialog(
+                modal=True,
+                content=ft.Row(
+                    spacing=20,
+                    controls=[
+                        grid_player,
+                        ft.Text("vs", size=60),
+                        grid_enemy,
+                    ],
+                ),
+                actions=[
+                    ft.TextButton("close",on_click=lambda x:self.page.pop_dialog())
+                ]
+            )
+            self.page.show_dialog(battle_dialog)
         def _create_level_ui(level, opened):
             """レベルデザイン"""
             return ft.ExpansionTile(
@@ -89,9 +142,24 @@ class Sortie:
                 shape=ft.BeveledRectangleBorder(side=ft.BorderSide(width=2, color=ft.Colors.ON_SURFACE)),
                 collapsed_shape=ft.BeveledRectangleBorder(side=ft.BorderSide(width=2, color=ft.Colors.ON_SURFACE)),
                 controls=[
-                    ft.FilledButton("Stage 1", on_click=lambda x:_load_enemies(stage_data[level]["Stage 1"])),
-                    ft.FilledButton("Stage 2"),
-                    ft.FilledButton("Stage 3"),
+                    ft.Row(
+                        controls=[
+                            ft.FilledButton("Stage 1", on_click=lambda x:_start_battle(stage_data[level]["Stage 1"])),
+                            ft.Text(stage_data[level]["Stage 1"]["description"]),
+                        ]
+                    ),
+                    ft.Row(
+                        controls=[
+                            ft.FilledButton("Stage 2", on_click=lambda x:_start_battle(stage_data[level]["Stage 2"])),
+                            ft.Text(stage_data[level]["Stage 2"]["description"]),
+                        ]
+                    ),
+                    ft.Row(
+                        controls=[
+                            ft.FilledButton("Stage 3", on_click=lambda x:_start_battle(stage_data[level]["Stage 3"])),
+                            ft.Text(stage_data[level]["Stage 3"]["description"]),
+                        ]
+                    ),
                 ],
                 on_change=lambda x:_expansion_tile_control(level, x.data),
             )
@@ -170,23 +238,22 @@ class Sortie:
         with open('src/stage_data.json', 'r', encoding='utf-8') as f:
             stage_data = json.load(f)
         # 対戦相手のマスターデータ読み出し
-        with open('src/master_data.json', 'r', encoding='utf-8') as f:
+        with open('src/enemy_master_data.json', 'r', encoding='utf-8') as f:
             master_data = json.load(f)
-
         # ダイアログのボタン作成
-        self.close_button = ft.TextButton(
+        self.formation_close_button = ft.TextButton(
             "キャンセル", 
             on_click=lambda e:{
                 _cancel_load_formation()
             }
         )
-        self.clear_button = ft.TextButton(
+        self.formation_clear_button = ft.TextButton(
             "外す", 
             on_click=lambda e:{
                 _clear_formation()
             }
         )
-        self.ok_button = ft.TextButton(
+        self.formation_ok_button = ft.TextButton(
             "編成する", 
             on_click=lambda e: {
                 _apply_load_formation()
@@ -209,6 +276,28 @@ class Sortie:
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 spacing=4,
                 controls=[
+                    ft.Row(
+                        alignment=ft.MainAxisAlignment.CENTER,
+                        vertical_alignment=ft.CrossAxisAlignment.START,
+                        controls=[
+                            ft.Container(
+                                width=630,
+                                border=ft.Border.all(width=2, color=ft.Colors.ON_SURFACE),
+                                border_radius=8,
+                                content=ft.Column(
+                                    alignment=ft.MainAxisAlignment.START,
+                                    horizontal_alignment=ft.CrossAxisAlignment.START,
+                                    spacing=0,
+                                    width=620,
+                                    margin=ft.Margin.all(5),
+                                    controls=[
+                                        ft.Text("<<< 注意事項 >>>"),
+                                        ft.Text("出撃には6枚のカードを編成すること（必須条件）。")
+                                    ],
+                                ),
+                            ),
+                        ],
+                    ),
                     ft.Row(
                         alignment=ft.MainAxisAlignment.CENTER,
                         vertical_alignment=ft.CrossAxisAlignment.CENTER,
@@ -235,13 +324,14 @@ class Sortie:
                                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                                 controls=[
                                     ft.GridView(
-                                        width=300,
+                                        width=200,
                                         height=600,
-                                        child_aspect_ratio=3,
+                                        child_aspect_ratio=2,
                                         runs_count=1,
                                         run_spacing=0,
                                         spacing=0,
-                                        controls=[      #Note:編成後のデータをそっくり戦闘画面に持っていく必要がある
+                                        controls=[
+                                            # 編成変更用のトリガー付きコンテナをロードする
                                             _create_blank_panel(0),
                                             _create_blank_panel(1),
                                             _create_blank_panel(2),
@@ -267,45 +357,6 @@ class Sortie:
                                     _create_level_ui("TORMENT",   False), #LR
                                     _create_level_ui("LUNATIC",   False), #LR+ (まともにやったら勝てないだろうからどうするかね)
                                 ],
-                            ),
-                        ],
-                    ),
-                    ft.Row(
-                        alignment=ft.MainAxisAlignment.CENTER,
-                        vertical_alignment=ft.CrossAxisAlignment.START,
-                        controls=[
-                            ft.Container(
-                                width=630,
-                                border=ft.Border.all(width=2, color=ft.Colors.ON_SURFACE),
-                                border_radius=8,
-                                content=ft.Column(
-                                    alignment=ft.MainAxisAlignment.START,
-                                    horizontal_alignment=ft.CrossAxisAlignment.START,
-                                    spacing=0,
-                                    width=620,
-                                    margin=ft.Margin.all(5),
-                                    controls=[
-                                        ft.Text("<<< 注意事項 >>>"),
-                                        ft.Text("出撃には6枚のカードを編成すること（必須条件）。")
-                                    ],
-                                ),
-                            ),
-                        ],
-                    ),
-                    ft.Row(
-                        width=720,
-                        height=50,
-                        alignment=ft.MainAxisAlignment.CENTER,
-                        vertical_alignment=ft.CrossAxisAlignment.START,
-                        expand=True,
-                        controls=[
-                            ft.Button(
-                                "出撃", 
-                                expand=True, 
-                                height=50,
-                                on_click=lambda x:{
-                                    print(self.current_formation)
-                                }
                             ),
                         ],
                     ),

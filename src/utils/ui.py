@@ -610,7 +610,7 @@ def create_sortie_formation_image(data, isEnemy):
                         content=create_rank_text(data['rank']),
                     ),
                     ft.Container(
-                        width=260,
+                        width=160,
                         alignment=ft.Alignment.TOP_LEFT,
                         content=ft.Text(data["title"],no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
                     ),
