@@ -536,7 +536,7 @@ def create_card_image(data, isShow, isFbButton, on_fav_changed=None):
     )
     return view
 
-def create_sortie_formation_image(data):
+def create_sortie_formation_image(data, isEnemy):
     """出撃タブ：編成用カードイメージ作成"""
     card_image = None
     if data["image"] == "" or data["image"] == None:
@@ -564,6 +564,40 @@ def create_sortie_formation_image(data):
                 fit=ft.BoxFit.CONTAIN,
             ),
         )
+    if isEnemy:
+        #対戦相手側
+        status_row = [
+            card_image,
+            ft.Container(
+                height=10,
+                expand=True,
+            ),
+            ft.Column(
+                spacing=0,
+                controls=[
+                    ft.Text(f"HP : {data["HP"]}".ljust(10),font_family="Consolas", size=16),
+                    ft.Text(f"DEF: {data["DEF"]}".ljust(10),font_family="Consolas", size=16),
+                    ft.Text(f"ATK: {data["ATK"]}".ljust(10),font_family="Consolas", size=16),
+                ]
+            )
+        ]
+    else:
+        #プレイヤー側
+        status_row = [
+            ft.Column(
+                spacing=0,
+                controls=[
+                    ft.Text(f"HP : {data["HP"]}".ljust(10),font_family="Consolas", size=16),
+                    ft.Text(f"DEF: {data["DEF"]}".ljust(10),font_family="Consolas", size=16),
+                    ft.Text(f"ATK: {data["ATK"]}".ljust(10),font_family="Consolas", size=16),
+                ],
+            ),
+            ft.Container(
+                height=10,
+                expand=True,
+            ),
+            card_image
+        ]
     view = ft.Column(
         spacing=0,
         controls=[
@@ -586,21 +620,7 @@ def create_sortie_formation_image(data):
             ft.Row(
                 margin=ft.Margin.all(2),
                 alignment=ft.MainAxisAlignment.END,
-                controls=[
-                    ft.Column(
-                        spacing=0,
-                        controls=[
-                            ft.Text(f"HP : {data["HP"]}".ljust(10),font_family="Consolas", size=16),
-                            ft.Text(f"DEF: {data["DEF"]}".ljust(10),font_family="Consolas", size=16),
-                            ft.Text(f"ATK: {data["ATK"]}".ljust(10),font_family="Consolas", size=16),
-                        ],
-                    ),
-                    ft.Container(
-                        height=10,
-                        expand=True,
-                    ),
-                    card_image,
-                ],
+                controls=status_row,
             ),
         ]
     )

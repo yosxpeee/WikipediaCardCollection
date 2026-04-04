@@ -12,10 +12,11 @@ class Sortie:
         self.page = page
         # ローディングオーバーレイの参照を保持(図鑑のものを使いまわし)
         self.loading_overlay = page.overlay[1]
-        self.current_formation_no = -1
         self.current_select_card = {}
+        self.current_formation_no = -1
         self.current_formation_dialog = None
         self.current_formation = [{},{},{},{},{},{}]
+        self.current_enemies_formation = [{},{},{},{},{},{}]
         self.accordion_opened = "NORMAL"
     async def create(self):
         """画面作成"""
@@ -24,7 +25,7 @@ class Sortie:
             self.current_formation_no = no
         def _load_sortie_formation_image(data, num):
             """編成用カードイメージをロードする"""
-            sortie_tab.controls[2].controls[0].controls[0].controls[num].content = create_sortie_formation_image(data)
+            sortie_tab.controls[2].controls[0].controls[0].controls[num].content = create_sortie_formation_image(data, False)
             self.page.update()
         def _load_sortie_formation_blank(num):
             """編成用カード(未配属)をロードする"""
@@ -75,7 +76,8 @@ class Sortie:
                     for item in sortie_tab.controls[2].controls[1].controls:
                         if item.title == level:
                             item.expanded = True
-
+        def _load_enemies(data):
+            print(data)
         def _create_level_ui(level, opened):
             """レベルデザイン"""
             return ft.ExpansionTile(
@@ -87,7 +89,7 @@ class Sortie:
                 shape=ft.BeveledRectangleBorder(side=ft.BorderSide(width=2, color=ft.Colors.ON_SURFACE)),
                 collapsed_shape=ft.BeveledRectangleBorder(side=ft.BorderSide(width=2, color=ft.Colors.ON_SURFACE)),
                 controls=[
-                    ft.FilledButton("Stage 1"),
+                    ft.FilledButton("Stage 1", on_click=lambda x:_load_enemies(stage_data[level]["Stage 1"])),
                     ft.FilledButton("Stage 2"),
                     ft.FilledButton("Stage 3"),
                 ],
@@ -164,6 +166,13 @@ class Sortie:
         # ローディングオーバーレイを表示
         self.loading_overlay.visible = True
         self.page.update()
+        # ステージデータ読み出し
+        with open('src/stage_data.json', 'r', encoding='utf-8') as f:
+            stage_data = json.load(f)
+        # 対戦相手のマスターデータ読み出し
+        with open('src/master_data.json', 'r', encoding='utf-8') as f:
+            master_data = json.load(f)
+
         # ダイアログのボタン作成
         self.close_button = ft.TextButton(
             "キャンセル", 
@@ -267,7 +276,7 @@ class Sortie:
                         controls=[
                             ft.Container(
                                 width=630,
-                                border=ft.Border.all(2),
+                                border=ft.Border.all(width=2, color=ft.Colors.ON_SURFACE),
                                 border_radius=8,
                                 content=ft.Column(
                                     alignment=ft.MainAxisAlignment.START,
