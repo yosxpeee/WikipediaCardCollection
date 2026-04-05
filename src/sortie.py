@@ -1,5 +1,6 @@
 import flet as ft
 import asyncio
+import random
 import json
 
 from utils.utils import RANK_TABLE, debug_print, rankid_to_rank, rank_to_rankid, calc_status, create_card_image_data, calc_damage
@@ -145,20 +146,114 @@ class Sortie:
         def _start_battle(data, title):
             """戦闘ダイアログを表示する"""
             async def _sortie(player_data, enemy_data):
-                """戦闘処理"""
-                await asyncio.sleep(1)
-                #player_dataとenemy_dataを使って戦闘を行う。
-                #ルール；
-                #プレイヤー側から必ず開始する
-                #編隊の先頭から順番に行動し、HPが残っている相手方をランダムで選び攻撃する。
-                #攻撃する処理はutils.calc_damage()を使い、受けたダメージの分だけそのカードの横にあるプログレスバーの値を減算していく。
-                #HPが0になってしまったカードは攻撃する処理をスキップする
-                #これを5ターン繰り返す
-                #勝利条件：
-                #相手を全滅させる(相手方のカード6枚すべてのHPを0にする)
-                #5ターン経過してどちらも生存者がいる場合は、生き残っていた数が多いほうが勝ち
-                #生き残っていた数も同じであれば残存HPの合計が多いほうが勝ち
-                #残存HPも同じであれば、プレイヤー側の敗北とする。
+                """戦闘処理
+
+                ルールはコメントの通り。
+                """
+                # 初期化
+                await asyncio.sleep(0.2)
+                log_list = battle_dialog.content.controls[1].content.controls[2]
+
+                # 準備：最大HPと現在HPを収集
+                p_max = [0]*6
+                p_cur = [0]*6
+                e_max = [0]*6
+                e_cur = [0]*6
+                for i in range(6):
+                    pd = player_data[i] if i < len(player_data) else {}
+                    ed = enemy_data[i] if i < len(enemy_data) else {}
+                    p_max[i] = int(pd.get("HP", 0)) if pd != {} else 0
+                    p_cur[i] = float(p_max[i])
+                    e_max[i] = int(ed.get("HP", 0)) if ed != {} else 0
+                    e_cur[i] = float(e_max[i])
+
+                def append_log(s):
+                    log_list.controls.append(ft.Text(s))
+                    self.page.update()
+
+                # 進行中のプログレスバー参照取得
+                def get_player_pb(idx):
+                    try:
+                        return grid_player.controls[idx].controls[1].content
+                    except Exception:
+                        return None
+
+                def get_enemy_pb(idx):
+                    try:
+                        return grid_enemy.controls[idx].controls[0].content
+                    except Exception:
+                        return None
+
+                # 戦闘ループ（最大5ターン） -- 各位置ごとにプレイヤーi → 敵i の順で交互に行動
+                winner = None
+                for turn in range(1, 6):
+                    append_log(f"--- ターン {turn} 開始 ---")
+
+                    for i in range(6):
+                        # プレイヤー i の行動
+                        if p_cur[i] > 0 and p_max[i] > 0:
+                            alive = [j for j in range(6) if e_cur[j] > 0 and e_max[j] > 0]
+                            if not alive:
+                                winner = "PLAYER"
+                                break
+                            tgt = random.choice(alive)
+                            dmg, d_type = calc_damage(False, player_data[i], enemy_data[tgt], e_cur[tgt])
+                            e_cur[tgt] = max(0.0, e_cur[tgt] - dmg)
+                            append_log(f"プレイヤー[{player_data[i].get('title','?')}] -> 敵[{enemy_data[tgt].get('title','?')}] : {dmg} ({d_type})")
+                            pb = get_enemy_pb(tgt)
+                            if pb is not None and e_max[tgt] > 0:
+                                try:
+                                    pb.value = max(0.0, e_cur[tgt] / e_max[tgt])
+                                except Exception:
+                                    pass
+                            self.page.update()
+                            await asyncio.sleep(0.20)
+
+                        # 敵 i の行動（プレイヤー i の行動後に行う）
+                        if e_cur[i] > 0 and e_max[i] > 0:
+                            alive_p = [j for j in range(6) if p_cur[j] > 0 and p_max[j] > 0]
+                            if not alive_p:
+                                winner = "ENEMY"
+                                break
+                            tgt_p = random.choice(alive_p)
+                            dmg, d_type = calc_damage(False, enemy_data[i], player_data[tgt_p], p_cur[tgt_p])
+                            p_cur[tgt_p] = max(0.0, p_cur[tgt_p] - dmg)
+                            append_log(f"敵[{enemy_data[i].get('title','?')}] -> プレイヤー[{player_data[tgt_p].get('title','?')}] : {dmg} ({d_type})")
+                            pbp = get_player_pb(tgt_p)
+                            if pbp is not None and p_max[tgt_p] > 0:
+                                try:
+                                    pbp.value = max(0.0, p_cur[tgt_p] / p_max[tgt_p])
+                                except Exception:
+                                    pass
+                            self.page.update()
+                            await asyncio.sleep(0.20)
+
+                    if winner == "PLAYER":
+                        append_log("敵を全滅しました。プレイヤー勝利！")
+                        break
+                    if winner == "ENEMY":
+                        append_log("編成が全滅しました。プレイヤー敗北。")
+                        break
+
+                # 判定（5ターン終了または早期終了）
+                if winner is None:
+                    p_alive = sum(1 for v in p_cur if v > 0)
+                    e_alive = sum(1 for v in e_cur if v > 0)
+                    if p_alive > e_alive:
+                        winner = "PLAYER"
+                    elif e_alive > p_alive:
+                        winner = "ENEMY"
+                    else:
+                        p_hp_sum = sum(p_cur)
+                        e_hp_sum = sum(e_cur)
+                        if p_hp_sum > e_hp_sum:
+                            winner = "PLAYER"
+                        elif e_hp_sum > p_hp_sum:
+                            winner = "ENEMY"
+                        else:
+                            winner = "ENEMY"
+
+                append_log(f"--- 結果: { 'プレイヤー勝利' if winner== 'PLAYER' else 'プレイヤー敗北' } ---")
                 battle_close_button.disabled = False
                 self.page.update()
             num = 0

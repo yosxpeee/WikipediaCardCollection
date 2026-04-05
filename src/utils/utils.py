@@ -145,10 +145,10 @@ def calc_damage(debug, id1_data, id2_data, id2_hp):
         critical_damage_rate = 1
     debug_print(debug, f"{id1_data["title"]} > {id2_data["title"]}")
     debug_print(debug, f"ランダム装甲: {defence_rnd}, 割合係数: {wariai_rnd}")
-    if int(id2_data["DEF"])*defence_rnd - int(id1_data["ATK"])*critical_damage_rate < 0:
+    if int(int(id2_data["DEF"])*defence_rnd) - int(int(id1_data["ATK"])*critical_damage_rate) < 0:
         #DEF*ランダム(0.7～1.3)-ATKして+200
         debug_print(debug, "実ダメージ")
-        id2_damage = abs(int(id2_data["DEF"])*defence_rnd - int(id1_data["ATK"])*critical_damage_rate) + 200
+        id2_damage = abs(int(int(id2_data["DEF"])*defence_rnd) - int(int(id1_data["ATK"])*critical_damage_rate)) + 200
     else:
         #DEF-ATKでマイナスにならない（装甲抜けなかった）場合は割合ダメージ(5%～10%)+100
         #(艦これと違って割合ダメでも倒せるようにする)
