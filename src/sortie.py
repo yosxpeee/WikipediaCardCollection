@@ -148,14 +148,39 @@ class Sortie:
         def _start_battle(data, title):
             """戦闘ダイアログを表示する"""
             async def _sortie(player_data, enemy_data):
-                """戦闘処理
-
-                ルールはコメントの通り。
-                """
+                """戦闘処理"""
+                def append_log(s):
+                    """戦闘ログ書き込み"""
+                    log_list.controls.append(ft.Text(s))
+                    self.page.update()
+                def get_player_pb(idx):
+                    """進行中のプログレスバー参照取得(プレイヤー側)"""
+                    try:
+                        return grid_player.controls[idx].controls[1].content
+                    except Exception:
+                        return None
+                def get_enemy_pb(idx):
+                    """進行中のプログレスバー参照取得(敵側)"""
+                    try:
+                        return grid_enemy.controls[idx].controls[0].content
+                    except Exception:
+                        return None
+                def update_pb_color(pb, pct):
+                    """プログレスバーの色更新"""
+                    try:
+                        if pct > 0.5:
+                            pb.color = ft.Colors.BLUE
+                        elif pct > 0.3:
+                            pb.color = ft.Colors.YELLOW
+                        elif pct > 0.1:
+                            pb.color = ft.Colors.ORANGE
+                        else:
+                            pb.color = ft.Colors.RED
+                    except Exception:
+                        pass
                 # 初期化
                 await asyncio.sleep(0.2)
                 log_list = battle_dialog.content.controls[1].content.controls[2]
-
                 # 準備：最大HPと現在HPを収集
                 p_max = [0]*6
                 p_cur = [0]*6
@@ -168,42 +193,10 @@ class Sortie:
                     p_cur[i] = float(p_max[i])
                     e_max[i] = int(ed.get("HP", 0)) if ed != {} else 0
                     e_cur[i] = float(e_max[i])
-
-                def append_log(s):
-                    log_list.controls.append(ft.Text(s))
-                    self.page.update()
-
-                # 進行中のプログレスバー参照取得
-                def get_player_pb(idx):
-                    try:
-                        return grid_player.controls[idx].controls[1].content
-                    except Exception:
-                        return None
-
-                def get_enemy_pb(idx):
-                    try:
-                        return grid_enemy.controls[idx].controls[0].content
-                    except Exception:
-                        return None
-
-                def update_pb_color(pb, pct):
-                    try:
-                        if pct > 0.5:
-                            pb.color = ft.Colors.BLUE
-                        elif pct > 0.3:
-                            pb.color = ft.Colors.YELLOW
-                        elif pct > 0.1:
-                            pb.color = ft.Colors.ORANGE
-                        else:
-                            pb.color = ft.Colors.RED
-                    except Exception:
-                        pass
-
                 # 戦闘ループ（最大5ターン） -- 各位置ごとにプレイヤーi → 敵i の順で交互に行動
                 winner = None
                 for turn in range(1, 6):
                     append_log(f"--- ターン {turn} 開始 ---")
-
                     for i in range(6):
                         # プレイヤー i の行動
                         if p_cur[i] > 0 and p_max[i] > 0:
@@ -225,7 +218,6 @@ class Sortie:
                                     pass
                             self.page.update()
                             await asyncio.sleep(0.20)
-
                         # 敵 i の行動（プレイヤー i の行動後に行う）
                         if e_cur[i] > 0 and e_max[i] > 0:
                             alive_p = [j for j in range(6) if p_cur[j] > 0 and p_max[j] > 0]
@@ -246,14 +238,12 @@ class Sortie:
                                     pass
                             self.page.update()
                             await asyncio.sleep(0.20)
-
                     if winner == "PLAYER":
                         append_log("敵を全滅させました。プレイヤー勝利！")
                         break
                     if winner == "ENEMY":
                         append_log("編成が全滅しました。プレイヤー敗北…")
                         break
-
                 # 判定（5ターン終了または早期終了）
                 if winner is None:
                     p_alive = sum(1 for v in p_cur if v > 0)
@@ -271,10 +261,14 @@ class Sortie:
                             winner = "ENEMY"
                         else:
                             winner = "ENEMY"
-
                 append_log(f"--- 結果: { 'プレイヤー勝利' if winner== 'PLAYER' else 'プレイヤー敗北' } ---")
                 battle_close_button.disabled = False
                 self.page.update()
+            #戦闘開始条件を満たしているかチェックする
+            for chk_data in self.current_formation:
+                if chk_data == {}:
+                    self.page.show_dialog(ft.SnackBar(ft.Text(f"必ず6枚のカードすべてを編成してください。"), duration=1500))
+                    return
             num = 0
             for enemy_id in data["enemies"]:
                 for enemy in master_data:
@@ -631,8 +625,3 @@ class Sortie:
             ],
         )
         return view
-
-#MEMO:
-#敵の特殊攻撃
-#・ダブルアタック：1.1倍x2
-#・マルチアタック：0.75倍を3体に
