@@ -197,7 +197,7 @@ class Sortie:
                                 winner = "PLAYER"
                                 break
                             tgt = random.choice(alive)
-                            dmg, d_type = calc_damage(False, player_data[i], enemy_data[tgt], e_cur[tgt])
+                            dmg, d_type = calc_damage(self.page.debug, player_data[i], enemy_data[tgt], e_cur[tgt])
                             e_cur[tgt] = max(0.0, e_cur[tgt] - dmg)
                             append_log(f"プレイヤー[{player_data[i].get('title','?')}] -> 敵[{enemy_data[tgt].get('title','?')}] : {dmg} ({d_type})")
                             pb = get_enemy_pb(tgt)
@@ -216,7 +216,7 @@ class Sortie:
                                 winner = "ENEMY"
                                 break
                             tgt_p = random.choice(alive_p)
-                            dmg, d_type = calc_damage(False, enemy_data[i], player_data[tgt_p], p_cur[tgt_p])
+                            dmg, d_type = calc_damage(self.page.debug, enemy_data[i], player_data[tgt_p], p_cur[tgt_p])
                             p_cur[tgt_p] = max(0.0, p_cur[tgt_p] - dmg)
                             append_log(f"敵[{enemy_data[i].get('title','?')}] -> プレイヤー[{player_data[tgt_p].get('title','?')}] : {dmg} ({d_type})")
                             pbp = get_player_pb(tgt_p)
@@ -229,10 +229,10 @@ class Sortie:
                             await asyncio.sleep(0.20)
 
                     if winner == "PLAYER":
-                        append_log("敵を全滅しました。プレイヤー勝利！")
+                        append_log("敵を全滅させました。プレイヤー勝利！")
                         break
                     if winner == "ENEMY":
-                        append_log("編成が全滅しました。プレイヤー敗北。")
+                        append_log("編成が全滅しました。プレイヤー敗北…")
                         break
 
                 # 判定（5ターン終了または早期終了）

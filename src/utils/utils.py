@@ -129,14 +129,14 @@ def calc_damage(debug, id1_data, id2_data, id2_hp):
     type = "normal"
     #回避を計算する(ダメージ0)
     avoid_rnd = int(random.triangular(1, 100))
-    print(f"回避係数: {avoid_rnd}")
+    #print(f"回避係数: {avoid_rnd}")
     if avoid_rnd >= 50 and avoid_rnd <= 52:
         debug_print(debug, "相手が回避")
         type = "avoid"
         return 0, type
     #クリティカルを計算する(1.5倍)
     critical_rnd = int(random.triangular(1, 100))
-    print(f"CRI係数: {critical_rnd}")
+    #print(f"CRI係数: {critical_rnd}")
     if critical_rnd >= 50 and critical_rnd <= 54:
         debug_print(debug, "クリティカルダメージ発生")
         critical_damage_rate = 1.5

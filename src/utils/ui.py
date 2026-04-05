@@ -576,8 +576,8 @@ def create_sortie_formation_image(data, isEnemy):
                 spacing=0,
                 controls=[
                     ft.Text(f"HP : {data["HP"]}".ljust(10),font_family="Consolas", size=16),
-                    ft.Text(f"DEF: {data["DEF"]}".ljust(10),font_family="Consolas", size=16),
                     ft.Text(f"ATK: {data["ATK"]}".ljust(10),font_family="Consolas", size=16),
+                    ft.Text(f"DEF: {data["DEF"]}".ljust(10),font_family="Consolas", size=16),
                 ]
             )
         ]
@@ -588,8 +588,8 @@ def create_sortie_formation_image(data, isEnemy):
                 spacing=0,
                 controls=[
                     ft.Text(f"HP : {data["HP"]}".ljust(10),font_family="Consolas", size=16),
-                    ft.Text(f"DEF: {data["DEF"]}".ljust(10),font_family="Consolas", size=16),
                     ft.Text(f"ATK: {data["ATK"]}".ljust(10),font_family="Consolas", size=16),
+                    ft.Text(f"DEF: {data["DEF"]}".ljust(10),font_family="Consolas", size=16),
                 ],
             ),
             ft.Container(
