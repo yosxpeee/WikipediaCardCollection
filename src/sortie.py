@@ -165,6 +165,49 @@ class Sortie:
                         return grid_enemy.controls[idx].controls[0].content
                     except Exception:
                         return None
+                def mark_dead_image(isEnemy, idx):
+                    """指定スロットのカード画像を半透明オーバーレイと赤×印を重ねたものに差し替える"""
+                    try:
+                        if isEnemy:
+                            row = grid_enemy.controls[idx]
+                            img_index = 2
+                            left = 0
+                            top = 0
+                        else:
+                            row = grid_player.controls[idx]
+                            img_index = 0
+                            left = -12
+                            top = 0
+                        if img_index >= len(row.controls):
+                            return
+                        img = row.controls[img_index]
+                        if getattr(img, '_dead_overlay', False):
+                            return
+                        overlay = ft.Container(
+                            width=200,
+                            height=100,
+                            left=left,
+                            top=top,
+                            bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.GREY)
+                        )
+                        x_icon = ft.Container(
+                            width=200,
+                            height=100,
+                            alignment=ft.Alignment.CENTER,
+                            content=ft.Icon(ft.CupertinoIcons.CLEAR_THICK, color=ft.Colors.RED, size=100),
+                        )
+                        stack = ft.Stack(
+                            alignment=ft.Alignment.CENTER,
+                            controls=[img, overlay, x_icon],
+                        )
+                        stack._dead_overlay = True
+                        row.controls[img_index] = stack
+                        try:
+                            self.page.update()
+                        except Exception:
+                            pass
+                    except Exception:
+                        pass
                 def update_pb_color(pb, pct):
                     """プログレスバーの色更新"""
                     try:
@@ -216,6 +259,9 @@ class Sortie:
                                     update_pb_color(pb, val)
                                 except Exception:
                                     pass
+                            # HP が 0 になったら画像にオーバーレイを付ける
+                            if e_cur[tgt] == 0:
+                                mark_dead_image(True, tgt)
                             self.page.update()
                             await asyncio.sleep(0.20)
                         # 敵 i の行動（プレイヤー i の行動後に行う）
@@ -236,6 +282,9 @@ class Sortie:
                                     update_pb_color(pbp, valp)
                                 except Exception:
                                     pass
+                            # HP が 0 になったら画像にオーバーレイを付ける
+                            if p_cur[tgt_p] == 0:
+                                mark_dead_image(False, tgt_p)
                             self.page.update()
                             await asyncio.sleep(0.20)
                     if winner == "PLAYER":
