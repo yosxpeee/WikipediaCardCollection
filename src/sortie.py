@@ -77,6 +77,7 @@ class Sortie:
                         if item.title == level:
                             item.expanded = True
         def _create_formation_grid(formation_data):
+            """戦闘画面用の編成表示"""
             data = []
             for info in formation_data:
                 image = create_sortie_formation_image(info, True)

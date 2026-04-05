@@ -2,7 +2,21 @@
 
 ## 概要
 なんか巷で流行った某ゲームもどきのアプリです。  
-面白半分で作ったので怒られたら消します()
+面白半分で作ったので怒られたら消します()  
+
+使用したAI
+- コーディングAI
+  - GPT-5 mini
+- 画像生成AI
+  - クラウドサービス
+    - Sora2
+    - ChatGPT
+  - ローカル
+    - Wan 2.2
+    - FLUX1.dev
+    - Anima preview1
+    - Anima preview2
+    - Qwen Image Edit
 
 ## 動作環境
 Windows 11 25H2以上  
