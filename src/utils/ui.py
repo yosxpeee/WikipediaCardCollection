@@ -544,7 +544,7 @@ def create_sortie_formation_image(data, isEnemy):
         card_image = ft.Container(
             alignment=ft.Alignment.CENTER,
             border=ft.Border.all(2, color=get_card_color(data["rank"], 0)),
-            bgcolor=ft.Colors.ON_PRIMARY,
+            bgcolor=ft.Colors.WHITE,
             width=74,
             height=74,
             content=ft.Text("NO IMAGE"),
@@ -554,7 +554,7 @@ def create_sortie_formation_image(data, isEnemy):
         card_image = ft.Container(
             alignment=ft.Alignment.CENTER,
             border=ft.Border.all(2, color=get_card_color(data["rank"], 0)),
-            bgcolor=ft.Colors.ON_PRIMARY,
+            bgcolor=ft.Colors.WHITE,
             width=74,
             height=74,
             content=ft.Image(

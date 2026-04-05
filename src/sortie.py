@@ -98,6 +98,7 @@ class Sortie:
                                         height=5,
                                         bar_height=5,
                                         value=1.0,
+                                        color=ft.Colors.BLUE,
                                     ),
                                 ),
                                 ft.Container(
@@ -122,6 +123,7 @@ class Sortie:
                                         height=5,
                                         bar_height=5,
                                         value=1.0,
+                                        color=ft.Colors.BLUE,
                                     ),
                                 ),
                             ],
@@ -184,6 +186,19 @@ class Sortie:
                     except Exception:
                         return None
 
+                def update_pb_color(pb, pct):
+                    try:
+                        if pct > 0.5:
+                            pb.color = ft.Colors.BLUE
+                        elif pct > 0.3:
+                            pb.color = ft.Colors.YELLOW
+                        elif pct > 0.1:
+                            pb.color = ft.Colors.ORANGE
+                        else:
+                            pb.color = ft.Colors.RED
+                    except Exception:
+                        pass
+
                 # 戦闘ループ（最大5ターン） -- 各位置ごとにプレイヤーi → 敵i の順で交互に行動
                 winner = None
                 for turn in range(1, 6):
@@ -203,7 +218,9 @@ class Sortie:
                             pb = get_enemy_pb(tgt)
                             if pb is not None and e_max[tgt] > 0:
                                 try:
-                                    pb.value = max(0.0, e_cur[tgt] / e_max[tgt])
+                                    val = max(0.0, e_cur[tgt] / e_max[tgt])
+                                    pb.value = val
+                                    update_pb_color(pb, val)
                                 except Exception:
                                     pass
                             self.page.update()
@@ -222,7 +239,9 @@ class Sortie:
                             pbp = get_player_pb(tgt_p)
                             if pbp is not None and p_max[tgt_p] > 0:
                                 try:
-                                    pbp.value = max(0.0, p_cur[tgt_p] / p_max[tgt_p])
+                                    valp = max(0.0, p_cur[tgt_p] / p_max[tgt_p])
+                                    pbp.value = valp
+                                    update_pb_color(pbp, valp)
                                 except Exception:
                                     pass
                             self.page.update()
