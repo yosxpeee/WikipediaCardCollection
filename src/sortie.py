@@ -2,7 +2,7 @@ import flet as ft
 import asyncio
 import json
 
-from utils.utils import RANK_TABLE, debug_print, rankid_to_rank, rank_to_rankid, calc_status, create_card_image_data
+from utils.utils import RANK_TABLE, debug_print, rankid_to_rank, rank_to_rankid, calc_status, create_card_image_data, calc_damage
 from utils.db import get_card_from_id, rankup_card, get_cards_by_rankid, get_cards_by_sozai, get_cards_by_favorite
 from utils.ui import create_ranked_tabs, create_sortie_formation_image
 
@@ -76,19 +76,63 @@ class Sortie:
                     for item in sortie_tab.controls[3].controls[1].controls:
                         if item.title == level:
                             item.expanded = True
-        def _create_formation_grid(formation_data):
+        def _create_formation_grid(formation_data, isEnemy):
             """戦闘画面用の編成表示"""
-            data = []
+            data_images = []
             for info in formation_data:
-                image = create_sortie_formation_image(info, True)
-                data.append(image)
+                image = create_sortie_formation_image(info, isEnemy)
+                data_images.append(image)
+            data = []
+            for image in data_images:
+                if isEnemy:
+                    data.append(
+                        ft.Row(
+                            expand=True,
+                            spacing=1,
+                            controls=[
+                                ft.RotatedBox(
+                                    quarter_turns=3,
+                                    content=ft.ProgressBar(
+                                        width=100,
+                                        height=5,
+                                        bar_height=5,
+                                        value=1.0,
+                                    ),
+                                ),
+                                ft.Container(
+                                    width=16,
+                                    height=20,
+                                ),
+                                image,
+                            ],
+                        ),
+                    )
+                else:
+                    data.append(
+                        ft.Row(
+                            expand=True,
+                            spacing=1,
+                            controls=[
+                                image,
+                                ft.RotatedBox(
+                                    quarter_turns=3,
+                                    content=ft.ProgressBar(
+                                        width=100,
+                                        height=5,
+                                        bar_height=5,
+                                        value=1.0,
+                                    ),
+                                ),
+                            ],
+                        ),
+                    )
             return ft.GridView(
                 width=200,
-                height=600,
+                height=606,
                 child_aspect_ratio=2,
                 runs_count=1,
                 run_spacing=0,
-                spacing=0,
+                spacing=1,
                 controls=[
                     data[0],
                     data[1],
@@ -98,7 +142,25 @@ class Sortie:
                     data[5],
                 ],
             )
-        def _start_battle(data):
+        def _start_battle(data, title):
+            """戦闘ダイアログを表示する"""
+            async def _sortie(player_data, enemy_data):
+                """戦闘処理"""
+                await asyncio.sleep(1)
+                #player_dataとenemy_dataを使って戦闘を行う。
+                #ルール；
+                #プレイヤー側から必ず開始する
+                #編隊の先頭から順番に行動し、HPが残っている相手方をランダムで選び攻撃する。
+                #攻撃する処理はutils.calc_damage()を使い、受けたダメージの分だけそのカードの横にあるプログレスバーの値を減算していく。
+                #HPが0になってしまったカードは攻撃する処理をスキップする
+                #これを5ターン繰り返す
+                #勝利条件：
+                #相手を全滅させる(相手方のカード6枚すべてのHPを0にする)
+                #5ターン経過してどちらも生存者がいる場合は、生き残っていた数が多いほうが勝ち
+                #生き残っていた数も同じであれば残存HPの合計が多いほうが勝ち
+                #残存HPも同じであれば、プレイヤー側の敗北とする。
+                battle_close_button.disabled = False
+                self.page.update()
             num = 0
             for enemy_id in data["enemies"]:
                 for enemy in master_data:
@@ -115,23 +177,61 @@ class Sortie:
                         self.current_enemies_formation[num] = image_data
                         num = num + 1
                         break
-            grid_player = _create_formation_grid(self.current_formation)
-            grid_enemy = _create_formation_grid(self.current_enemies_formation)
+            grid_player = _create_formation_grid(self.current_formation,         False)
+            grid_enemy  = _create_formation_grid(self.current_enemies_formation, True )
+            battle_close_button = ft.TextButton("close", disabled=True, on_click=lambda x:self.page.pop_dialog())
             battle_dialog = ft.AlertDialog(
                 modal=True,
-                content=ft.Row(
-                    spacing=20,
+                title=f"出撃：{title}",
+                content=ft.Column(
                     controls=[
-                        grid_player,
-                        ft.Text("vs", size=60),
-                        grid_enemy,
+                        ft.Row(
+                            spacing=0,
+                            alignment=ft.MainAxisAlignment.CENTER,
+                            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                            controls=[
+                                grid_player,
+                                ft.Container(
+                                    width=11,
+                                    height=10,
+                                ),
+                                ft.Container(
+                                    width=70,
+                                    alignment=ft.Alignment.CENTER,
+                                    content=ft.Text("vs", size=60),
+                                ),
+                                grid_enemy,
+                            ],
+                        ),
+                        ft.Container(
+                            alignment=ft.Alignment.CENTER,
+                            width=640,
+                            height=180,
+                            bgcolor=ft.Colors.with_opacity(0.25, ft.Colors.GREY_100),
+                            content=ft.Column(
+                                spacing=0,
+                                controls=[
+                                    ft.Text("＜＜＜戦闘ログ＞＞＞"),
+                                    ft.Divider(color=ft.Colors.GREY, height=1),
+                                    ft.ListView(
+                                        width=640,
+                                        height=160,
+                                        spacing=0,
+                                        auto_scroll=True,
+                                        scroll=ft.ScrollMode.AUTO,
+                                        controls=[],
+                                    ),
+                                ],
+                            ),
+                        ),
                     ],
                 ),
                 actions=[
-                    ft.TextButton("close",on_click=lambda x:self.page.pop_dialog())
+                    battle_close_button
                 ]
             )
             self.page.show_dialog(battle_dialog)
+            asyncio.create_task(_sortie(self.current_formation, self.current_enemies_formation))
         def _create_level_ui(level, opened):
             """レベルデザイン"""
             return ft.ExpansionTile(
@@ -145,19 +245,19 @@ class Sortie:
                 controls=[
                     ft.Row(
                         controls=[
-                            ft.FilledButton("Stage 1", on_click=lambda x:_start_battle(stage_data[level]["Stage 1"])),
+                            ft.FilledButton("Stage 1", on_click=lambda x:_start_battle(stage_data[level]["Stage 1"], f"{level} (Stage 1)")),
                             ft.Text(stage_data[level]["Stage 1"]["description"]),
                         ]
                     ),
                     ft.Row(
                         controls=[
-                            ft.FilledButton("Stage 2", on_click=lambda x:_start_battle(stage_data[level]["Stage 2"])),
+                            ft.FilledButton("Stage 2", on_click=lambda x:_start_battle(stage_data[level]["Stage 2"], f"{level} (Stage 2)")),
                             ft.Text(stage_data[level]["Stage 2"]["description"]),
                         ]
                     ),
                     ft.Row(
                         controls=[
-                            ft.FilledButton("Stage 3", on_click=lambda x:_start_battle(stage_data[level]["Stage 3"])),
+                            ft.FilledButton("Stage 3", on_click=lambda x:_start_battle(stage_data[level]["Stage 3"], f"{level} (Stage 3)")),
                             ft.Text(stage_data[level]["Stage 3"]["description"]),
                         ]
                     ),
