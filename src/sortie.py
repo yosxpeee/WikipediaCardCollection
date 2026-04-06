@@ -151,7 +151,7 @@ class Sortie:
                 """戦闘処理"""
                 def append_log(s):
                     """戦闘ログ書き込み"""
-                    log_list.controls.append(ft.Text(s))
+                    log_list.controls.append(s)
                     self.page.update()
                 def get_player_pb(idx):
                     """進行中のプログレスバー参照取得(プレイヤー側)"""
@@ -221,6 +221,9 @@ class Sortie:
                             pb.color = ft.Colors.RED
                     except Exception:
                         pass
+                ####################
+                # 戦闘処理開始
+                ####################
                 # 初期化
                 await asyncio.sleep(0.2)
                 log_list = battle_dialog.content.controls[1].content.controls[2]
@@ -239,7 +242,7 @@ class Sortie:
                 # 戦闘ループ（最大5ターン） -- 各位置ごとにプレイヤーi → 敵i の順で交互に行動
                 winner = None
                 for turn in range(1, 6):
-                    append_log(f"--- ターン {turn} 開始 ---")
+                    append_log(ft.Text(f"--- ターン {turn} 開始 ---"))
                     for i in range(6):
                         # プレイヤー i の行動
                         if p_cur[i] > 0 and p_max[i] > 0:
@@ -250,7 +253,7 @@ class Sortie:
                             tgt = random.choice(alive)
                             dmg, d_type = calc_damage(self.page.debug, player_data[i], enemy_data[tgt], e_cur[tgt])
                             e_cur[tgt] = max(0.0, e_cur[tgt] - dmg)
-                            append_log(f"プレイヤー[{player_data[i].get('title','?')}] -> 敵[{enemy_data[tgt].get('title','?')}] : {dmg} ({d_type})")
+                            append_log(ft.Text(f"プレイヤー[{player_data[i].get('title','?')}] が 敵[{enemy_data[tgt].get('title','?')}] に攻撃、{dmg}のダメージを与えた。 ({d_type})"))
                             pb = get_enemy_pb(tgt)
                             if pb is not None and e_max[tgt] > 0:
                                 try:
@@ -273,7 +276,7 @@ class Sortie:
                             tgt_p = random.choice(alive_p)
                             dmg, d_type = calc_damage(self.page.debug, enemy_data[i], player_data[tgt_p], p_cur[tgt_p])
                             p_cur[tgt_p] = max(0.0, p_cur[tgt_p] - dmg)
-                            append_log(f"敵[{enemy_data[i].get('title','?')}] -> プレイヤー[{player_data[tgt_p].get('title','?')}] : {dmg} ({d_type})")
+                            append_log(ft.Text(f"敵[{enemy_data[i].get('title','?')}] が プレイヤー[{player_data[tgt_p].get('title','?')}] に攻撃、{dmg}のダメージを与えた。({d_type})"))
                             pbp = get_player_pb(tgt_p)
                             if pbp is not None and p_max[tgt_p] > 0:
                                 try:
@@ -288,31 +291,42 @@ class Sortie:
                             self.page.update()
                             await asyncio.sleep(0.20)
                     if winner == "PLAYER":
-                        append_log("敵を全滅させました。プレイヤー勝利！")
+                        append_log(ft.Text("敵を全滅させました。プレイヤー勝利！", color=ft.Colors.WHITE, bgcolor=ft.Colors.BLUE))
                         break
                     if winner == "ENEMY":
-                        append_log("編成が全滅しました。プレイヤー敗北…")
+                        append_log(ft.Text("編成が全滅しました。プレイヤー敗北…", color=ft.Colors.WHITE, bgcolor=ft.Colors.RED))
                         break
-                # 判定（5ターン終了または早期終了）
+                # 判定（5ターン終了）
                 if winner is None:
                     p_alive = sum(1 for v in p_cur if v > 0)
                     e_alive = sum(1 for v in e_cur if v > 0)
                     if p_alive > e_alive:
                         winner = "PLAYER"
+                        reason = "生存数判定"
                     elif e_alive > p_alive:
                         winner = "ENEMY"
+                        reason = "生存数判定"
                     else:
                         p_hp_sum = sum(p_cur)
                         e_hp_sum = sum(e_cur)
                         if p_hp_sum > e_hp_sum:
                             winner = "PLAYER"
+                            reason = "残HP合計"
                         elif e_hp_sum > p_hp_sum:
                             winner = "ENEMY"
+                            reason = "残HP合計"
                         else:
                             winner = "ENEMY"
-                append_log(f"--- 結果: { 'プレイヤー勝利' if winner== 'PLAYER' else 'プレイヤー敗北' } ---")
+                            reason = "戦略的敗北"
+                    if winner == "PLAYER":
+                        append_log(ft.Text(f"--- 結果: プレイヤー勝利({reason}) ---", color=ft.Colors.WHITE, bgcolor=ft.Colors.BLUE))
+                    if winner == "ENEMY":
+                        append_log(ft.Text(f"--- 結果: プレイヤー敗北({reason}) ---", color=ft.Colors.WHITE, bgcolor=ft.Colors.RED))
                 battle_close_button.disabled = False
                 self.page.update()
+            ####################
+            # 戦闘開始画面の表示
+            ####################
             #戦闘開始条件を満たしているかチェックする
             for chk_data in self.current_formation:
                 if chk_data == {}:
@@ -389,12 +403,13 @@ class Sortie:
             )
             self.page.show_dialog(battle_dialog)
             asyncio.create_task(_sortie(self.current_formation, self.current_enemies_formation))
-        def _create_level_ui(level, opened):
+        def _create_level_ui(level, opened, disabled):
             """レベルデザイン"""
             return ft.ExpansionTile(
                 width=320,
                 title=level,
                 expanded=opened,
+                disabled=disabled,
                 dense=True,
                 expanded_alignment=ft.Alignment.TOP_LEFT,
                 shape=ft.BeveledRectangleBorder(side=ft.BorderSide(width=2, color=ft.Colors.ON_SURFACE)),
@@ -606,14 +621,14 @@ class Sortie:
                                 width=320,
                                 height=600,
                                 controls=[
-                                    _create_level_ui("NORMAL",    True ), #C
-                                    _create_level_ui("HARD",      False), #UC
-                                    _create_level_ui("VERY HARD", False), #R
-                                    _create_level_ui("HARD CORE", False), #SR
-                                    _create_level_ui("EXTREME",   False), #SSR
-                                    _create_level_ui("INSANE",    False), #UR
-                                    _create_level_ui("TORMENT",   False), #LR
-                                    _create_level_ui("LUNATIC",   False), #LR+ (まともにやったら勝てないだろうからどうするかね)
+                                    _create_level_ui("NORMAL",    True , False), #C   (今のところC級のみ実装)
+                                    _create_level_ui("HARD",      False, True ), #UC
+                                    _create_level_ui("VERY HARD", False, True ), #R
+                                    _create_level_ui("HARD CORE", False, True ), #SR
+                                    _create_level_ui("EXTREME",   False, True ), #SSR
+                                    _create_level_ui("INSANE",    False, True ), #UR
+                                    _create_level_ui("TORMENT",   False, True ), #LR
+                                    _create_level_ui("LUNATIC",   False, True ), #LR+
                                 ],
                             ),
                         ],
