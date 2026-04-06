@@ -327,7 +327,7 @@ class Sortie:
             ####################
             # 戦闘開始画面の表示
             ####################
-            #戦闘開始条件を満たしているかチェックする
+            #6枚編成済みかチェック
             for chk_data in self.current_formation:
                 if chk_data == {}:
                     self.page.show_dialog(ft.SnackBar(ft.Text(f"必ず6枚のカードすべてを編成してください。"), duration=1500))
@@ -348,6 +348,12 @@ class Sortie:
                         self.current_enemies_formation[num] = image_data
                         num = num + 1
                         break
+            #選択した難易度に対する条件を満たしているかチェック
+            for chk_data in self.current_formation:
+                #敵の先頭のランク以上のカードが編成されていたらNG
+                if rank_to_rankid(chk_data["rank"]) > rank_to_rankid(self.current_enemies_formation[0]["rank"]):
+                    self.page.show_dialog(ft.SnackBar(ft.Text(f"難易度別の出撃条件を満たしていません。編成を変えてください。"), duration=1500))
+                    return
             grid_player = _create_formation_grid(self.current_formation,         False)
             grid_enemy  = _create_formation_grid(self.current_enemies_formation, True )
             battle_close_button = ft.TextButton("close", disabled=True, on_click=lambda x:self.page.pop_dialog())
@@ -403,11 +409,12 @@ class Sortie:
             )
             self.page.show_dialog(battle_dialog)
             asyncio.create_task(_sortie(self.current_formation, self.current_enemies_formation))
-        def _create_level_ui(level, opened, disabled):
+        def _create_level_ui(level, subtitle, opened, disabled):
             """レベルデザイン"""
             return ft.ExpansionTile(
                 width=320,
                 title=level,
+                subtitle=subtitle,
                 expanded=opened,
                 disabled=disabled,
                 dense=True,
@@ -565,7 +572,8 @@ class Sortie:
                                     margin=ft.Margin.all(5),
                                     controls=[
                                         ft.Text("<<< 注意事項 >>>"),
-                                        ft.Text("出撃には6枚のカードを編成すること（必須条件）。")
+                                        ft.Text("出撃には6枚のカードを編成すること。"),
+                                        ft.Text("難易度別に編成できるカードに制限があります。"),
                                     ],
                                 ),
                             ),
@@ -621,14 +629,14 @@ class Sortie:
                                 width=320,
                                 height=600,
                                 controls=[
-                                    _create_level_ui("NORMAL",    True , False), #C   (今のところC級のみ実装)
-                                    _create_level_ui("HARD",      False, True ), #UC
-                                    _create_level_ui("VERY HARD", False, True ), #R
-                                    _create_level_ui("HARD CORE", False, True ), #SR
-                                    _create_level_ui("EXTREME",   False, True ), #SSR
-                                    _create_level_ui("INSANE",    False, True ), #UR
-                                    _create_level_ui("TORMENT",   False, True ), #LR
-                                    _create_level_ui("LUNATIC",   False, True ), #LR+
+                                    _create_level_ui("NORMAL",    "出撃制限：Cのみ",   True , False), #C   (今のところC級のみ実装)
+                                    _create_level_ui("HARD",      "出撃制限：UCまで",  False, True ), #UC
+                                    _create_level_ui("VERY HARD", "出撃制限：Rまで",   False, True ), #R
+                                    _create_level_ui("HARD CORE", "出撃制限：SRまで",  False, True ), #SR
+                                    _create_level_ui("EXTREME",   "出撃制限：SSRまで", False, True ), #SSR
+                                    _create_level_ui("INSANE",    "出撃制限：URまで",  False, True ), #UR
+                                    _create_level_ui("TORMENT",   "出撃制限：なし",    False, True ), #LR
+                                    _create_level_ui("LUNATIC",   "出撃制限：なし",    False, True ), #LR+
                                 ],
                             ),
                         ],
