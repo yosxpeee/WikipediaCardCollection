@@ -68,14 +68,14 @@ class Sortie:
             """"アコーディオンメニュー制御"""
             if toggle:
                 for item in sortie_tab.controls[3].controls[1].controls:
-                    if item.title != level:
+                    if item.title.value != level:
                         item.expanded = False
                     else:
                         self.accordion_opened = level
             else:
                 if level == self.accordion_opened:
                     for item in sortie_tab.controls[3].controls[1].controls:
-                        if item.title == level:
+                        if item.title.value == level:
                             item.expanded = True
         def _create_formation_grid(formation_data, isEnemy):
             """戦闘画面用の編成表示"""
@@ -413,30 +413,46 @@ class Sortie:
             """レベルデザイン"""
             return ft.ExpansionTile(
                 width=320,
-                title=level,
+                title=ft.Text(level, weight=ft.FontWeight.BOLD, style=ft.TextStyle(decoration=ft.TextDecoration.UNDERLINE)),
                 subtitle=subtitle,
                 expanded=opened,
                 disabled=disabled,
                 dense=True,
+                controls_padding=ft.Padding.all(0),
                 expanded_alignment=ft.Alignment.TOP_LEFT,
-                shape=ft.BeveledRectangleBorder(side=ft.BorderSide(width=2, color=ft.Colors.ON_SURFACE)),
-                collapsed_shape=ft.BeveledRectangleBorder(side=ft.BorderSide(width=2, color=ft.Colors.ON_SURFACE)),
+                shape=ft.BeveledRectangleBorder(side=ft.BorderSide(width=1, color=ft.Colors.ON_SURFACE)),
+                collapsed_shape=ft.BeveledRectangleBorder(side=ft.BorderSide(width=1, color=ft.Colors.ON_SURFACE)),
                 controls=[
                     ft.Row(
                         controls=[
-                            ft.FilledButton("Stage 1", on_click=lambda x:_start_battle(stage_data[level]["Stage 1"], f"{level} (Stage 1)")),
+                            ft.FilledButton(
+                                "Stage 1", 
+                                width=100,
+                                style=ft.ButtonStyle(shape=ft.BeveledRectangleBorder()),
+                                on_click=lambda x:_start_battle(stage_data[level]["Stage 1"], f"{level} (Stage 1)")
+                            ),
                             ft.Text(stage_data[level]["Stage 1"]["description"]),
                         ]
                     ),
                     ft.Row(
                         controls=[
-                            ft.FilledButton("Stage 2", on_click=lambda x:_start_battle(stage_data[level]["Stage 2"], f"{level} (Stage 2)")),
+                            ft.FilledButton(
+                                "Stage 2", 
+                                width=100,
+                                style=ft.ButtonStyle(shape=ft.BeveledRectangleBorder()),
+                                on_click=lambda x:_start_battle(stage_data[level]["Stage 2"], f"{level} (Stage 2)")
+                            ),
                             ft.Text(stage_data[level]["Stage 2"]["description"]),
                         ]
                     ),
                     ft.Row(
                         controls=[
-                            ft.FilledButton("Stage 3", on_click=lambda x:_start_battle(stage_data[level]["Stage 3"], f"{level} (Stage 3)")),
+                            ft.FilledButton(
+                                "Stage 3", 
+                                width=100,
+                                style=ft.ButtonStyle(shape=ft.BeveledRectangleBorder()),
+                                on_click=lambda x:_start_battle(stage_data[level]["Stage 3"], f"{level} (Stage 3)")
+                            ),
                             ft.Text(stage_data[level]["Stage 3"]["description"]),
                         ]
                     ),
@@ -582,15 +598,16 @@ class Sortie:
                     ft.Row(
                         alignment=ft.MainAxisAlignment.CENTER,
                         vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                        spacing=0,
                         controls=[
                             ft.Container(
                                 alignment=ft.Alignment.CENTER,
-                                width=300,
+                                width=200,
                                 content=ft.Text("編成"),
                             ),
                             ft.Container(
                                 alignment=ft.Alignment.CENTER,
-                                width=320,
+                                width=360,
                                 content=ft.Text("出撃先"),
                             ),
                         ],
@@ -599,6 +616,7 @@ class Sortie:
                     ft.Row(
                         alignment=ft.MainAxisAlignment.CENTER,
                         vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                        spacing=0,
                         controls=[
                             ft.Column(
                                 alignment=ft.MainAxisAlignment.START,
@@ -626,7 +644,7 @@ class Sortie:
                             ft.Column(
                                 alignment=ft.MainAxisAlignment.CENTER,
                                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                                width=320,
+                                width=360,
                                 height=600,
                                 controls=[
                                     _create_level_ui("NORMAL",    "出撃制限：Cのみ",   True , False), #C   (今のところC級のみ実装)
