@@ -2,9 +2,10 @@ import flet as ft
 import urllib.parse
 import asyncio
 
-from utils.utils import debug_print, fetch_json, calc_status, rankid_to_rank
+from utils.utils import debug_print, calc_status, rankid_to_rank
 from utils.db import save_cards, get_card_from_pageid
 from utils.ui import get_card_color, create_card_image
+from utils.webapi import fetch_random_wiki_articles, fetch_wikirank_data, fetch_wiki_info_data, fetch_wiki_summary
 
 class Gacha:
     def __init__(self, page):
@@ -13,62 +14,7 @@ class Gacha:
         # ローディングオーバーレイの参照を保持
         self.loading_overlay = page.overlay[0]
     async def draw(self, num):
-        """初期化"""
-        async def _get_random(n):
-            """ランダム記事取得"""
-            j = {}
-            try:
-                random_url = f"https://ja.wikipedia.org/w/api.php?format=json&action=query&list=random&rnnamespace=0&rnlimit={n}"
-                debug_print(self.page.debug, f"get random url: {random_url}")
-                j = await fetch_json(self.page.debug, random_url)
-                if "error" in j or j == {}:
-                    debug_print(self.page.debug, f"エラーデータ: {j}")
-                    return []
-                return j.get("query", {}).get("random", [])
-            except Exception as e:
-                debug_print(self.page.debug, f"例外発生: error={e}")
-                return []
-        async def _get_rank_data(t_quote):
-            """ランク取得"""
-            j = {}
-            try:
-                rank_url = f"https://api.wikirank.net/api.php?name={t_quote}&lang=ja"
-                debug_print(self.page.debug, f"get rank data url: {rank_url}")
-                j = await fetch_json(self.page.debug, rank_url)
-                if j.get("result", "") == "not found":
-                    debug_print(self.page.debug, f"エラーデータ: {j}")
-                    #Note:この場合live.wikirank.netのほうから取るという手もなくはないが、APIがない。
-                    return {}
-                return j
-            except Exception as e:
-                debug_print(self.page.debug, f"例外発生: error={e}")
-                return {}
-        async def _get_info_data(t_quote):
-            """記事の情報取得"""
-            j = {}
-            try:
-                info_url = f"https://ja.wikipedia.org/w/api.php?format=json&action=query&titles={t_quote}&prop=info%7Cpageimages%7Cpageprops%7Cpageviews%7Ccategories&inprop=url%7Ctalkid&pithumbsize=600"
-                debug_print(self.page.debug, f"get info data url: {info_url}")
-                j = await fetch_json(self.page.debug, info_url)
-                #Note:ここでjの中身を参照していないので、後ろの処理で例外がでる。
-                return j
-            except Exception as e:
-                debug_print(self.page.debug, f"例外発生: error={e}")
-                return {}
-        async def _get_summary(t_quote):
-            """記事の概要取得"""
-            j = {}
-            try:
-                summary_url = f"https://ja.wikipedia.org/api/rest_v1/page/summary/{t_quote}"
-                debug_print(self.page.debug, f"get summary url: {summary_url}")
-                j = await fetch_json(self.page.debug, summary_url)
-                if "status" in j:
-                    debug_print(self.page.debug, f"エラーデータ: {j}")
-                    return "ERROR"
-                return j.get("extract", "")
-            except Exception as e:
-                debug_print(self.page.debug, f"例外発生: error={e}")
-                return "ERROR"
+        """ガチャ実行処理"""
         def _make_thumb_content(idx, selected):
             """サムネイルのコンテンツを生成するヘルパー"""
             color = get_card_color(get_card_list[idx]["rank"], get_card_list[idx]["isSozai"])
@@ -153,7 +99,6 @@ class Gacha:
         # 処理開始
         ####################
         # ローディングオーバーレイ（進捗）を表示
-        # overlay[0] は gacha のオーバーレイ（counter + progress）
         self.loading_overlay.visible = True
         # 初期化：counter と progress を 0 にする
         col = self.loading_overlay.content
@@ -165,14 +110,13 @@ class Gacha:
         get_card_list = []
         force_stopped = False
         # 10枚記事をとってきて、途中の処理でエラーになったらスキップ
-        # 足りない分だけまた記事を取得、それを繰り替えして10枚引いたら終わる
         while True:
             if count >= num:
                 break
             col.controls[1].controls[3].value = f"ランダム記事取得中..."
             col.controls[1].controls[3].update()
-            randList = await _get_random(10-count)
-            # デバッグ用のdata固定
+            randList = await fetch_random_wiki_articles(self.page.debug, 10-count)
+            # デバッグ用のdata固定 (コメントアウトされたデバッグデータはそのまま残す)
             #    randList[0] = {"id":"4059891", "title":"コニャ"}                      #素材(500エラーになる)
             #    randList[0] = {"id":"1662965", "title":"鎌倉山 (曖昧さ回避)"}         #素材(曖昧さ回避)
             #    randList[0] = {"id":"2717179", "title":"印象"}                        #素材(ソフトリダイレクト)
@@ -218,19 +162,19 @@ class Gacha:
                     t_quote = urllib.parse.quote(title)
                     col.controls[1].controls[3].value = f"ランクデータ取得中..."
                     col.controls[1].controls[3].update()
-                    rank_data = await _get_rank_data(t_quote) #Rank
+                    rank_data = await fetch_wikirank_data(self.page.debug, t_quote)
                     if rank_data == {}:
                         debug_print(self.page.debug, "ランクデータ取得失敗。リトライ")
                         continue
                     col.controls[1].controls[3].value = f"記事情報取得中..."
                     col.controls[1].controls[3].update()
-                    info_data = await _get_info_data(t_quote) #info
+                    info_data = await fetch_wiki_info_data(self.page.debug, t_quote)
                     if info_data == {}:
                         debug_print(self.page.debug, "記事情報取得失敗。リトライ")
                         continue
                     col.controls[1].controls[3].value = f"記事概要取得中..."
                     col.controls[1].controls[3].update()
-                    extract  = await _get_summary(t_quote) #概要
+                    extract  = await fetch_wiki_summary(self.page.debug, t_quote)
                     if extract == "ERROR":
                         debug_print(self.page.debug, "記事概要取得失敗。リトライ")
                         continue
