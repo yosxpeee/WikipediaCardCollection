@@ -1,6 +1,6 @@
 [
 	{
-		"pageid": 99990001,
+		"pageId": 99990001,
 		"title": "残留思念",
 		"pageUrl": "", 
 		"imageUrl": "enemies\\99990001.png",
@@ -17,7 +17,7 @@
 		"resourceRANK": "0"
 	},
 	{
-		"pageid": 99990002,
+		"pageId": 99990002,
 		"title": "削除記事の怨念",
 		"pageUrl": "",
 		"imageUrl": "enemies\\99990002.png",
@@ -34,7 +34,7 @@
 		"resourceRANK": "0"
 	},
 	{
-		"pageid": 99990003,
+		"pageId": 99990003,
 		"title": "溶解人間",
 		"pageUrl": "",
 		"imageUrl": "enemies\\99990003.png",
@@ -51,7 +51,7 @@
 		"resourceRANK": "0"
 	},
 	{
-		"pageid": 99990004,
+		"pageId": 99990004,
 		"title": "ジャンクロボット",
 		"pageUrl": "",
 		"imageUrl": "enemies\\99990004.png",
@@ -68,7 +68,7 @@
 		"resourceRANK": "0"
 	},
 	{
-		"pageid": 99990005,
+		"pageId": 99990005,
 		"title": "インプ",
 		"pageUrl": "",
 		"imageUrl": "enemies\\99990005.png",
@@ -85,7 +85,7 @@
 		"resourceRANK": "0"
 	},
 	{
-		"pageid": 99990006,
+		"pageId": 99990006,
 		"title": "マッドネス",
 		"pageUrl": "",
 		"imageUrl": "enemies\\99990006.png",
@@ -102,7 +102,7 @@
 		"resourceRANK": "0"
 	},
 	{
-		"pageid": 99995001,
+		"pageId": 99995001,
 		"title": "報酬アイテム - マテリアル",
 		"pageUrl": "",
 		"imageUrl": "items\\99995001.png",

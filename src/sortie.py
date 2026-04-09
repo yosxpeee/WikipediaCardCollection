@@ -4,7 +4,7 @@ import random
 import json
 
 from utils.utils import RANK_TABLE, debug_print, rankid_to_rank, rank_to_rankid, calc_status, create_card_image_data, calc_damage
-from utils.db import get_card_from_id, rankup_card, get_cards_by_rankid, get_cards_by_sozai, get_cards_by_favorite
+from utils.db import get_card_from_id, rankup_card, get_cards_by_rankid, get_cards_by_sozai, get_cards_by_favorite, save_cards
 from utils.ui import create_ranked_tabs, create_sortie_formation_image, create_card_image, create_reward_items_carousel
 
 class Sortie:
@@ -176,9 +176,10 @@ class Sortie:
                 if rewards == []:
                     return
                 items = []
+                items_for_db = []
                 for item in rewards:
                     for data in master_data:
-                        if data["pageid"] == item:
+                        if data["pageId"] == item:
                             #報酬はカード前提とする
                             data["rank"] = rankid_to_rank(data["rank"], data["isSozai"])
                             data["resourceRANK"] = rankid_to_rank(data["resourceRANK"], data["isSozai"])
@@ -196,6 +197,7 @@ class Sortie:
                                 bgcolor=ft.Colors.GREY_100, border_radius=5,
                                 padding=ft.Padding.all(5),
                             )
+                            items_for_db.append(data)
                             items.append(view_data)
                 reward_items_view = create_reward_items_carousel(items)
                 reward_close_button = ft.TextButton("Close", disabled=True, on_click=lambda x:self.page.pop_dialog())
@@ -209,7 +211,10 @@ class Sortie:
                 )
                 self.page.show_dialog(reward_dialog)
                 reward_close_button.disabled = False
-                #Note:DBに素材カードを追加する
+                #DBに報酬を追加する
+                #いまは素材だけなのでこれでよい
+                save_cards(items_for_db)
+                #ページを再読み込みする
                 self.page.update()
             async def _sortie(player_data, enemy_data):
                 """戦闘処理"""
@@ -400,9 +405,9 @@ class Sortie:
             num = 0
             for enemy_id in data["enemies"]:
                 for enemy in master_data:
-                    if enemy_id == enemy["pageid"]:
+                    if enemy_id == enemy["pageId"]:
                         image_data = {
-                            "id"   :enemy["pageid"],
+                            "id"   :enemy["pageId"],
                             "title":enemy["title"],
                             "rank" :rankid_to_rank(enemy["rank"], 0),
                             "image":enemy["imageUrl"],
