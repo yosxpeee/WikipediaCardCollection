@@ -51,6 +51,23 @@
 		"resourceRANK": "0"
 	},
 	{
+		"pageid": 99990004, 
+		"title": "ジャンクロボット",  
+		"pageUrl": "", 
+		"imageUrl": "enemies\\99990003.png", 
+		"rank": "1", 
+		"quality": "0", 
+		"isSozai": 0,
+		"extract": "壊れた機械",
+		"HP": "6000", 
+		"ATK": "4000", 
+		"DEF": "3000",
+		"favorite": 0,
+		"resourceATK": "0",
+		"resourceDEF": "0",
+		"resourceRANK": "0"
+	},
+	{
 		"pageid": 99995001, 
 		"title": "報酬アイテム - マテリアル", 
 		"pageUrl": "", 

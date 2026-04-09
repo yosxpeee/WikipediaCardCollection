@@ -14,30 +14,51 @@ class Sortie:
         # ローディングオーバーレイの参照を保持(図鑑のものを使いまわし)
         self.loading_overlay = page.overlay[1]
         self.current_select_card = {}
-        self.current_formation_no = -1
+        # 編集中のスロット番号(0-5)
+        self.current_slot_no = -1
+        # 現在表示している編成タブ番号(0-7)
+        self.current_tab = 0
         self.current_formation_dialog = None
-        self.current_formation = [{},{},{},{},{},{}]
+        # 編成リスト: 最大8編成、それぞれ6スロット
+        self.formations = [[{},{},{},{},{},{}] for _ in range(8)]
         self.current_enemies_formation = [{},{},{},{},{},{}]
         self.accordion_opened = "NORMAL"
         self.current_battle_winner = "ENEMY"
     async def create(self):
         """画面作成"""
         def _set_current_formation(no):
-            """編成しようとしている編隊番号を記憶"""
-            self.current_formation_no = no
+            """編成しようとしているスロット番号を記憶"""
+            self.current_slot_no = no
+        formation_grid = None
         def _load_sortie_formation_image(data, num):
             """編成用カードイメージをロードする"""
-            sortie_tab.controls[3].controls[0].controls[0].controls[num].content = create_sortie_formation_image(data, False)
-            self.page.update()
+            try:
+                nonlocal formation_grid
+            except Exception:
+                pass
+            try:
+                if formation_grid is not None:
+                    formation_grid.controls[num].content = create_sortie_formation_image(data, False)
+                    self.page.update()
+            except Exception:
+                pass
         def _load_sortie_formation_blank(num):
             """編成用カード(未配属)をロードする"""
-            sortie_tab.controls[3].controls[0].controls[0].controls[num].content = ft.Text("未配属")
-            self.page.update()
+            try:
+                nonlocal formation_grid
+            except Exception:
+                pass
+            try:
+                if formation_grid is not None:
+                    formation_grid.controls[num].content = ft.Text("未配属")
+                    self.page.update()
+            except Exception:
+                pass
         def _create_formation_dialog():
             """編成用画面のダイアログ作成"""
             formation_dialog = ft.AlertDialog(
                 modal=True,
-                title=f"編成：{self.current_formation_no+1}",
+                title=f"編成スロット：{self.current_slot_no+1} (編成{self.current_tab+1})",
                 content=ft.Container(
                     width=700,
                     expand=True,
@@ -158,7 +179,7 @@ class Sortie:
                 for item in rewards:
                     for data in master_data:
                         if data["pageid"] == item:
-                            #暫定で素材前提とする
+                            #報酬はカード前提とする
                             data["rank"] = rankid_to_rank(data["rank"], data["isSozai"])
                             data["resourceRANK"] = rankid_to_rank(data["resourceRANK"], data["isSozai"])
                             img = create_card_image(data, True, False)
@@ -371,8 +392,8 @@ class Sortie:
             ####################
             # 戦闘開始画面の表示
             ####################
-            #6枚編成済みかチェック
-            for chk_data in self.current_formation:
+            #6枚編成済みかチェック(現在のタブ)
+            for chk_data in self.formations[self.current_tab]:
                 if chk_data == {}:
                     self.page.show_dialog(ft.SnackBar(ft.Text(f"必ず6枚のカードすべてを編成してください。"), duration=1500))
                     return
@@ -393,12 +414,12 @@ class Sortie:
                         num = num + 1
                         break
             #選択した難易度に対する条件を満たしているかチェック
-            for chk_data in self.current_formation:
+            for chk_data in self.formations[self.current_tab]:
                 #敵の先頭のランク以上のカードが編成されていたらNG
                 if rank_to_rankid(chk_data["rank"]) > rank_to_rankid(self.current_enemies_formation[0]["rank"]):
                     self.page.show_dialog(ft.SnackBar(ft.Text(f"難易度別の出撃条件を満たしていません。編成を変えてください。"), duration=1500))
                     return
-            grid_player = _create_formation_grid(self.current_formation,         False)
+            grid_player = _create_formation_grid(self.formations[self.current_tab],         False)
             grid_enemy  = _create_formation_grid(self.current_enemies_formation, True )
             battle_close_button = ft.TextButton("Close", disabled=True, on_click=lambda x:{
                 self.page.pop_dialog(),
@@ -455,7 +476,7 @@ class Sortie:
                 ]
             )
             self.page.show_dialog(battle_dialog)
-            asyncio.create_task(_sortie(self.current_formation, self.current_enemies_formation))
+            asyncio.create_task(_sortie(self.formations[self.current_tab], self.current_enemies_formation))
         def _create_level_ui(level, subtitle, opened, disabled):
             """レベルデザイン"""
             return ft.ExpansionTile(
@@ -508,8 +529,6 @@ class Sortie:
             )
         def _on_target_selected(id, name, rk, hp, atk, deff, img):
             """選んだカード"""
-            #print(f"編成対象：{self.current_formation_no+1}")
-            #print(f"{id}, {name}, {rk}, {hp}, {atk}, {deff}, {img}")
             self.current_select_card = {
                 "id"   :id,
                 "title":name,
@@ -520,13 +539,30 @@ class Sortie:
                 "DEF"  :deff,
             }
             return
+        def _refresh_formation_panels():
+            """現在のタブに表示される編成パネルを更新する"""
+            try:
+                for i in range(6):
+                    data = self.formations[self.current_tab][i]
+                    if data == {}:
+                        _load_sortie_formation_blank(i)
+                    else:
+                        _load_sortie_formation_image(data, i)
+            except Exception:
+                pass
+
         def _formation_dialog_common_update():
             """編成ダイアログの共通更新処理"""
             _set_current_formation(-1)
             self.current_select_card = {}
-            with open('formation.json', 'w', encoding='utf-8') as f:
-                json.dump(self.current_formation, f, indent=4, ensure_ascii=False)
+            # 保存時は8編成形式で保存する
+            try:
+                with open('formation.json', 'w', encoding='utf-8') as f:
+                    json.dump(self.formations, f, indent=4, ensure_ascii=False)
+            except Exception:
+                pass
             self.page.pop_dialog()
+            _refresh_formation_panels()
             self.page.update()
         def _cancel_load_formation():
             """編成ダイアログのキャンセルボタン"""
@@ -536,41 +572,44 @@ class Sortie:
             self.page.update()
         def _clear_formation():
             """編成ダイアログのクリアボタン(編成から外す)"""
-            self.current_formation[self.current_formation_no] = {}
-            _load_sortie_formation_blank(self.current_formation_no)
+            # 現在のタブのスロットをクリア
+            if 0 <= self.current_slot_no < 6:
+                self.formations[self.current_tab][self.current_slot_no] = {}
+                _load_sortie_formation_blank(self.current_slot_no)
             _formation_dialog_common_update()
         def _apply_load_formation():
             """編成ダイアログのOKボタン"""
             hit = False
-            for num in range(len(self.current_formation)):
-                #print(num)
-                organized = self.current_formation[num]
+            # 同じタブ内で重複チェックしてスワップあるいは追加
+            for num in range(len(self.formations[self.current_tab])):
+                organized = self.formations[self.current_tab][num]
                 if organized == {}:
                     continue
-                if organized["id"] == self.current_select_card["id"]:
-                    if num != self.current_formation_no:
-                        #現在の選択とは違うところに同じカードがある＝スワップ
-                        if self.current_formation[self.current_formation_no] == {}:
-                            #未配属と入れ替え
-                            self.current_formation[num] = {}
+                if organized.get("id") == self.current_select_card.get("id"):
+                    if num != self.current_slot_no:
+                        # スワップ
+                        if self.formations[self.current_tab][self.current_slot_no] == {}:
+                            # 未配属と入れ替え
+                            self.formations[self.current_tab][num] = {}
                             _load_sortie_formation_blank(num)
-                            self.current_formation[self.current_formation_no] = self.current_select_card
-                            _load_sortie_formation_image(self.current_select_card, self.current_formation_no)
+                            self.formations[self.current_tab][self.current_slot_no] = self.current_select_card
+                            _load_sortie_formation_image(self.current_select_card, self.current_slot_no)
                         else:
-                            #編成済みと入れ替え
-                            tmp = self.current_formation[self.current_formation_no]
-                            self.current_formation[self.current_formation_no] = self.current_select_card
-                            _load_sortie_formation_image(self.current_select_card, self.current_formation_no)
-                            self.current_formation[num] = tmp
+                            # 編成済みと入れ替え
+                            tmp = self.formations[self.current_tab][self.current_slot_no]
+                            self.formations[self.current_tab][self.current_slot_no] = self.current_select_card
+                            _load_sortie_formation_image(self.current_select_card, self.current_slot_no)
+                            self.formations[self.current_tab][num] = tmp
                             _load_sortie_formation_image(tmp, num)
                     _formation_dialog_common_update()
                     hit = True
                     break
-            #当てはまらなければ追加
-            if hit == False:
-                self.current_formation[self.current_formation_no] = self.current_select_card
-                _load_sortie_formation_image(self.current_select_card, self.current_formation_no)
-                _formation_dialog_common_update()
+            # 当てはまらなければ追加
+            if not hit:
+                if 0 <= self.current_slot_no < 6:
+                    self.formations[self.current_tab][self.current_slot_no] = self.current_select_card
+                    _load_sortie_formation_image(self.current_select_card, self.current_slot_no)
+                    _formation_dialog_common_update()
         ####################
         # 処理開始
         ####################
@@ -665,10 +704,23 @@ class Sortie:
                         vertical_alignment=ft.CrossAxisAlignment.CENTER,
                         spacing=0,
                         controls=[
+                            # 編成タブ (1-8) と編成グリッド
                             ft.Column(
                                 alignment=ft.MainAxisAlignment.START,
                                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                                 controls=[
+                                    # タブボタン: 1..8
+                                    ft.Row(
+                                        spacing=4,
+                                        controls=[
+                                            ft.Button(str(i+1),
+                                                      width=40,
+                                                      height=36,
+                                                      on_click=(lambda e, idx=i: (setattr(self, 'current_tab', idx), _refresh_formation_panels(), self.page.update())))
+                                            for i in range(8)
+                                        ],
+                                    ),
+                                    # グリッド本体 (参照は closure の formation_grid を使う)
                                     ft.GridView(
                                         width=200,
                                         height=600,
@@ -708,19 +760,26 @@ class Sortie:
                     ),
                 ],
             )
+            # GridView 参照を closure 側に保持
+            try:
+                formation_grid = sortie_tab.controls[3].controls[0].controls[1]
+            except Exception:
+                formation_grid = None
             # 以前に編成したデータをそっくり読みだして編成を再現する
             try:
                 with open('formation.json', 'r', encoding='utf-8') as f:
-                    self.current_formation = json.load(f)
-                    #print(self.current_formation)
-                    self.current_formation_no = 0
-                    for data in self.current_formation:
-                        #print(data)
-                        if data != {}:
-                            _load_sortie_formation_image(data, self.current_formation_no)
-                        self.current_formation_no += 1
-                    self.current_formation_no = -1
-            except Exception as e:
+                    loaded = json.load(f)
+                    # 互換対応: 旧フォーマット(6スロットのみ)の場合はタブ0に当てはめる
+                    if isinstance(loaded, list) and len(loaded) == 6:
+                        self.formations = [[{},{},{},{},{},{}] for _ in range(8)]
+                        self.formations[0] = loaded
+                    elif isinstance(loaded, list) and len(loaded) == 8:
+                        # 想定フォーマット
+                        self.formations = loaded
+                    # 表示更新
+                    self.current_tab = 0
+                    _refresh_formation_panels()
+            except Exception:
                 pass
         finally:
             # ローディングオーバーレイを非表示（例外が起きても必ず閉じる）
