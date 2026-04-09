@@ -99,7 +99,10 @@ def create_ranked_tabs(ranks, all_cards_by_rank, on_select_callback=None):
         ft.Tabs オブジェクト
     """
     tab_views = []
-    target_containers = []
+    # 全タブで共有する現在選択中のカードID（タブ横断で1つだけハイライト）
+    selected_cid = {"val": None}
+    # 各タブの refresh 関数を保持して、選択変更時に全タブを再描画する
+    refresh_funcs = []
     for rk in ranks:
         lv = ft.ListView(
             expand=True,
@@ -107,6 +110,11 @@ def create_ranked_tabs(ranks, all_cards_by_rank, on_select_callback=None):
             auto_scroll=False,
             controls=[],
         )
+        # ページング用の状態（1ページあたり28件）
+        page = {"idx": 0}
+        PAGE_SIZE = 28
+        # 各タブ内の選択コンテナをローカルに管理（表示中の行のみ）
+        target_containers = []
         sort_dd = ft.Dropdown(
             margin=ft.Margin.all(0),
             border_color=ft.Colors.GREY,
@@ -165,35 +173,39 @@ def create_ranked_tabs(ranks, all_cards_by_rank, on_select_callback=None):
                 ),
             )
             def _on_target_click(e, cid=cid, name=name, rk=rk, cont=cont):
-                for c in target_containers:
-                    c.bgcolor = None
+                # グローバル選択IDを更新して全タブの一覧を再描画する
+                selected_cid["val"] = cid
+                for f in refresh_funcs:
                     try:
-                        c.content.controls[0].color = None
-                        c.content.controls[2].color = None
-                        c.content.controls[4].color = None
-                        c.content.controls[5].color = None
-                        c.content.controls[6].color = None
+                        f()
                     except Exception:
                         pass
-                    c.update()
-                cont.bgcolor = ft.Colors.YELLOW_100
-                try:
-                    cont.content.controls[0].color = ft.Colors.BLACK
-                    cont.content.controls[2].color = ft.Colors.BLACK
-                    cont.content.controls[4].color = ft.Colors.BLACK
-                    cont.content.controls[5].color = ft.Colors.BLACK
-                    cont.content.controls[6].color = ft.Colors.BLACK
-                except Exception:
-                    pass
-                cont.update()
                 if callable(on_select_callback):
                     try:
                         on_select_callback(cid, name, rank, hp, atk, deff, img)
                     except Exception:
                         pass
             cont.on_click = _on_target_click
+            # もしこの行が現在選択されているカードならハイライトしておく
+            try:
+                if selected_cid.get("val") == cid:
+                    cont.bgcolor = ft.Colors.YELLOW_100
+                    try:
+                        cont.content.controls[0].color = ft.Colors.BLACK
+                        cont.content.controls[2].color = ft.Colors.BLACK
+                        cont.content.controls[4].color = ft.Colors.BLACK
+                        cont.content.controls[5].color = ft.Colors.BLACK
+                        cont.content.controls[6].color = ft.Colors.BLACK
+                    except Exception:
+                        pass
+            except Exception:
+                pass
             return cont
-        def refresh_lv(e=None, rk=rk, lv=lv, sort_dd=sort_dd, sort_rg=sort_rg, search_tf=search_tf):
+        # ページング用 UI を作る
+        page_label = ft.Text("1/1")
+        prev_btn = ft.IconButton(icon=ft.Icons.ARROW_BACK)
+        next_btn = ft.IconButton(icon=ft.Icons.ARROW_FORWARD)
+        def refresh_lv(e=None, rk=rk, lv=lv, sort_dd=sort_dd, sort_rg=sort_rg, search_tf=search_tf, page=page, page_label=page_label, prev_btn=prev_btn, next_btn=next_btn):
             rows = all_cards_by_rank.get(rk, [])
             q = (search_tf.value or "").strip().lower()
             key = sort_dd.value or "id"
@@ -219,14 +231,52 @@ def create_ranked_tabs(ranks, all_cards_by_rank, on_select_callback=None):
                     return 0
                 return 0
             filtered.sort(key=keyfunc, reverse=order_desc)
+            # ページ計算
+            total = len(filtered)
+            total_pages = (total + PAGE_SIZE - 1) // PAGE_SIZE if total > 0 else 1
+            if page["idx"] < 0:
+                page["idx"] = 0
+            if page["idx"] >= total_pages:
+                page["idx"] = total_pages - 1
+            start = page["idx"] * PAGE_SIZE
+            end_idx = start + PAGE_SIZE
+            display_rows = filtered[start:end_idx]
             lv.controls.clear()
-            for row in filtered:
+            # 表示前に可視コンテナの参照をリセット
+            target_containers.clear()
+            for row in display_rows:
                 cont = build_row_cont(row)
                 lv.controls.append(cont)
                 target_containers.append(cont)
             if len(lv.controls) == 0:
                 lv.controls.append(ft.Container(padding=ft.Padding.all(8), content=ft.Text("対象が見つかりません")))
+            # ページ表示更新
+            page_label.value = f"{page['idx']+1}/{total_pages}"
+            try:
+                page_label.update()
+                prev_btn.disabled = (page["idx"] == 0)
+                next_btn.disabled = (page["idx"] >= total_pages - 1)
+                prev_btn.update()
+                next_btn.update()
+                lv.update()
+            except Exception:
+                pass
+        # このタブの refresh 関数をグローバル配列に追加
+        refresh_funcs.append(refresh_lv)
         sort_ui = ft.Row(spacing=4, alignment=ft.MainAxisAlignment.CENTER, controls=[sort_dd, sort_rg, search_tf])
+        # ページ切替 UI
+        pagination_row = ft.Row(
+            margin=ft.Margin.all(0),
+            spacing=8,
+            alignment=ft.MainAxisAlignment.CENTER,
+            controls=[
+                prev_btn,
+                ft.Container(expand=True),
+                page_label,
+                ft.Container(expand=True),
+                next_btn,
+            ],
+        )
         header = ft.Container(
             padding=ft.Padding.all(6),
             bgcolor=None,
@@ -246,12 +296,34 @@ def create_ranked_tabs(ranks, all_cards_by_rank, on_select_callback=None):
         tab_views.append(
             ft.Container(
                 alignment=ft.Alignment.CENTER,
-                content=ft.Column(spacing=1, controls=[sort_ui, ft.Divider(height=1), header, ft.Divider(height=1), lv]),
-            )
+                content=ft.Column(
+                    spacing=1, 
+                    margin=ft.Margin.all(0),
+                    controls=[
+                        sort_ui, 
+                        pagination_row, 
+                        ft.Divider(height=1), 
+                        header, 
+                        ft.Divider(height=1), 
+                        lv
+                    ],
+                ),
+            ),
         )
         sort_dd.on_select = refresh_lv
         sort_rg.on_change = refresh_lv
         search_tf.on_submit = refresh_lv
+        # ページ操作ハンドラ
+        def _on_prev(e, page=page, ref=refresh_lv):
+            if page["idx"] > 0:
+                page["idx"] -= 1
+                ref()
+        def _on_next(e, page=page, ref=refresh_lv, total_rows_getter=lambda rk=rk: len([r for r in all_cards_by_rank.get(rk, []) if (search_tf.value or "").strip().lower() in ((r[2] or "").lower()) or (search_tf.value or "").strip()==""])):
+            # next は refresh 内で上限チェックが入るのでインクリメントして更新
+            page["idx"] += 1
+            ref()
+        prev_btn.on_click = _on_prev
+        next_btn.on_click = _on_next
         def _on_search_clear(e, tf=search_tf, ref=refresh_lv):
             try:
                 tf.value = ""
