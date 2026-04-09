@@ -493,7 +493,7 @@ class Sortie:
                 controls=[
                     ft.Row(
                         controls=[
-                            ft.FilledButton(
+                            ft.OutlinedButton(
                                 "Stage 1", 
                                 width=100,
                                 style=ft.ButtonStyle(shape=ft.BeveledRectangleBorder()),
@@ -504,7 +504,7 @@ class Sortie:
                     ),
                     ft.Row(
                         controls=[
-                            ft.FilledButton(
+                            ft.OutlinedButton(
                                 "Stage 2", 
                                 width=100,
                                 style=ft.ButtonStyle(shape=ft.BeveledRectangleBorder()),
@@ -515,7 +515,7 @@ class Sortie:
                     ),
                     ft.Row(
                         controls=[
-                            ft.FilledButton(
+                            ft.OutlinedButton(
                                 "Stage 3", 
                                 width=100,
                                 style=ft.ButtonStyle(shape=ft.BeveledRectangleBorder()),
@@ -540,17 +540,23 @@ class Sortie:
             }
             return
         def _refresh_formation_panels():
-            """現在のタブに表示される編成パネルを更新する"""
-            try:
-                for i in range(6):
-                    data = self.formations[self.current_tab][i]
-                    if data == {}:
-                        _load_sortie_formation_blank(i)
-                    else:
-                        _load_sortie_formation_image(data, i)
-            except Exception:
-                pass
-
+            """現在のタブに表示される編成パネルを更新する（グリッドとタブのハイライト）"""
+            for i in range(6):
+                data = self.formations[self.current_tab][i]
+                if data == {}:
+                    _load_sortie_formation_blank(i)
+                else:
+                    _load_sortie_formation_image(data, i)
+            # タブボタンのハイライト更新
+            for idx, btn in enumerate(tab_buttons):
+                if idx == self.current_tab:
+                    btn.bgcolor        = ft.Colors.ON_SURFACE
+                    btn.content.color  = ft.Colors.ON_PRIMARY
+                    btn.content.weight = ft.FontWeight.BOLD
+                else:
+                    btn.bgcolor        = ft.Colors.ON_PRIMARY
+                    btn.content.color  = ft.Colors.ON_SURFACE
+                    btn.content.weight = ft.FontWeight.NORMAL
         def _formation_dialog_common_update():
             """編成ダイアログの共通更新処理"""
             _set_current_formation(-1)
@@ -653,6 +659,19 @@ class Sortie:
             all_cards_by_rank[rk] = rows
         try:
             await asyncio.sleep(1)
+            # タブボタン参照リスト（作成前に宣言）
+            tab_buttons = []
+            for i in range(8):
+                # Buttonオブジェクトだと中央寄せテキストにならないのでContainerでボタン自作
+                btn = ft.Container(
+                    alignment=ft.Alignment.CENTER,
+                    border=ft.Border.all(1, ft.Colors.ON_SURFACE),
+                    content=ft.Text(str(i+1), text_align=ft.TextAlign.CENTER),
+                    width=40,
+                    height=36,
+                    on_click=(lambda e, idx=i: (setattr(self, 'current_tab', idx), _refresh_formation_panels(), self.page.update())),
+                )
+                tab_buttons.append(btn)
             sortie_tab = ft.Column(
                 alignment=ft.MainAxisAlignment.START,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -711,14 +730,8 @@ class Sortie:
                                 controls=[
                                     # タブボタン: 1..8
                                     ft.Row(
-                                        spacing=4,
-                                        controls=[
-                                            ft.Button(str(i+1),
-                                                      width=40,
-                                                      height=36,
-                                                      on_click=(lambda e, idx=i: (setattr(self, 'current_tab', idx), _refresh_formation_panels(), self.page.update())))
-                                            for i in range(8)
-                                        ],
+                                        spacing=0,
+                                        controls=tab_buttons,
                                     ),
                                     # グリッド本体 (参照は closure の formation_grid を使う)
                                     ft.GridView(
