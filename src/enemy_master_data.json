@@ -12,9 +12,9 @@
 		"ATK": "500", 
 		"DEF": "500",
 		"favorite": 0,
-		"resourceATK": 0,
-		"resourceDEF": 0,
-		"resourceRANK": 0
+		"resourceATK": "0",
+		"resourceDEF": "0",
+		"resourceRANK": "0"
 	},
 	{
 		"pageid": 99990002, 
@@ -29,9 +29,9 @@
 		"ATK": "1200", 
 		"DEF": "1500",
 		"favorite": 0,
-		"resourceATK": 0,
-		"resourceDEF": 0,
-		"resourceRANK": 0
+		"resourceATK": "0",
+		"resourceDEF": "0",
+		"resourceRANK": "0"
 	},
 	{
 		"pageid": 99990003, 
@@ -46,9 +46,9 @@
 		"ATK": "2000", 
 		"DEF": "2000",
 		"favorite": 0,
-		"resourceATK": 0,
-		"resourceDEF": 0,
-		"resourceRANK": 0
+		"resourceATK": "0",
+		"resourceDEF": "0",
+		"resourceRANK": "0"
 	},
 	{
 		"pageid": 99995001, 
@@ -63,8 +63,8 @@
 		"ATK": "-", 
 		"DEF": "-",
 		"favorite": 0,
-		"resourceATK": 0,
-		"resourceDEF": 0,
-		"resourceRANK": 0
+		"resourceATK": "0",
+		"resourceDEF": "0",
+		"resourceRANK": "0"
 	}
 ]

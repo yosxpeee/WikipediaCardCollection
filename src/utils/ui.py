@@ -298,10 +298,8 @@ def create_card_image(data, isShow, isFbButton, on_fav_changed=None):
         fav_icon.disabled = False
         fav_icon.update()
     # ランクとカードタイトル
-    link_text = ft.GestureDetector(
-        mouse_cursor=ft.MouseCursor.CLICK,
-        on_tap=lambda e:webbrowser.open(data["pageUrl"]),
-        content=ft.Text(
+    if data["pageUrl"] == "":
+        link_text = ft.Text(
             data["title"],
             tooltip=data["title"],
             max_lines=1,
@@ -311,8 +309,23 @@ def create_card_image(data, isShow, isFbButton, on_fav_changed=None):
                 color=ft.Colors.BLUE,
                 decoration=ft.TextDecoration.UNDERLINE,
             ),
-        ),
-    )
+        )
+    else:
+        link_text = ft.GestureDetector(
+            mouse_cursor=ft.MouseCursor.CLICK,
+            on_tap=lambda e:webbrowser.open(data["pageUrl"]),
+            content=ft.Text(
+                data["title"],
+                tooltip=data["title"],
+                max_lines=1,
+                overflow=ft.TextOverflow.ELLIPSIS,
+                no_wrap=True,
+                style=ft.TextStyle(
+                    color=ft.Colors.BLUE,
+                    decoration=ft.TextDecoration.UNDERLINE,
+                ),
+            ),
+        )
     if data["isSozai"] == 1:
         title = ft.Row(
             spacing=0,
@@ -626,5 +639,75 @@ def create_sortie_formation_image(data, isEnemy):
                 controls=status_row,
             ),
         ]
+    )
+    return view
+
+def create_reward_items_carousel(items):
+    """戦闘報酬のカルーセル表示"""
+    def carousel_event(type):
+        """ページ送りイベント"""
+        nonlocal current_visible
+        if type == "back":
+            if current_visible == start:
+                return
+            current_visible -= 1
+        else: #forward
+            if current_visible == end-1:
+                return
+            current_visible += 1
+        for num in range(end):
+            if num == current_visible:
+                view.controls[0].content.value = f"<<< {current_visible+1}/{end} >>>"
+                view.controls[1].controls[num].visible = True
+            else:
+                view.controls[0].content.value = f"<<< {current_visible+1}/{end} >>>"
+                view.controls[1].controls[num].visible = False
+        view.update()
+    start = 0
+    end = len(items)
+    current_visible = 0
+    view = ft.Column(
+        tight=True,
+        controls=[
+            ft.Container(
+                width=320,
+                alignment=ft.Alignment.CENTER,
+                content=ft.Text(f"<<< {start+1}/{end} >>>",weight=ft.FontWeight.BOLD)
+            ),
+            ft.Stack(
+                controls=[],
+            ),
+        ],
+    )
+    for num in range(end):
+        if num == start:
+            items[num].visible = True
+        else:
+            items[num].visible = False
+        view.controls[1].controls.append(items[num])
+    view.controls[1].controls.append(
+        ft.Row(
+            width=320,
+            height=480,
+            alignment=ft.MainAxisAlignment.CENTER,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            controls=[
+                ft.IconButton(
+                    icon=ft.Icons.ARROW_BACK,
+                    icon_color=ft.Colors.LIGHT_BLUE,
+                    bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.GREY),
+                    on_click=lambda x:carousel_event("back"),
+                ),
+                ft.Container(
+                    expand=True
+                ),
+                ft.IconButton(
+                    icon=ft.Icons.ARROW_FORWARD,
+                    icon_color=ft.Colors.LIGHT_BLUE,
+                    bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.GREY),
+                    on_click=lambda x:carousel_event("forward"),
+                ),
+            ],
+        )
     )
     return view

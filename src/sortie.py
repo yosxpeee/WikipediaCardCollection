@@ -5,7 +5,7 @@ import json
 
 from utils.utils import RANK_TABLE, debug_print, rankid_to_rank, rank_to_rankid, calc_status, create_card_image_data, calc_damage
 from utils.db import get_card_from_id, rankup_card, get_cards_by_rankid, get_cards_by_sozai, get_cards_by_favorite
-from utils.ui import create_ranked_tabs, create_sortie_formation_image
+from utils.ui import create_ranked_tabs, create_sortie_formation_image, create_card_image, create_reward_items_carousel
 
 class Sortie:
     def __init__(self, page):
@@ -19,6 +19,7 @@ class Sortie:
         self.current_formation = [{},{},{},{},{},{}]
         self.current_enemies_formation = [{},{},{},{},{},{}]
         self.accordion_opened = "NORMAL"
+        self.current_battle_winner = "ENEMY"
     async def create(self):
         """画面作成"""
         def _set_current_formation(no):
@@ -147,6 +148,48 @@ class Sortie:
             )
         def _start_battle(data, title):
             """戦闘ダイアログを表示する"""
+            async def _get_reward(rewards):
+                await asyncio.sleep(0.2)
+                if self.current_battle_winner == "ENEMY":
+                    return
+                if rewards == []:
+                    return
+                items = []
+                for item in rewards:
+                    for data in master_data:
+                        if data["pageid"] == item:
+                            #暫定で素材前提とする
+                            data["rank"] = rankid_to_rank(data["rank"], data["isSozai"])
+                            data["resourceRANK"] = rankid_to_rank(data["resourceRANK"], data["isSozai"])
+                            img = create_card_image(data, True, False)
+                            view_data = ft.Container(
+                                width=320,
+                                height=480,
+                                content=ft.Column(
+                                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                                    expand=True,
+                                    controls=[
+                                        img,
+                                    ],
+                                ),
+                                bgcolor=ft.Colors.GREY_100, border_radius=5,
+                                padding=ft.Padding.all(5),
+                            )
+                            items.append(view_data)
+                reward_items_view = create_reward_items_carousel(items)
+                reward_close_button = ft.TextButton("Close", disabled=True, on_click=lambda x:self.page.pop_dialog())
+                reward_dialog =ft.AlertDialog(
+                    modal=True,
+                    title="戦闘報酬",
+                    content=reward_items_view,
+                    actions=[
+                        reward_close_button
+                    ]
+                )
+                self.page.show_dialog(reward_dialog)
+                reward_close_button.disabled = False
+                #Note:DBに素材カードを追加する
+                self.page.update()
             async def _sortie(player_data, enemy_data):
                 """戦闘処理"""
                 def append_log(s):
@@ -323,6 +366,7 @@ class Sortie:
                     if winner == "ENEMY":
                         append_log(ft.Text(f"--- 結果: プレイヤー敗北({reason}) ---", color=ft.Colors.WHITE, bgcolor=ft.Colors.RED))
                 battle_close_button.disabled = False
+                self.current_battle_winner = winner
                 self.page.update()
             ####################
             # 戦闘開始画面の表示
@@ -356,7 +400,10 @@ class Sortie:
                     return
             grid_player = _create_formation_grid(self.current_formation,         False)
             grid_enemy  = _create_formation_grid(self.current_enemies_formation, True )
-            battle_close_button = ft.TextButton("close", disabled=True, on_click=lambda x:self.page.pop_dialog())
+            battle_close_button = ft.TextButton("Close", disabled=True, on_click=lambda x:{
+                self.page.pop_dialog(),
+                asyncio.create_task(_get_reward(data["reward"]))
+            })
             battle_dialog = ft.AlertDialog(
                 modal=True,
                 title=f"出撃：{title}",
@@ -648,7 +695,7 @@ class Sortie:
                                 height=600,
                                 controls=[
                                     _create_level_ui("NORMAL",    "出撃制限：Cのみ",   True , False), #C   (今のところC級のみ実装)
-                                    _create_level_ui("HARD",      "出撃制限：UCまで",  False, True ), #UC
+                                    _create_level_ui("HARD",      "出撃制限：UCまで",  False, False ), #UC
                                     _create_level_ui("VERY HARD", "出撃制限：Rまで",   False, True ), #R
                                     _create_level_ui("HARD CORE", "出撃制限：SRまで",  False, True ), #SR
                                     _create_level_ui("EXTREME",   "出撃制限：SSRまで", False, True ), #SSR
