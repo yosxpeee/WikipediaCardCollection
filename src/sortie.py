@@ -8,7 +8,7 @@ import urllib
 
 from utils.utils import debug_print, rankid_to_rank, rank_to_rankid, calc_damage, quality_to_rank, get_sozai_flag, get_resources, get_urls, card_data_from_db, calc_status
 from utils.db import get_cards_by_rankid, get_cards_by_favorite, save_cards, get_card_from_pageid
-from utils.ui import create_ranked_tabs, create_sortie_formation_image, create_card_image, create_reward_items_carousel
+from utils.ui import create_ranked_tabs, create_sortie_formation_image, create_card_image, create_reward_items_carousel, get_card_color
 from utils.webapi import fetch_random_wiki_articles, fetch_wikirank_data, fetch_wiki_info_data, fetch_wiki_summary
 
 class Sortie:
@@ -296,12 +296,22 @@ class Sortie:
                                     if rank_data == {}:
                                         debug_print(self.page.debug, "ランクデータ取得失敗。リトライ")
                                         continue
-                                    #魔法陣の色を変える
-                                    self.loading_overlay.controls[1].content.content.shapes[0].paint.color = ft.Colors.RED
-                                    self.loading_overlay.controls[1].content.content.shapes[1].paint.color = ft.Colors.RED
-                                    self.loading_overlay.controls[1].content.content.shapes[2].paint.color = ft.Colors.RED
-                                    self.loading_overlay.controls[1].content.content.shapes[3].paint.color = ft.Colors.RED
-                                    self.loading_overlay.controls[1].content.content.shapes[4].paint.color = ft.Colors.RED
+                                    # 魔法陣の色を変えたいので即座にランクの決定を行う
+                                    try:
+                                        quality = float(rank_data["result"]["ja"]["quality"])
+                                    except Exception:
+                                        debug_print(self.page.debug, "ランクデータ読取失敗。リトライ")
+                                        debug_print(self.page.debug, f"Failed data: {rank_data}")
+                                        continue
+                                    rank = quality_to_rank(quality)
+                                    # 魔法陣の色を変える（各シェイプに新しいPaintを割り当てる）
+                                    canvas_shapes = self.loading_overlay.controls[1].content.content.shapes
+                                    for i in range(len(canvas_shapes)):
+                                        canvas_shapes[i].paint = ft.Paint(
+                                            stroke_width=2,
+                                            style=ft.PaintingStyle.STROKE,
+                                            color=get_card_color(rank ,0),
+                                        )
                                     self.loading_overlay.controls[1].content.content.update()
                                     info_data = await fetch_wiki_info_data(self.page.debug, t_quote)
                                     if info_data == {}:
@@ -311,27 +321,20 @@ class Sortie:
                                     if extract == "ERROR":
                                         debug_print(self.page.debug, "記事概要取得失敗。リトライ")
                                         continue
-                                    try:
-                                        quality = float(rank_data["result"]["ja"]["quality"])
-                                    except Exception:
-                                        debug_print(self.page.debug, "ランクデータ読取失敗。リトライ")
-                                        debug_print(self.page.debug, f"Failed data: {rank_data}")
-                                        continue
-                                    rank = quality_to_rank(quality)
                                     # 素材判定
                                     try:
                                         isSozai = get_sozai_flag(info_data, pageid)
                                     except :
                                         debug_print(self.page.debug, "カテゴリ取得失敗。リトライ")
                                         debug_print(self.page.debug, f"Failed data: {info_data}")
-                                        break
+                                        continue
                                     # リソース取得
                                     try:
                                         d_resource, a_resource = get_resources(info_data, pageid)
                                     except:
                                         debug_print(self.page.debug, "リソース取得失敗。リトライ")
                                         debug_print(self.page.debug, f"Failed data: {info_data}")
-                                        break
+                                        continue
                                     # URL取得
                                     try:
                                         image_url, full_url = get_urls(info_data, pageid)
@@ -339,7 +342,7 @@ class Sortie:
                                     except:
                                         debug_print(self.page.debug, "URL取得失敗。リトライ")
                                         debug_print(self.page.debug, f"Failed data: {info_data}")
-                                        break
+                                        continue
                                 if query:
                                     if isSozai == 0:
                                         defence, atk, hitPoint = calc_status(d_resource, a_resource, rank)
@@ -380,12 +383,14 @@ class Sortie:
                                         "resourceRANK": rank, #引いた直後なので必ず現在のランク＝元のランク
                                     })
                                     count = count + 1
-                                    #1枚引き終わったら魔法陣の色を元に戻す
-                                    self.loading_overlay.controls[1].content.content.shapes[0].paint.color = ft.Colors.WHITE
-                                    self.loading_overlay.controls[1].content.content.shapes[1].paint.color = ft.Colors.WHITE
-                                    self.loading_overlay.controls[1].content.content.shapes[2].paint.color = ft.Colors.WHITE
-                                    self.loading_overlay.controls[1].content.content.shapes[3].paint.color = ft.Colors.WHITE
-                                    self.loading_overlay.controls[1].content.content.shapes[4].paint.color = ft.Colors.WHITE
+                                    # 1枚引き終わったら魔法陣の色を元に戻す
+                                    canvas_shapes = self.loading_overlay.controls[1].content.content.shapes
+                                    for i in range(len(canvas_shapes)):
+                                        canvas_shapes[i].paint = ft.Paint(
+                                            stroke_width=2,
+                                            style=ft.PaintingStyle.STROKE,
+                                            color=ft.Colors.WHITE,
+                                        )
                                     self.loading_overlay.controls[1].content.content.update()
                         if force_stopped == True:
                             self.loading_overlay.visible = False
@@ -396,14 +401,11 @@ class Sortie:
                             view_data = ft.Container(
                                 width=320,
                                 height=480,
-                                content=ft.Column(
-                                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                                    expand=True,
-                                    controls=[
-                                        img,
-                                    ],
+                                content=ft.Stack(
+                                    controls=[img],
                                 ),
-                                bgcolor=ft.Colors.GREY_100, border_radius=5,
+                                bgcolor=ft.Colors.GREY_100,
+                                border_radius=5,
                                 padding=ft.Padding.all(5),
                             )
                             items_for_db.append(db_data)
@@ -422,14 +424,11 @@ class Sortie:
                                 view_data = ft.Container(
                                     width=320,
                                     height=480,
-                                    content=ft.Column(
-                                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                                        expand=True,
-                                        controls=[
-                                            img,
-                                        ],
+                                    content=ft.Stack(
+                                        controls=[img],
                                     ),
-                                    bgcolor=ft.Colors.GREY_100, border_radius=5,
+                                    bgcolor=ft.Colors.GREY_100,
+                                    border_radius=5,
                                     padding=ft.Padding.all(5),
                                 )
                                 items_for_db.append(data)

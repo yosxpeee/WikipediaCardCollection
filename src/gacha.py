@@ -177,14 +177,14 @@ class Gacha:
                     except :
                         debug_print(self.page.debug, "カテゴリ取得失敗。リトライ")
                         debug_print(self.page.debug, f"Failed data: {info_data}")
-                        break
+                        continue
                     # リソース取得
                     try:
                         d_resource, a_resource = get_resources(info_data, pageid)
                     except:
                         debug_print(self.page.debug, "リソース取得失敗。リトライ")
                         debug_print(self.page.debug, f"Failed data: {info_data}")
-                        break
+                        continue
                     # URL取得
                     try:
                         image_url, full_url = get_urls(info_data, pageid)
@@ -192,7 +192,7 @@ class Gacha:
                     except:
                         debug_print(self.page.debug, "URL取得失敗。リトライ")
                         debug_print(self.page.debug, f"Failed data: {info_data}")
-                        break
+                        continue
                 if query:
                     if isSozai == 0:
                         defence, atk, hitPoint = calc_status(d_resource, a_resource, rank)
@@ -290,7 +290,8 @@ class Gacha:
                         content=ft.Stack(
                             controls=stack_controls,
                         ),
-                        bgcolor=ft.Colors.GREY_100, border_radius=5,
+                        bgcolor=ft.Colors.GREY_100,
+                        border_radius=5,
                         padding=ft.Padding.all(5),
                     )
                 ],

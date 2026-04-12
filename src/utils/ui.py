@@ -370,33 +370,29 @@ def create_card_image(data, isShow, isFbButton, on_fav_changed=None):
         fav_icon.disabled = False
         fav_icon.update()
     # ランクとカードタイトル
+    text = ft.Text(
+        data["title"],
+        tooltip=data["title"],
+        max_lines=1,
+        overflow=ft.TextOverflow.ELLIPSIS,
+        no_wrap=True,
+        style=ft.TextStyle(
+            color=ft.Colors.BLUE,
+            #decoration=ft.TextDecoration.UNDERLINE,
+        )
+    )
     if data["pageUrl"] == "":
-        link_text = ft.Text(
-            data["title"],
-            tooltip=data["title"],
-            max_lines=1,
-            overflow=ft.TextOverflow.ELLIPSIS,
-            no_wrap=True,
-            style=ft.TextStyle(
-                color=ft.Colors.BLUE,
-                decoration=ft.TextDecoration.UNDERLINE,
-            ),
+        text_container = ft.Container(
+            width=270,
+            bgcolor=ft.Colors.YELLOW,
+            content=text,
         )
     else:
-        link_text = ft.GestureDetector(
-            mouse_cursor=ft.MouseCursor.CLICK,
-            on_tap=lambda e:webbrowser.open(data["pageUrl"]),
-            content=ft.Text(
-                data["title"],
-                tooltip=data["title"],
-                max_lines=1,
-                overflow=ft.TextOverflow.ELLIPSIS,
-                no_wrap=True,
-                style=ft.TextStyle(
-                    color=ft.Colors.BLUE,
-                    decoration=ft.TextDecoration.UNDERLINE,
-                ),
-            ),
+        text_container = ft.Container(
+            width=270,
+            bgcolor=ft.Colors.YELLOW,
+            content=text,
+            on_click=lambda e:webbrowser.open(data["pageUrl"]) if data["pageUrl"] != "" else None,
         )
     if data["isSozai"] == 1:
         title = ft.Row(
@@ -408,11 +404,7 @@ def create_card_image(data, isShow, isFbButton, on_fav_changed=None):
                     bgcolor=ft.Colors.GREY_200,
                     content=ft.Text("--"),
                 ),
-                ft.Container(
-                    width=270,
-                    bgcolor=ft.Colors.YELLOW,
-                    content=link_text,
-                ),
+                text_container,
             ],
         )
     else:
@@ -425,11 +417,7 @@ def create_card_image(data, isShow, isFbButton, on_fav_changed=None):
                     bgcolor=ft.Colors.GREY_200,
                     content=create_rank_text(data['rank']),
                 ),
-                ft.Container(
-                    width=270,
-                    bgcolor=ft.Colors.YELLOW,
-                    content=link_text,
-                ),
+                text_container,
             ]
         )
     # 画像
