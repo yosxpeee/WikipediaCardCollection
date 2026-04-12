@@ -7,7 +7,7 @@ import math
 import urllib
 
 from utils.utils import debug_print, rankid_to_rank, rank_to_rankid, calc_damage, quality_to_rank, get_sozai_flag, get_resources, get_urls, card_data_from_db, calc_status
-from utils.db import get_cards_by_rankid, get_cards_by_favorite, save_cards, get_card_from_pageid
+from utils.db import get_cards_by_rankid, get_cards_by_favorite, save_cards, get_card_from_pageid, update_favorite
 from utils.ui import create_ranked_tabs, create_sortie_formation_image, create_card_image, create_reward_items_carousel, get_card_color
 from utils.webapi import fetch_random_wiki_articles, fetch_wikirank_data, fetch_wiki_info_data, fetch_wiki_summary
 
@@ -239,6 +239,41 @@ class Sortie:
                         height=size,
                     )
                     return ft.Container(content=canvas, alignment=ft.Alignment.CENTER, expand=True)
+                def _on_fav_changed(card_id, current_fav, external_update=False):
+                    """報酬ダイアログ内でお気に入りが変更されたときのハンドラ
+                    - DB の更新は外部呼び出し側が既に行っている場合があるので
+                      external_update フラグを尊重する
+                    - ローカルの items_for_db リスト内の該当エントリの favorite を更新する
+                    """
+                    try:
+                        new_val = int(current_fav)
+                    except Exception:
+                        new_val = 1
+                    # 外部が更新していない場合はここで DB を更新
+                    if not external_update:
+                        try:
+                            update_favorite(card_id, new_val)
+                        except Exception:
+                            pass
+                    # ローカルの保存リストを更新して UI 一貫性を保つ
+                    try:
+                        for d in items_for_db:
+                            # saved cards have 'id' (DB PK) or 'pageId'
+                            if d.get("id") is not None and str(d.get("id")) == str(card_id):
+                                d["favorite"] = new_val
+                            elif str(d.get("pageId")) == str(card_id):
+                                d["favorite"] = new_val
+                    except Exception:
+                        pass
+                    try:
+                        self.page.update()
+                    except Exception:
+                        pass
+                    # 全体 UI を最新化（編成タブ等を再読み込み）
+                    try:
+                        asyncio.create_task(_reload_sortie_tab())
+                    except Exception:
+                        pass
                 await asyncio.sleep(0.2)
                 if self.current_battle_winner == "ENEMY":
                     return
@@ -396,8 +431,13 @@ class Sortie:
                             self.loading_overlay.visible = False
                             self.page.show_dialog(ft.SnackBar(ft.Text("ランダム記事取得エラー。今回はガチャ報酬を取得できませんでした。"), duration=1500))
                             self.page.update()
+                        # まずDBに保存して `id` を割り振る（create_card_image の _on_fav_click が id を参照するため）
+                        try:
+                            save_cards(get_card_list)
+                        except Exception:
+                            pass
                         for db_data in get_card_list:
-                            img = create_card_image(db_data, True, False)
+                            img = create_card_image(db_data, True, True, _on_fav_changed)
                             view_data = ft.Container(
                                 width=320,
                                 height=480,
@@ -420,7 +460,7 @@ class Sortie:
                             if data["pageId"] == item:
                                 data["rank"] = rankid_to_rank(data["rank"], data["isSozai"])
                                 data["resourceRANK"] = rankid_to_rank(data["resourceRANK"], data["isSozai"])
-                                img = create_card_image(data, True, False)
+                                img = create_card_image(data, True, True, _on_fav_changed)
                                 view_data = ft.Container(
                                     width=320,
                                     height=480,
@@ -449,8 +489,7 @@ class Sortie:
                     )
                     self.page.show_dialog(reward_dialog)
                     reward_close_button.disabled = False
-                    #DBに報酬を追加する
-                    save_cards(items_for_db)
+                    # DB 保存は必要な場合に既に行っている（重複保存を避ける）
                     #ページを再読み込みする
                     asyncio.create_task(_reload_sortie_tab())
             async def _sortie(player_data, enemy_data):
