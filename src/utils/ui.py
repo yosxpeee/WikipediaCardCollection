@@ -254,8 +254,6 @@ def create_ranked_tabs(ranks, all_cards_by_rank, on_select_callback=None):
             page_label.value = f"{page['idx']+1}/{total_pages}"
             try:
                 page_label.update()
-                prev_btn.disabled = (page["idx"] == 0)
-                next_btn.disabled = (page["idx"] >= total_pages - 1)
                 prev_btn.update()
                 next_btn.update()
                 lv.update()
