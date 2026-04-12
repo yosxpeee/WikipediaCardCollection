@@ -748,7 +748,8 @@ def create_reward_items_carousel(items):
     view.controls[1].controls.append(
         ft.Row(
             width=320,
-            height=480,
+            height=48,
+            top=480/2-24,
             alignment=ft.MainAxisAlignment.CENTER,
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
             controls=[

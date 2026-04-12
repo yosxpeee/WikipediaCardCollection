@@ -394,7 +394,7 @@ class Sortie:
                                     self.loading_overlay.controls[1].content.content.update()
                         if force_stopped == True:
                             self.loading_overlay.visible = False
-                            self.page.show_dialog(ft.SnackBar(ft.Text("ランダム記事取得エラー。今回はガチャ報酬を取得できません。申し訳ございません。"), duration=1500))
+                            self.page.show_dialog(ft.SnackBar(ft.Text("ランダム記事取得エラー。今回はガチャ報酬を取得できませんでした。"), duration=1500))
                             self.page.update()
                         for db_data in get_card_list:
                             img = create_card_image(db_data, True, False)
@@ -436,22 +436,23 @@ class Sortie:
                     else:
                         #ここに来たらバグです…
                         pass
-                reward_items_view = create_reward_items_carousel(items)
-                reward_close_button = ft.TextButton("Close", disabled=True, on_click=lambda x:self.page.pop_dialog())
-                reward_dialog =ft.AlertDialog(
-                    modal=True,
-                    title="戦闘報酬",
-                    content=reward_items_view,
-                    actions=[
-                        reward_close_button
-                    ]
-                )
-                self.page.show_dialog(reward_dialog)
-                reward_close_button.disabled = False
-                #DBに報酬を追加する
-                save_cards(items_for_db)
-                #ページを再読み込みする
-                asyncio.create_task(_reload_sortie_tab())
+                if len(items) != 0:
+                    reward_items_view = create_reward_items_carousel(items)
+                    reward_close_button = ft.TextButton("Close", disabled=True, on_click=lambda x:self.page.pop_dialog())
+                    reward_dialog =ft.AlertDialog(
+                        modal=True,
+                        title="戦闘報酬",
+                        content=reward_items_view,
+                        actions=[
+                            reward_close_button
+                        ]
+                    )
+                    self.page.show_dialog(reward_dialog)
+                    reward_close_button.disabled = False
+                    #DBに報酬を追加する
+                    save_cards(items_for_db)
+                    #ページを再読み込みする
+                    asyncio.create_task(_reload_sortie_tab())
             async def _sortie(player_data, enemy_data):
                 """戦闘処理"""
                 def append_log(s):
