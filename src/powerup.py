@@ -12,8 +12,8 @@ class PowerUp:
         self.loading_overlay = page.overlay[1]
     async def do_powerup(self, target_id, next_rankid, atk, defence, hp, sozai_id):
         """強化実施処理"""
-        # 強化タブ自身を再読み込みして差し替える
         async def _reload_powerup_tab():
+            """画面リロード"""
             try:
                 # タブを一時的に無効化する
                 tabs_widget = self.page.controls[0]
@@ -270,36 +270,36 @@ class PowerUp:
             )
             for row in sozai_all:
                 # sozai_all は isSozai==1 の行のみ
-                    cid = row[0]
-                    name = row[2] or ""
-                    cont = ft.Container(
-                        padding=ft.Padding(top=0, left=6, right=6, bottom=0),
-                        bgcolor=None,
-                        content=ft.Row(
-                            controls=[
-                                ft.Text(str(cid).ljust(8, " "), font_family="Consolas"), 
-                                ft.Text(name, expand=True, tooltip=name, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS)
-                            ],
-                        ),
-                    )
-                    def _on_sozai_click(e, cid=cid, name=name, cont=cont):
-                        """素材リストをクリックしたときの処理"""
-                        nonlocal selected_sozai_id
-                        selected_sozai_id = cid
-                        selected_sozai_text.value = f"{cid} : {name}"
-                        selected_sozai_text.update()
-                        for c in sozai_containers:
-                            c.bgcolor = None
-                            c.content.controls[0].color = None
-                            c.content.controls[1].color = None
-                            c.update()
-                        cont.bgcolor = ft.Colors.YELLOW_100
-                        cont.content.controls[0].color = ft.Colors.BLACK
-                        cont.content.controls[1].color = ft.Colors.BLACK
-                        cont.update()
-                    cont.on_click = _on_sozai_click
-                    sozai_lv.controls.append(cont)
-                    sozai_containers.append(cont)
+                cid = row[0]
+                name = row[2] or ""
+                cont = ft.Container(
+                    padding=ft.Padding(top=0, left=6, right=6, bottom=0),
+                    bgcolor=None,
+                    content=ft.Row(
+                        controls=[
+                            ft.Text(str(cid).ljust(8, " "), font_family="Consolas"), 
+                            ft.Text(name, expand=True, tooltip=name, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS)
+                        ],
+                    ),
+                )
+                def _on_sozai_click(e, cid=cid, name=name, cont=cont):
+                    """素材リストをクリックしたときの処理"""
+                    nonlocal selected_sozai_id
+                    selected_sozai_id = cid
+                    selected_sozai_text.value = f"{cid} : {name}"
+                    selected_sozai_text.update()
+                    for c in sozai_containers:
+                        c.bgcolor = None
+                        c.content.controls[0].color = None
+                        c.content.controls[1].color = None
+                        c.update()
+                    cont.bgcolor = ft.Colors.YELLOW_100
+                    cont.content.controls[0].color = ft.Colors.BLACK
+                    cont.content.controls[1].color = ft.Colors.BLACK
+                    cont.update()
+                cont.on_click = _on_sozai_click
+                sozai_lv.controls.append(cont)
+                sozai_containers.append(cont)
             # 素材一覧が空ならプレースホルダを表示
             if len(sozai_lv.controls) == 0:
                 sozai_lv.controls.append(ft.Container(padding=ft.Padding.all(8), content=ft.Text("素材が見つかりません")))

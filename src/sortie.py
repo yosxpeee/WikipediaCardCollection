@@ -2,9 +2,11 @@ import flet as ft
 import asyncio
 import random
 import json
+import flet.canvas as cv
+import math
 
-from utils.utils import RANK_TABLE, debug_print, rankid_to_rank, rank_to_rankid, calc_status, create_card_image_data, calc_damage
-from utils.db import get_card_from_id, rankup_card, get_cards_by_rankid, get_cards_by_sozai, get_cards_by_favorite, save_cards
+from utils.utils import rankid_to_rank, rank_to_rankid, calc_damage
+from utils.db import get_cards_by_rankid, get_cards_by_favorite, save_cards
 from utils.ui import create_ranked_tabs, create_sortie_formation_image, create_card_image, create_reward_items_carousel
 
 class Sortie:
@@ -169,7 +171,72 @@ class Sortie:
             )
         def _start_battle(data, title):
             """戦闘ダイアログを表示する"""
+            async def _reload_sortie_tab():
+                """画面リロード"""
+                try:
+                    # タブを一時的に無効化する
+                    tabs_widget = self.page.controls[0]
+                    tabs_widget.disabled = True
+                    tabs_widget.update()
+                    # create() は自身でオーバーレイを表示/非表示するのでそのまま await する
+                    content = await self.create()
+                    tab_bar_view = tabs_widget.content.controls[1]
+                    tab_bar_view.controls[4] = ft.Container(
+                        content=content,
+                        alignment=ft.Alignment.CENTER,
+                    )
+                    tab_bar_view.update()
+                    # タブを再有効化する
+                    tabs_widget.disabled = False
+                    tabs_widget.update()
+                except Exception:
+                    tabs_widget = self.page.controls[0]
+                    tab_bar_view = tabs_widget.content.controls[1]
+                    tab_bar_view.controls[4] = ft.Column([ft.Text("読み込みに失敗しました。")])
+                    tab_bar_view.update()
+                    tabs_widget.disabled = False
+                    tabs_widget.update()
             async def _get_reward(rewards):
+                """報酬取得"""
+                def _draw_hexagram():
+                    """魔法陣の描画"""
+                    size = 400
+                    center = size / 2
+                    radius = 180
+                    # Paintオブジェクトの設定
+                    stroke_paint = ft.Paint(
+                        stroke_width=2,
+                        style=ft.PaintingStyle.STROKE,
+                        color=ft.Colors.CYAN_ACCENT,
+                    )
+                    def get_star_points(n, r, offset_angle=0):
+                        return [
+                            ft.Offset(
+                                center + r * math.cos((2 * math.pi * i / n) + offset_angle),
+                                center + r * math.sin((2 * math.pi * i / n) + offset_angle)
+                            ) for i in range(n)
+                        ]
+                    # ヘキサグラム（六角星）のパスを生成する関数
+                    def create_triangle_path(points):
+                        elements = [cv.Path.MoveTo(points[0].x, points[0].y)]
+                        for p in points[1:]:
+                            elements.append(cv.Path.LineTo(p.x, p.y))
+                        elements.append(cv.Path.Close())
+                        return cv.Path(elements, stroke_paint)
+                    # 描画要素のリスト
+                    shapes = [
+                        cv.Circle(center, center, radius, stroke_paint),
+                        cv.Circle(center, center, radius - 10, stroke_paint),
+                        create_triangle_path(get_star_points(3, radius - 20, -math.pi/2)),
+                        create_triangle_path(get_star_points(3, radius - 20, math.pi/2)),
+                        cv.Circle(center, center, radius * 0.4, stroke_paint),
+                    ]
+                    canvas = cv.Canvas(
+                        shapes=shapes,
+                        width=size,
+                        height=size,
+                    )
+                    return ft.Container(content=canvas, alignment=ft.Alignment.CENTER, expand=True)
                 await asyncio.sleep(0.2)
                 if self.current_battle_winner == "ENEMY":
                     return
@@ -178,27 +245,60 @@ class Sortie:
                 items = []
                 items_for_db = []
                 for item in rewards:
-                    for data in master_data:
-                        if data["pageId"] == item:
-                            #報酬はカード前提とする
-                            data["rank"] = rankid_to_rank(data["rank"], data["isSozai"])
-                            data["resourceRANK"] = rankid_to_rank(data["resourceRANK"], data["isSozai"])
-                            img = create_card_image(data, True, False)
-                            view_data = ft.Container(
-                                width=320,
-                                height=480,
-                                content=ft.Column(
-                                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    if item == "gacha":
+                        #ガチャを回す場合
+                        reward_overlay = ft.Stack(
+                            expand=True,
+                            controls=[
+                                # 下地
+                                ft.Container(
                                     expand=True,
-                                    controls=[
-                                        img,
-                                    ],
+                                    bgcolor=ft.Colors.with_opacity(0.88, ft.Colors.GREY),
                                 ),
-                                bgcolor=ft.Colors.GREY_100, border_radius=5,
-                                padding=ft.Padding.all(5),
-                            )
-                            items_for_db.append(data)
-                            items.append(view_data)
+                                # 魔法陣
+                                ft.Container(
+                                    content=_draw_hexagram(), 
+                                    alignment=ft.Alignment.CENTER, 
+                                    expand=True
+                                ),
+                            ]
+                        )
+                        self.page.overlay[2] = reward_overlay
+                        # オーバーレイの切り替え
+                        self.loading_overlay = self.page.overlay[2]
+                        self.page.update()
+                        #TBD
+                        #どうにかしてガチャを回す仕組みだけを外出ししてここで呼び出す
+                        await asyncio.sleep(1)
+                        # オーバーレイを解いてローディングのものに戻しておく
+                        self.loading_overlay.visible = False
+                        self.loading_overlay = self.page.overlay[1]
+                        self.page.update()
+                    elif item > 99995000:
+                        #マスターデータから取ってくる場合(現状は素材のみ)
+                        for data in master_data:
+                            if data["pageId"] == item:
+                                data["rank"] = rankid_to_rank(data["rank"], data["isSozai"])
+                                data["resourceRANK"] = rankid_to_rank(data["resourceRANK"], data["isSozai"])
+                                img = create_card_image(data, True, False)
+                                view_data = ft.Container(
+                                    width=320,
+                                    height=480,
+                                    content=ft.Column(
+                                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                                        expand=True,
+                                        controls=[
+                                            img,
+                                        ],
+                                    ),
+                                    bgcolor=ft.Colors.GREY_100, border_radius=5,
+                                    padding=ft.Padding.all(5),
+                                )
+                                items_for_db.append(data)
+                                items.append(view_data)
+                    else:
+                        #ここに来たらバグです…
+                        pass
                 reward_items_view = create_reward_items_carousel(items)
                 reward_close_button = ft.TextButton("Close", disabled=True, on_click=lambda x:self.page.pop_dialog())
                 reward_dialog =ft.AlertDialog(
@@ -212,10 +312,9 @@ class Sortie:
                 self.page.show_dialog(reward_dialog)
                 reward_close_button.disabled = False
                 #DBに報酬を追加する
-                #いまは素材だけなのでこれでよい
                 save_cards(items_for_db)
                 #ページを再読み込みする
-                self.page.update()
+                asyncio.create_task(_reload_sortie_tab())
             async def _sortie(player_data, enemy_data):
                 """戦闘処理"""
                 def append_log(s):

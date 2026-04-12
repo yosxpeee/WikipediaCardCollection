@@ -69,6 +69,70 @@ def rank_to_rankid(rank):
     key = next((k for k, v in RANK_TABLE.items() if v == rank), None)
     return key
 
+def quality_to_rank(quality):
+    """記事クオリティからランクへ変換"""
+    if quality == 100:
+        rank = "LR"
+    elif quality >= 90:
+        rank = "UR"
+    elif quality >= 80:
+        rank = "SSR"
+    elif quality >= 60:
+        rank = "SR"
+    elif quality >= 35:
+        rank = "R"
+    elif quality >= 20:
+        rank = "UC"
+    else:
+        rank = "C"
+    return rank
+
+def card_data_from_db(data_from_pageid):
+    #かぶったらAPIコールをせず内部データを使って更新する
+    full_url = data_from_pageid[0][3]
+    image_url = data_from_pageid[0][4]
+    #既存のデータは強化済みの可能性があるので元ランクのデータを使う
+    rank = rankid_to_rank(data_from_pageid[0][15], data_from_pageid[0][7])
+    quality = data_from_pageid[0][6]
+    isSozai = data_from_pageid[0][7]
+    extract = data_from_pageid[0][8]
+    hitPoint = int(data_from_pageid[0][9])
+    atk = int(data_from_pageid[0][10])
+    defence = int(data_from_pageid[0][11])
+    #favorite = data_from_pageid[0][12]
+    a_resource = int(data_from_pageid[0][13])
+    d_resource = int(data_from_pageid[0][14])
+    #r_resource = rankid_to_rank(data_from_pageid[0][15], data_from_pageid[0][7])
+    return full_url, image_url, rank, quality, isSozai, extract, hitPoint, atk, defence, a_resource, d_resource
+
+def get_sozai_flag(info_data, pageid):
+    p_str = str(pageid)
+    isAimai         = any("曖昧さ回避" in category.get("title", "") for category in info_data["query"]["pages"][p_str]["categories"])
+    isSoftRedirect  = any("ソフトリダイレクト" in category.get("title", "") for category in info_data["query"]["pages"][p_str]["categories"])
+    if isAimai or isSoftRedirect:
+        isSozai = 1
+    else:
+        isSozai = 0
+    return isSozai
+
+def get_resources(info_data, pageid):
+    p_str = str(pageid)
+    d_resource = info_data["query"]["pages"][p_str]["length"]
+    a_resource = 0
+    for dayView in info_data["query"]["pages"][p_str]["pageviews"]:
+        if info_data["query"]["pages"][p_str]["pageviews"][dayView] != None:
+            a_resource = a_resource + info_data["query"]["pages"][p_str]["pageviews"][dayView]
+    return d_resource, a_resource
+
+def get_urls(info_data, pageid):
+    p_str = str(pageid)
+    if "thumbnail" in info_data["query"]["pages"][p_str]:
+        image_url = info_data["query"]["pages"][p_str]["thumbnail"]["source"]
+    else:
+        image_url = ""
+    full_url = info_data["query"]["pages"][p_str]["fullurl"]
+    return image_url, full_url
+
 def calc_status(d_resource, a_resource, rank):
     """リソースからATK,DEF,HPの計算"""
     #rankから掛け算の補正を決める

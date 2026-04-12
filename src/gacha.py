@@ -2,7 +2,7 @@ import flet as ft
 import urllib.parse
 import asyncio
 
-from utils.utils import debug_print, calc_status, rankid_to_rank
+from utils.utils import debug_print, calc_status, rankid_to_rank, quality_to_rank, card_data_from_db, get_sozai_flag, get_resources, get_urls
 from utils.db import save_cards, get_card_from_pageid
 from utils.ui import get_card_color, create_card_image
 from utils.webapi import fetch_random_wiki_articles, fetch_wikirank_data, fetch_wiki_info_data, fetch_wiki_summary
@@ -141,21 +141,7 @@ class Gacha:
                 #すでに取得済みかどうかpageidで検索
                 data_from_pageid = get_card_from_pageid(pageid)
                 if len(data_from_pageid) >= 1:
-                    #かぶったらAPIコールをせず内部データを使って更新する
-                    full_url = data_from_pageid[0][3]
-                    image_url = data_from_pageid[0][4]
-                    #既存のデータは強化済みの可能性があるので元ランクのデータを使う
-                    rank = rankid_to_rank(data_from_pageid[0][15], data_from_pageid[0][7])
-                    quality = data_from_pageid[0][6]
-                    isSozai = data_from_pageid[0][7]
-                    extract = data_from_pageid[0][8]
-                    hitPoint = int(data_from_pageid[0][9])
-                    atk = int(data_from_pageid[0][10])
-                    defence = int(data_from_pageid[0][11])
-                    #favorite = data_from_pageid[0][12]
-                    a_resource = int(data_from_pageid[0][13])
-                    d_resource = int(data_from_pageid[0][14])
-                    #r_resource = rankid_to_rank(data_from_pageid[0][15], data_from_pageid[0][7])
+                    full_url, image_url, rank, quality, isSozai, extract, hitPoint, atk, defence, a_resource, d_resource = card_data_from_db(data_from_pageid)
                     query = True
                 else:
                     #かぶってない場合は通常処理(APIコールしてデータ取得)
@@ -184,51 +170,24 @@ class Gacha:
                         debug_print(self.page.debug, "ランクデータ読取失敗。リトライ")
                         debug_print(self.page.debug, f"Failed data: {rank_data}")
                         continue
-                    if quality == 100:
-                        rank = "LR"
-                    elif quality >= 90:
-                        rank = "UR"
-                    elif quality >= 80:
-                        rank = "SSR"
-                    elif quality >= 60:
-                        rank = "SR"
-                    elif quality >= 35:
-                        rank = "R"
-                    elif quality >= 20:
-                        rank = "UC"
-                    else:
-                        rank = "C"
-                    p_str = str(pageid)
+                    rank = quality_to_rank(quality)
                     # 素材判定
                     try:
-                        isAimai         = any("曖昧さ回避" in category.get("title", "") for category in info_data["query"]["pages"][p_str]["categories"])
-                        isSoftRedirect  = any("ソフトリダイレクト" in category.get("title", "") for category in info_data["query"]["pages"][p_str]["categories"])
-                        if isAimai or isSoftRedirect:
-                            isSozai = 1
-                        else:
-                            isSozai = 0
+                        isSozai = get_sozai_flag(info_data, pageid)
                     except :
                         debug_print(self.page.debug, "カテゴリ取得失敗。リトライ")
                         debug_print(self.page.debug, f"Failed data: {info_data}")
                         break
+                    # リソース取得
                     try:
-                        # リソース取得
-                        d_resource = info_data["query"]["pages"][p_str]["length"]
-                        a_resource = 0
-                        for dayView in info_data["query"]["pages"][p_str]["pageviews"]:
-                            if info_data["query"]["pages"][p_str]["pageviews"][dayView] != None:
-                                a_resource = a_resource + info_data["query"]["pages"][p_str]["pageviews"][dayView]
+                        d_resource, a_resource = get_resources(info_data, pageid)
                     except:
                         debug_print(self.page.debug, "リソース取得失敗。リトライ")
                         debug_print(self.page.debug, f"Failed data: {info_data}")
                         break
+                    # URL取得
                     try:
-                        # URL取得
-                        if "thumbnail" in info_data["query"]["pages"][p_str]:
-                            image_url = info_data["query"]["pages"][p_str]["thumbnail"]["source"]
-                        else:
-                            image_url = ""
-                        full_url = info_data["query"]["pages"][p_str]["fullurl"]
+                        image_url, full_url = get_urls(info_data, pageid)
                         query = True
                     except:
                         debug_print(self.page.debug, "URL取得失敗。リトライ")
