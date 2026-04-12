@@ -2,7 +2,7 @@ import flet as ft
 import urllib.parse
 import asyncio
 
-from utils.utils import debug_print, calc_status, rankid_to_rank, quality_to_rank, card_data_from_db, get_sozai_flag, get_resources, get_urls
+from utils.utils import debug_print, calc_status, quality_to_rank, card_data_from_db, get_sozai_flag, get_resources, get_urls
 from utils.db import save_cards, get_card_from_pageid
 from utils.ui import get_card_color, create_card_image
 from utils.webapi import fetch_random_wiki_articles, fetch_wikirank_data, fetch_wiki_info_data, fetch_wiki_summary

@@ -106,6 +106,7 @@ def card_data_from_db(data_from_pageid):
     return full_url, image_url, rank, quality, isSozai, extract, hitPoint, atk, defence, a_resource, d_resource
 
 def get_sozai_flag(info_data, pageid):
+    """素材カードかどうかを取得"""
     p_str = str(pageid)
     isAimai         = any("曖昧さ回避" in category.get("title", "") for category in info_data["query"]["pages"][p_str]["categories"])
     isSoftRedirect  = any("ソフトリダイレクト" in category.get("title", "") for category in info_data["query"]["pages"][p_str]["categories"])
@@ -116,6 +117,7 @@ def get_sozai_flag(info_data, pageid):
     return isSozai
 
 def get_resources(info_data, pageid):
+    """攻撃力と防御力のリソースを取得"""
     p_str = str(pageid)
     d_resource = info_data["query"]["pages"][p_str]["length"]
     a_resource = 0
@@ -125,6 +127,7 @@ def get_resources(info_data, pageid):
     return d_resource, a_resource
 
 def get_urls(info_data, pageid):
+    """URL系のパラメータを取得"""
     p_str = str(pageid)
     if "thumbnail" in info_data["query"]["pages"][p_str]:
         image_url = info_data["query"]["pages"][p_str]["thumbnail"]["source"]

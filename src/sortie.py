@@ -4,10 +4,12 @@ import random
 import json
 import flet.canvas as cv
 import math
+import urllib
 
-from utils.utils import rankid_to_rank, rank_to_rankid, calc_damage
-from utils.db import get_cards_by_rankid, get_cards_by_favorite, save_cards
+from utils.utils import debug_print, rankid_to_rank, rank_to_rankid, calc_damage, quality_to_rank, get_sozai_flag, get_resources, get_urls, card_data_from_db, calc_status
+from utils.db import get_cards_by_rankid, get_cards_by_favorite, save_cards, get_card_from_pageid
 from utils.ui import create_ranked_tabs, create_sortie_formation_image, create_card_image, create_reward_items_carousel
+from utils.webapi import fetch_random_wiki_articles, fetch_wikirank_data, fetch_wiki_info_data, fetch_wiki_summary
 
 class Sortie:
     def __init__(self, page):
@@ -207,7 +209,7 @@ class Sortie:
                     stroke_paint = ft.Paint(
                         stroke_width=2,
                         style=ft.PaintingStyle.STROKE,
-                        color=ft.Colors.CYAN_ACCENT,
+                        color=ft.Colors.WHITE,
                     )
                     def get_star_points(n, r, offset_angle=0):
                         return [
@@ -245,8 +247,9 @@ class Sortie:
                 items = []
                 items_for_db = []
                 for item in rewards:
-                    if item == "gacha":
+                    if str(item).startswith("gacha"):
                         #ガチャを回す場合
+                        gacha_num = int(str(item).replace("gacha", ""))
                         reward_overlay = ft.Stack(
                             expand=True,
                             controls=[
@@ -267,9 +270,144 @@ class Sortie:
                         # オーバーレイの切り替え
                         self.loading_overlay = self.page.overlay[2]
                         self.page.update()
-                        #TBD
-                        #どうにかしてガチャを回す仕組みだけを外出ししてここで呼び出す
-                        await asyncio.sleep(1)
+                        # ここから実際にガチャを回す
+                        count = 0
+                        get_card_list = []
+                        force_stopped = False
+                        while True:
+                            if count >= gacha_num:
+                                break
+                            randList = await fetch_random_wiki_articles(self.page.debug, gacha_num-count)
+                            if randList == []:
+                                force_stopped = True
+                                break
+                            for r in randList:
+                                query = False
+                                pageid = r["id"]
+                                title = r["title"]
+                                #すでに取得済みかどうかpageidで検索
+                                data_from_pageid = get_card_from_pageid(pageid)
+                                if len(data_from_pageid) >= 1:
+                                    full_url, image_url, rank, quality, isSozai, extract, hitPoint, atk, defence, a_resource, d_resource = card_data_from_db(data_from_pageid)
+                                    query = True
+                                else:
+                                    t_quote = urllib.parse.quote(title)
+                                    rank_data = await fetch_wikirank_data(self.page.debug, t_quote)
+                                    if rank_data == {}:
+                                        debug_print(self.page.debug, "ランクデータ取得失敗。リトライ")
+                                        continue
+                                    #魔法陣の色を変える
+                                    self.loading_overlay.controls[1].content.content.shapes[0].paint.color = ft.Colors.RED
+                                    self.loading_overlay.controls[1].content.content.shapes[1].paint.color = ft.Colors.RED
+                                    self.loading_overlay.controls[1].content.content.shapes[2].paint.color = ft.Colors.RED
+                                    self.loading_overlay.controls[1].content.content.shapes[3].paint.color = ft.Colors.RED
+                                    self.loading_overlay.controls[1].content.content.shapes[4].paint.color = ft.Colors.RED
+                                    self.loading_overlay.controls[1].content.content.update()
+                                    info_data = await fetch_wiki_info_data(self.page.debug, t_quote)
+                                    if info_data == {}:
+                                        debug_print(self.page.debug, "記事情報取得失敗。リトライ")
+                                        continue
+                                    extract  = await fetch_wiki_summary(self.page.debug, t_quote)
+                                    if extract == "ERROR":
+                                        debug_print(self.page.debug, "記事概要取得失敗。リトライ")
+                                        continue
+                                    try:
+                                        quality = float(rank_data["result"]["ja"]["quality"])
+                                    except Exception:
+                                        debug_print(self.page.debug, "ランクデータ読取失敗。リトライ")
+                                        debug_print(self.page.debug, f"Failed data: {rank_data}")
+                                        continue
+                                    rank = quality_to_rank(quality)
+                                    # 素材判定
+                                    try:
+                                        isSozai = get_sozai_flag(info_data, pageid)
+                                    except :
+                                        debug_print(self.page.debug, "カテゴリ取得失敗。リトライ")
+                                        debug_print(self.page.debug, f"Failed data: {info_data}")
+                                        break
+                                    # リソース取得
+                                    try:
+                                        d_resource, a_resource = get_resources(info_data, pageid)
+                                    except:
+                                        debug_print(self.page.debug, "リソース取得失敗。リトライ")
+                                        debug_print(self.page.debug, f"Failed data: {info_data}")
+                                        break
+                                    # URL取得
+                                    try:
+                                        image_url, full_url = get_urls(info_data, pageid)
+                                        query = True
+                                    except:
+                                        debug_print(self.page.debug, "URL取得失敗。リトライ")
+                                        debug_print(self.page.debug, f"Failed data: {info_data}")
+                                        break
+                                if query:
+                                    if isSozai == 0:
+                                        defence, atk, hitPoint = calc_status(d_resource, a_resource, rank)
+                                    else:
+                                        defence = -1
+                                        atk = -1
+                                        hitPoint = -1
+                                    debug_print(self.page.debug, "#########################################################")
+                                    if isSozai == 1:
+                                        debug_print(self.page.debug, f"{pageid}: {title} [{rank}] ({quality}) (素材)")
+                                    else:
+                                        debug_print(self.page.debug, f"{pageid}: {title} [{rank}] ({quality})")
+                                    debug_print(self.page.debug, f"Page URL: {full_url}")
+                                    if extract == "":
+                                        debug_print(self.page.debug, "概要: なし")
+                                    else:
+                                        debug_print(self.page.debug, f"概要: {extract}")
+                                    debug_print(self.page.debug, f"画像URL: {image_url}")
+                                    debug_print(self.page.debug, f"HP :{hitPoint}")
+                                    debug_print(self.page.debug, f"ATK:{atk} ({a_resource})")
+                                    debug_print(self.page.debug, f"DEF:{defence} ({d_resource})")
+                                    debug_print(self.page.debug, "#########################################################")
+                                    get_card_list.append({
+                                        "pageId": pageid,
+                                        "title": title,
+                                        "pageUrl": full_url,
+                                        "imageUrl": image_url,
+                                        "rank": rank,
+                                        "quality": quality,
+                                        "isSozai": isSozai,
+                                        "extract": extract,
+                                        "HP": hitPoint,
+                                        "ATK": atk,
+                                        "DEF": defence,
+                                        "favorite": 0, #引いた直後なので必ず0
+                                        "resourceATK": a_resource,
+                                        "resourceDEF": d_resource,
+                                        "resourceRANK": rank, #引いた直後なので必ず現在のランク＝元のランク
+                                    })
+                                    count = count + 1
+                                    #1枚引き終わったら魔法陣の色を元に戻す
+                                    self.loading_overlay.controls[1].content.content.shapes[0].paint.color = ft.Colors.WHITE
+                                    self.loading_overlay.controls[1].content.content.shapes[1].paint.color = ft.Colors.WHITE
+                                    self.loading_overlay.controls[1].content.content.shapes[2].paint.color = ft.Colors.WHITE
+                                    self.loading_overlay.controls[1].content.content.shapes[3].paint.color = ft.Colors.WHITE
+                                    self.loading_overlay.controls[1].content.content.shapes[4].paint.color = ft.Colors.WHITE
+                                    self.loading_overlay.controls[1].content.content.update()
+                        if force_stopped == True:
+                            self.loading_overlay.visible = False
+                            self.page.show_dialog(ft.SnackBar(ft.Text("ランダム記事取得エラー。今回はガチャ報酬を取得できません。申し訳ございません。"), duration=1500))
+                            self.page.update()
+                        for db_data in get_card_list:
+                            img = create_card_image(db_data, True, False)
+                            view_data = ft.Container(
+                                width=320,
+                                height=480,
+                                content=ft.Column(
+                                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                                    expand=True,
+                                    controls=[
+                                        img,
+                                    ],
+                                ),
+                                bgcolor=ft.Colors.GREY_100, border_radius=5,
+                                padding=ft.Padding.all(5),
+                            )
+                            items_for_db.append(db_data)
+                            items.append(view_data)
                         # オーバーレイを解いてローディングのものに戻しておく
                         self.loading_overlay.visible = False
                         self.loading_overlay = self.page.overlay[1]
@@ -864,8 +1002,8 @@ class Sortie:
                                 height=600,
                                 controls=[
                                     _create_level_ui("NORMAL",    "出撃制限：Cのみ",   True , False), #C   (今のところC級のみ実装)
-                                    _create_level_ui("HARD",      "出撃制限：UCまで",  False, False ), #UC
-                                    _create_level_ui("VERY HARD", "出撃制限：Rまで",   False, True ), #R
+                                    _create_level_ui("HARD",      "出撃制限：UCまで",  False, False), #UC
+                                    _create_level_ui("VERY HARD", "出撃制限：Rまで",   False, False), #R
                                     _create_level_ui("HARD CORE", "出撃制限：SRまで",  False, True ), #SR
                                     _create_level_ui("EXTREME",   "出撃制限：SSRまで", False, True ), #SSR
                                     _create_level_ui("INSANE",    "出撃制限：URまで",  False, True ), #UR

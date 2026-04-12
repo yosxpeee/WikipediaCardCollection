@@ -102,6 +102,23 @@
 		"resourceRANK": "0"
 	},
 	{
+		"pageId": 99990007,
+		"title": "tesutoRmob",
+		"pageUrl": "",
+		"imageUrl": "",
+		"rank": "2",
+		"quality": "0",
+		"isSozai": 0,
+		"extract": "テスト用",
+		"HP": "8000",
+		"ATK": "4000",
+		"DEF": "5000",
+		"favorite": 0,
+		"resourceATK": "0",
+		"resourceDEF": "0",
+		"resourceRANK": "0"
+	},
+	{
 		"pageId": 99995001,
 		"title": "報酬アイテム - マテリアル",
 		"pageUrl": "",
