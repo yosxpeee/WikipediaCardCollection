@@ -200,8 +200,23 @@ class Sortie:
                     tabs_widget.update()
             async def _get_reward(rewards):
                 """報酬取得"""
-                def _draw_hexagram():
+                def _draw_hexagram(type):
                     """魔法陣の描画"""
+                    def get_star_points(n, r, offset_angle=0):
+                        """描画位置を取得"""
+                        return [
+                            ft.Offset(
+                                center + r * math.cos((2 * math.pi * i / n) + offset_angle),
+                                center + r * math.sin((2 * math.pi * i / n) + offset_angle)
+                            ) for i in range(n)
+                        ]
+                    def create_triangle_path(points):
+                        """ヘキサグラム（六角星）のパスを生成する関数"""
+                        elements = [cv.Path.MoveTo(points[0].x, points[0].y)]
+                        for p in points[1:]:
+                            elements.append(cv.Path.LineTo(p.x, p.y))
+                        elements.append(cv.Path.Close())
+                        return cv.Path(elements, stroke_paint)
                     size = 400
                     center = size / 2
                     radius = 180
@@ -211,20 +226,6 @@ class Sortie:
                         style=ft.PaintingStyle.STROKE,
                         color=ft.Colors.WHITE,
                     )
-                    def get_star_points(n, r, offset_angle=0):
-                        return [
-                            ft.Offset(
-                                center + r * math.cos((2 * math.pi * i / n) + offset_angle),
-                                center + r * math.sin((2 * math.pi * i / n) + offset_angle)
-                            ) for i in range(n)
-                        ]
-                    # ヘキサグラム（六角星）のパスを生成する関数
-                    def create_triangle_path(points):
-                        elements = [cv.Path.MoveTo(points[0].x, points[0].y)]
-                        for p in points[1:]:
-                            elements.append(cv.Path.LineTo(p.x, p.y))
-                        elements.append(cv.Path.Close())
-                        return cv.Path(elements, stroke_paint)
                     # 描画要素のリスト
                     shapes = [
                         cv.Circle(center, center, radius, stroke_paint),
@@ -238,7 +239,7 @@ class Sortie:
                         width=size,
                         height=size,
                     )
-                    return ft.Container(content=canvas, alignment=ft.Alignment.CENTER, expand=True)
+                    return ft.Container(content=canvas, alignment=ft.Alignment.CENTER, expand=True, scale=ft.Scale(0.75) if type=="sub" else ft.Scale(1))
                 def _on_fav_changed(card_id, current_fav, external_update=False):
                     """報酬ダイアログ内でお気に入りが変更されたときのハンドラ
                     - DB の更新は外部呼び出し側が既に行っている場合があるので
@@ -274,6 +275,16 @@ class Sortie:
                         asyncio.create_task(_reload_sortie_tab())
                     except Exception:
                         pass
+                def revert_hexagram_color():
+                    """魔法陣の色を元に戻す"""
+                    canvas_shapes = self.loading_overlay.controls[1].content.content.shapes
+                    for i in range(len(canvas_shapes)):
+                        canvas_shapes[i].paint = ft.Paint(
+                            stroke_width=2,
+                            style=ft.PaintingStyle.STROKE,
+                            color=ft.Colors.WHITE,
+                        )
+                    self.loading_overlay.controls[1].content.content.update()
                 await asyncio.sleep(0.2)
                 if self.current_battle_winner == "ENEMY":
                     return
@@ -291,13 +302,43 @@ class Sortie:
                                 # 下地
                                 ft.Container(
                                     expand=True,
-                                    bgcolor=ft.Colors.with_opacity(0.88, ft.Colors.GREY),
+                                    bgcolor=ft.Colors.with_opacity(0.88, ft.Colors.BLACK),
                                 ),
                                 # 魔法陣
                                 ft.Container(
-                                    content=_draw_hexagram(), 
-                                    alignment=ft.Alignment.CENTER, 
+                                    content=_draw_hexagram("main"),
+                                    alignment=ft.Alignment.CENTER,
                                     expand=True
+                                ),
+                                ft.Container(
+                                    content=_draw_hexagram("sub"),
+                                    top=0,
+                                    left=0,
+                                    expand=True
+                                ),
+                                ft.Container(
+                                    content=_draw_hexagram("sub"),
+                                    top=0,
+                                    left=768-400-20,
+                                    expand=True
+                                ),
+                                ft.Container(
+                                    content=_draw_hexagram("sub"),
+                                    top=1024-400-40,
+                                    left=0,
+                                    expand=True
+                                ),
+                                ft.Container(
+                                    content=_draw_hexagram("sub"),
+                                    top=1024-400-40,
+                                    left=768-400-20,
+                                    expand=True
+                                ),
+                                # メッセージ
+                                ft.Container(
+                                    alignment=ft.Alignment.CENTER,
+                                    expand=True,
+                                    content=ft.Text("状態更新",color=ft.Colors.WHITE),
                                 ),
                             ]
                         )
@@ -312,6 +353,8 @@ class Sortie:
                         while True:
                             if count >= gacha_num:
                                 break
+                            self.loading_overlay.controls[6].content.value = f"ランダム記事取得中..."
+                            self.loading_overlay.controls[6].update()
                             randList = await fetch_random_wiki_articles(self.page.debug, gacha_num-count)
                             if randList == []:
                                 force_stopped = True
@@ -327,11 +370,19 @@ class Sortie:
                                     query = True
                                 else:
                                     t_quote = urllib.parse.quote(title)
+                                    self.loading_overlay.controls[6].content.value = f"ランクデータ取得中..."
+                                    self.loading_overlay.controls[6].update()
                                     rank_data = await fetch_wikirank_data(self.page.debug, t_quote)
                                     if rank_data == {}:
                                         debug_print(self.page.debug, "ランクデータ取得失敗。リトライ")
                                         continue
-                                    # 魔法陣の色を変えたいので即座にランクの決定を行う
+                                    self.loading_overlay.controls[6].content.value = f"記事情報取得中..."
+                                    self.loading_overlay.controls[6].update()
+                                    info_data = await fetch_wiki_info_data(self.page.debug, t_quote)
+                                    if info_data == {}:
+                                        debug_print(self.page.debug, "記事情報取得失敗。リトライ")
+                                        continue
+                                    # 魔法陣の色を変えたいのでここでランクの決定と素材判定を行う
                                     try:
                                         quality = float(rank_data["result"]["ja"]["quality"])
                                     except Exception:
@@ -339,29 +390,27 @@ class Sortie:
                                         debug_print(self.page.debug, f"Failed data: {rank_data}")
                                         continue
                                     rank = quality_to_rank(quality)
+                                    try:
+                                        isSozai = get_sozai_flag(info_data, pageid)
+                                    except :
+                                        debug_print(self.page.debug, "カテゴリ取得失敗。リトライ")
+                                        debug_print(self.page.debug, f"Failed data: {info_data}")
+                                        continue
                                     # 魔法陣の色を変える（各シェイプに新しいPaintを割り当てる）
                                     canvas_shapes = self.loading_overlay.controls[1].content.content.shapes
                                     for i in range(len(canvas_shapes)):
                                         canvas_shapes[i].paint = ft.Paint(
                                             stroke_width=2,
                                             style=ft.PaintingStyle.STROKE,
-                                            color=get_card_color(rank ,0),
+                                            color=get_card_color(rank, isSozai),
                                         )
                                     self.loading_overlay.controls[1].content.content.update()
-                                    info_data = await fetch_wiki_info_data(self.page.debug, t_quote)
-                                    if info_data == {}:
-                                        debug_print(self.page.debug, "記事情報取得失敗。リトライ")
-                                        continue
+                                    self.loading_overlay.controls[6].content.value = f"記事概要取得中..."
+                                    self.loading_overlay.controls[6].update()
                                     extract  = await fetch_wiki_summary(self.page.debug, t_quote)
                                     if extract == "ERROR":
                                         debug_print(self.page.debug, "記事概要取得失敗。リトライ")
-                                        continue
-                                    # 素材判定
-                                    try:
-                                        isSozai = get_sozai_flag(info_data, pageid)
-                                    except :
-                                        debug_print(self.page.debug, "カテゴリ取得失敗。リトライ")
-                                        debug_print(self.page.debug, f"Failed data: {info_data}")
+                                        revert_hexagram_color()
                                         continue
                                     # リソース取得
                                     try:
@@ -369,6 +418,7 @@ class Sortie:
                                     except:
                                         debug_print(self.page.debug, "リソース取得失敗。リトライ")
                                         debug_print(self.page.debug, f"Failed data: {info_data}")
+                                        revert_hexagram_color()
                                         continue
                                     # URL取得
                                     try:
@@ -377,6 +427,7 @@ class Sortie:
                                     except:
                                         debug_print(self.page.debug, "URL取得失敗。リトライ")
                                         debug_print(self.page.debug, f"Failed data: {info_data}")
+                                        revert_hexagram_color()
                                         continue
                                 if query:
                                     if isSozai == 0:
@@ -419,14 +470,7 @@ class Sortie:
                                     })
                                     count = count + 1
                                     # 1枚引き終わったら魔法陣の色を元に戻す
-                                    canvas_shapes = self.loading_overlay.controls[1].content.content.shapes
-                                    for i in range(len(canvas_shapes)):
-                                        canvas_shapes[i].paint = ft.Paint(
-                                            stroke_width=2,
-                                            style=ft.PaintingStyle.STROKE,
-                                            color=ft.Colors.WHITE,
-                                        )
-                                    self.loading_overlay.controls[1].content.content.update()
+                                    revert_hexagram_color()
                         if force_stopped == True:
                             self.loading_overlay.visible = False
                             self.page.show_dialog(ft.SnackBar(ft.Text("ランダム記事取得エラー。今回はガチャ報酬を取得できませんでした。"), duration=1500))
