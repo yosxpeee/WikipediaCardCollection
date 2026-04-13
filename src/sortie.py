@@ -300,9 +300,21 @@ class Sortie:
                             expand=True,
                             controls=[
                                 # 下地
-                                ft.Container(
-                                    expand=True,
-                                    bgcolor=ft.Colors.with_opacity(0.88, ft.Colors.BLACK),
+                                ft.ShaderMask(
+                                    content=ft.Container(
+                                        border=ft.Border.all(0),
+                                        alignment=ft.Alignment.CENTER,
+                                        bgcolor=ft.Colors.with_opacity(0.88, ft.Colors.BLACK),
+                                        content=None
+                                    ),
+                                    blend_mode=ft.BlendMode.SRC_IN,
+                                    shader=ft.RadialGradient(
+                                        center=ft.Alignment.CENTER,
+                                        radius=0.5,
+                                        colors=[ft.Colors.GREY, ft.Colors.BLACK, ft.Colors.GREY],
+                                        stops=[0.2, 0.8, 1.0],
+                                        tile_mode=ft.GradientTileMode.REPEATED,
+                                    ),
                                 ),
                                 # 魔法陣
                                 ft.Container(
