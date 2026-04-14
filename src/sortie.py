@@ -290,7 +290,6 @@ class Sortie:
                     return
                 if rewards == []:
                     return
-                items = []
                 items_for_db = []
                 for item in rewards:
                     if str(item).startswith("gacha"):
@@ -311,7 +310,7 @@ class Sortie:
                                     shader=ft.RadialGradient(
                                         center=ft.Alignment.CENTER,
                                         radius=0.5,
-                                        colors=[ft.Colors.GREY, ft.Colors.BLACK, ft.Colors.GREY],
+                                        colors=[ft.Colors.DEEP_PURPLE_900, ft.Colors.INDIGO_900, ft.Colors.DEEP_PURPLE_900],
                                         stops=[0.2, 0.8, 1.0],
                                         tile_mode=ft.GradientTileMode.REPEATED,
                                     ),
@@ -419,6 +418,8 @@ class Sortie:
                                     self.loading_overlay.controls[1].content.content.update()
                                     self.loading_overlay.controls[6].content.value = f"記事概要取得中..."
                                     self.loading_overlay.controls[6].update()
+                                    # UI を反映してから演出を一定時間表示する
+                                    await asyncio.sleep(2)
                                     extract  = await fetch_wiki_summary(self.page.debug, t_quote)
                                     if extract == "ERROR":
                                         debug_print(self.page.debug, "記事概要取得失敗。リトライ")
@@ -487,25 +488,9 @@ class Sortie:
                             self.loading_overlay.visible = False
                             self.page.show_dialog(ft.SnackBar(ft.Text("ランダム記事取得エラー。今回はガチャ報酬を取得できませんでした。"), duration=1500))
                             self.page.update()
-                        # まずDBに保存して `id` を割り振る（create_card_image の _on_fav_click が id を参照するため）
-                        try:
-                            save_cards(get_card_list)
-                        except Exception:
-                            pass
+                        # DB保存用配列に詰めなおす
                         for db_data in get_card_list:
-                            img = create_card_image(db_data, True, True, _on_fav_changed)
-                            view_data = ft.Container(
-                                width=320,
-                                height=480,
-                                content=ft.Stack(
-                                    controls=[img],
-                                ),
-                                bgcolor=ft.Colors.GREY_100,
-                                border_radius=5,
-                                padding=ft.Padding.all(5),
-                            )
                             items_for_db.append(db_data)
-                            items.append(view_data)
                         # オーバーレイを解いてローディングのものに戻しておく
                         self.loading_overlay.visible = False
                         self.loading_overlay = self.page.overlay[1]
@@ -516,23 +501,28 @@ class Sortie:
                             if data["pageId"] == item:
                                 data["rank"] = rankid_to_rank(data["rank"], data["isSozai"])
                                 data["resourceRANK"] = rankid_to_rank(data["resourceRANK"], data["isSozai"])
-                                img = create_card_image(data, True, True, _on_fav_changed)
-                                view_data = ft.Container(
-                                    width=320,
-                                    height=480,
-                                    content=ft.Stack(
-                                        controls=[img],
-                                    ),
-                                    bgcolor=ft.Colors.GREY_100,
-                                    border_radius=5,
-                                    padding=ft.Padding.all(5),
-                                )
                                 items_for_db.append(data)
-                                items.append(view_data)
                     else:
                         #ここに来たらバグです…
                         pass
-                if len(items) != 0:
+                if len(items_for_db) != 0:
+                    #まずDBに保存して `id` を割り振る（create_card_image の _on_fav_click が id を参照するため）
+                    save_cards(items_for_db)
+                    #ここで一括してカードイメージを作る
+                    items = []
+                    for db_data in items_for_db:
+                        img = create_card_image(db_data, True, True, _on_fav_changed)
+                        view_data = ft.Container(
+                            width=320,
+                            height=480,
+                            content=ft.Stack(
+                                controls=[img],
+                            ),
+                            bgcolor=ft.Colors.GREY_100,
+                            border_radius=5,
+                            padding=ft.Padding.all(5),
+                        )
+                        items.append(view_data)
                     reward_items_view = create_reward_items_carousel(items)
                     reward_close_button = ft.TextButton("Close", disabled=True, on_click=lambda x:self.page.pop_dialog())
                     reward_dialog =ft.AlertDialog(
@@ -545,7 +535,6 @@ class Sortie:
                     )
                     self.page.show_dialog(reward_dialog)
                     reward_close_button.disabled = False
-                    # DB 保存は必要な場合に既に行っている（重複保存を避ける）
                     #ページを再読み込みする
                     asyncio.create_task(_reload_sortie_tab())
             async def _sortie(player_data, enemy_data):
@@ -1096,11 +1085,11 @@ class Sortie:
                                 width=360,
                                 height=600,
                                 controls=[
-                                    _create_level_ui("NORMAL",    "出撃制限：Cのみ",   True , False), #C   (今のところC級のみ実装)
+                                    _create_level_ui("NORMAL",    "出撃制限：Cのみ",   True , False), #C
                                     _create_level_ui("HARD",      "出撃制限：UCまで",  False, False), #UC
                                     _create_level_ui("VERY HARD", "出撃制限：Rまで",   False, False), #R
-                                    _create_level_ui("HARD CORE", "出撃制限：SRまで",  False, True ), #SR
-                                    _create_level_ui("EXTREME",   "出撃制限：SSRまで", False, True ), #SSR
+                                    _create_level_ui("HARD CORE", "出撃制限：SRまで",  False, False), #SR  (今のところここまで実装)
+                                    _create_level_ui("EXTREME",   "出撃制限：SSRまで", False, False), #SSR
                                     _create_level_ui("INSANE",    "出撃制限：URまで",  False, True ), #UR
                                     _create_level_ui("TORMENT",   "出撃制限：なし",    False, True ), #LR
                                     _create_level_ui("LUNATIC",   "出撃制限：なし",    False, True ), #LR+
