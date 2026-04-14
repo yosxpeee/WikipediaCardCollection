@@ -889,7 +889,7 @@ class Sortie:
             self.current_select_card = {}
             # 保存時は8編成形式で保存する
             try:
-                with open('formation.json', 'w', encoding='utf-8') as f:
+                with open('sortie_info.json', 'w', encoding='utf-8') as f:
                     json.dump(self.formations, f, indent=4, ensure_ascii=False)
             except Exception:
                 pass
@@ -1106,15 +1106,9 @@ class Sortie:
                 formation_grid = None
             # 以前に編成したデータをそっくり読みだして編成を再現する
             try:
-                with open('formation.json', 'r', encoding='utf-8') as f:
+                with open('sortie_info.json', 'r', encoding='utf-8') as f:
                     loaded = json.load(f)
-                    # 互換対応: 旧フォーマット(6スロットのみ)の場合はタブ0に当てはめる
-                    if isinstance(loaded, list) and len(loaded) == 6:
-                        self.formations = [[{},{},{},{},{},{}] for _ in range(8)]
-                        self.formations[0] = loaded
-                    elif isinstance(loaded, list) and len(loaded) == 8:
-                        # 想定フォーマット
-                        self.formations = loaded
+                    self.formations = loaded
                     # 表示更新
                     self.current_tab = 0
                     _refresh_formation_panels()

@@ -1,0 +1,402 @@
+[
+    [
+        {
+            "id": 694,
+            "title": "永久のユウグレ",
+            "rank": "C",
+            "image": "",
+            "HP": "4362",
+            "ATK": "3217",
+            "DEF": "1362"
+        },
+        {
+            "id": 500,
+            "title": "ベンジャミン・カードーゾ",
+            "rank": "C",
+            "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Benjamin_Cardozo.jpg/960px-Benjamin_Cardozo.jpg",
+            "HP": "4307",
+            "ATK": "865",
+            "DEF": "1307"
+        },
+        {
+            "id": 818,
+            "title": "ホナス・ラマーリョ",
+            "rank": "C",
+            "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Jon%C3%A1s_Ramalho.jpg/960px-Jon%C3%A1s_Ramalho.jpg",
+            "HP": "4182",
+            "ATK": "2117",
+            "DEF": "1182"
+        },
+        {
+            "id": 351,
+            "title": "ミゲル・デ・オリベイラ",
+            "rank": "C",
+            "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/Miguel_de_oliveira.jpg/960px-Miguel_de_oliveira.jpg",
+            "HP": "3956",
+            "ATK": "2670",
+            "DEF": "956"
+        },
+        {
+            "id": 51,
+            "title": "小大君",
+            "rank": "C",
+            "image": "https://upload.wikimedia.org/wikipedia/commons/8/84/Sanj%C5%ABrokkasen-gaku_-_22_-_Kan%C5%8D_Naonobu_-_Kodai_no_Kimi.jpg",
+            "HP": "3845",
+            "ATK": "1716",
+            "DEF": "845"
+        },
+        {
+            "id": 282,
+            "title": "アレクサンダル・ルコヴィッチ",
+            "rank": "C",
+            "image": "https://upload.wikimedia.org/wikipedia/commons/1/15/Aleksandar_Lukovic.jpg",
+            "HP": "4350",
+            "ATK": "2046",
+            "DEF": "1350"
+        }
+    ],
+    [
+        {
+            "id": 451,
+            "title": "猪俣周杜",
+            "rank": "UC",
+            "image": "",
+            "HP": "4707",
+            "ATK": "6788",
+            "DEF": "1707"
+        },
+        {
+            "id": 329,
+            "title": "クライド (潜水艦)",
+            "rank": "UC",
+            "image": "",
+            "HP": "6525",
+            "ATK": "6062",
+            "DEF": "3525"
+        },
+        {
+            "id": 162,
+            "title": "ブレンパワード",
+            "rank": "UC",
+            "image": "",
+            "HP": "6508",
+            "ATK": "4232",
+            "DEF": "3508"
+        },
+        {
+            "id": 490,
+            "title": "ハンス＝ヨアヒム・スタック",
+            "rank": "UC",
+            "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/HansJoachimStuck2008.jpg/960px-HansJoachimStuck2008.jpg",
+            "HP": "6613",
+            "ATK": "3744",
+            "DEF": "3613"
+        },
+        {
+            "id": 66,
+            "title": "2024年のMotoGP",
+            "rank": "UC",
+            "image": "",
+            "HP": "7711",
+            "ATK": "3484",
+            "DEF": "4711"
+        },
+        {
+            "id": 827,
+            "title": "再捜査刑事・片岡悠介",
+            "rank": "UC",
+            "image": "",
+            "HP": "6519",
+            "ATK": "4399",
+            "DEF": "3519"
+        }
+    ],
+    [
+        {
+            "id": 178,
+            "title": "シャン・チー/テン・リングスの伝説",
+            "rank": "R",
+            "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Shang-chi_logo.jpg/960px-Shang-chi_logo.jpg",
+            "HP": "8221",
+            "ATK": "6257",
+            "DEF": "5221"
+        },
+        {
+            "id": 380,
+            "title": "灼眼のシャナの登場人物",
+            "rank": "R",
+            "image": "",
+            "HP": "11269",
+            "ATK": "6404",
+            "DEF": "8269"
+        },
+        {
+            "id": 600,
+            "title": "辻村深月",
+            "rank": "R",
+            "image": "",
+            "HP": "7070",
+            "ATK": "8870",
+            "DEF": "4070"
+        },
+        {
+            "id": 599,
+            "title": "松下幸之助",
+            "rank": "R",
+            "image": "https://upload.wikimedia.org/wikipedia/commons/0/01/Konosuke_Matsushita_01.jpg",
+            "HP": "7586",
+            "ATK": "7066",
+            "DEF": "4586"
+        },
+        {
+            "id": 454,
+            "title": "高解像度スマートフォンディスプレイの比較",
+            "rank": "R",
+            "image": "",
+            "HP": "10348",
+            "ATK": "3386",
+            "DEF": "7348"
+        },
+        {
+            "id": 577,
+            "title": "くまみこ",
+            "rank": "R",
+            "image": "",
+            "HP": "8404",
+            "ATK": "5571",
+            "DEF": "5404"
+        }
+    ],
+    [
+        {
+            "id": 1051,
+            "title": "愛媛県",
+            "rank": "SR",
+            "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/D%C5%8Dgo_Onsen.jpg/960px-D%C5%8Dgo_Onsen.jpg",
+            "HP": "10434",
+            "ATK": "10207",
+            "DEF": "7434"
+        },
+        {
+            "id": 1054,
+            "title": "火縄銃",
+            "rank": "SR",
+            "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Edo_period_rifles.jpg/960px-Edo_period_rifles.jpg",
+            "HP": "9176",
+            "ATK": "9894",
+            "DEF": "6176"
+        },
+        {
+            "id": 1037,
+            "title": "シャキーン!",
+            "rank": "SR",
+            "image": "",
+            "HP": "15548",
+            "ATK": "15474",
+            "DEF": "12548"
+        },
+        {
+            "id": 380,
+            "title": "灼眼のシャナの登場人物",
+            "rank": "R",
+            "image": "",
+            "HP": "11269",
+            "ATK": "6404",
+            "DEF": "8269"
+        },
+        {
+            "id": 1045,
+            "title": "トランスフォーマー カーロボット",
+            "rank": "SR",
+            "image": "",
+            "HP": "9748",
+            "ATK": "4433",
+            "DEF": "6748"
+        },
+        {
+            "id": 885,
+            "title": "東宝特撮映画の怪獣対策組織",
+            "rank": "SR",
+            "image": "",
+            "HP": "10739",
+            "ATK": "3676",
+            "DEF": "7739"
+        }
+    ],
+    [
+        {
+            "id": 706,
+            "title": "Mitsubishi SpaceJet",
+            "rank": "SSR",
+            "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/JA21MJ_TAXI_TEST.jpg/960px-JA21MJ_TAXI_TEST.jpg",
+            "HP": "13617",
+            "ATK": "10301",
+            "DEF": "10617"
+        },
+        {
+            "id": 15,
+            "title": "梶原岳人",
+            "rank": "SSR",
+            "image": "",
+            "HP": "13043",
+            "ATK": "11307",
+            "DEF": "10043"
+        },
+        {
+            "id": 993,
+            "title": "石川由依",
+            "rank": "SSR",
+            "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/Jurassic_World_Fallen_Kingdom_Japan_Premiere_Red_Carpet_Ishikawa_Yui_%2843101892301%29.jpg/960px-Jurassic_World_Fallen_Kingdom_Japan_Premiere_Red_Carpet_Ishikawa_Yui_%2843101892301%29.jpg",
+            "HP": "14280",
+            "ATK": "9842",
+            "DEF": "11280"
+        },
+        {
+            "id": 726,
+            "title": "小芝風花",
+            "rank": "SSR",
+            "image": "https://upload.wikimedia.org/wikipedia/commons/3/37/Fuka_Koshiba_2023_MHLW_hatarakikatasusume_230x300.jpg",
+            "HP": "13806",
+            "ATK": "17216",
+            "DEF": "10806"
+        },
+        {
+            "id": 1107,
+            "title": "丸山隆平",
+            "rank": "SSR",
+            "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/RyuheiMaruyama20220126.jpg/960px-RyuheiMaruyama20220126.jpg",
+            "HP": "12730",
+            "ATK": "12755",
+            "DEF": "9730"
+        },
+        {
+            "id": 1126,
+            "title": "ニック・ワレンダ",
+            "rank": "SSR",
+            "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Nik_Wallenda_waving.jpg/960px-Nik_Wallenda_waving.jpg",
+            "HP": "11476",
+            "ATK": "3853",
+            "DEF": "8476"
+        }
+    ],
+    [
+        {
+            "id": 1164,
+            "title": "新宿駅",
+            "rank": "UR",
+            "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/JRE_Shinjuku-STA_South.jpg/960px-JRE_Shinjuku-STA_South.jpg",
+            "HP": "17353",
+            "ATK": "12891",
+            "DEF": "14353"
+        },
+        {
+            "id": 1166,
+            "title": "シャチ",
+            "rank": "UR",
+            "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Killerwhales_jumping.jpg/960px-Killerwhales_jumping.jpg",
+            "HP": "17135",
+            "ATK": "10279",
+            "DEF": "14135"
+        },
+        {
+            "id": 1168,
+            "title": "木星",
+            "rank": "UR",
+            "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Jupiter_-_December_10_2000_%2849128253132%29.png/960px-Jupiter_-_December_10_2000_%2849128253132%29.png",
+            "HP": "13091",
+            "ATK": "13955",
+            "DEF": "10091"
+        },
+        {
+            "id": 726,
+            "title": "小芝風花",
+            "rank": "SSR",
+            "image": "https://upload.wikimedia.org/wikipedia/commons/3/37/Fuka_Koshiba_2023_MHLW_hatarakikatasusume_230x300.jpg",
+            "HP": "13806",
+            "ATK": "17216",
+            "DEF": "10806"
+        },
+        {
+            "id": 1167,
+            "title": "東條英機",
+            "rank": "SSR",
+            "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Hideki_Tojo_2.jpg/960px-Hideki_Tojo_2.jpg",
+            "HP": "15922",
+            "ATK": "13496",
+            "DEF": "12922"
+        },
+        {
+            "id": 15,
+            "title": "梶原岳人",
+            "rank": "SSR",
+            "image": "",
+            "HP": "13043",
+            "ATK": "11307",
+            "DEF": "10043"
+        }
+    ],
+    [
+        {
+            "id": 191,
+            "title": "大和_(戦艦)",
+            "rank": "LR",
+            "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Yamato_during_Trial_Service.jpg/960px-Yamato_during_Trial_Service.jpg",
+            "HP": "17238",
+            "ATK": "15303",
+            "DEF": "14238"
+        },
+        {
+            "id": 201,
+            "title": "武蔵_(戦艦)",
+            "rank": "LR",
+            "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Musashi_battleship_in_1942.jpg/960px-Musashi_battleship_in_1942.jpg",
+            "HP": "15567",
+            "ATK": "13432",
+            "DEF": "12567"
+        },
+        {
+            "id": 1169,
+            "title": "マリリン・モンロー",
+            "rank": "LR",
+            "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/Marilyn_Monroe%2C_Photoplay_1953.jpg/960px-Marilyn_Monroe%2C_Photoplay_1953.jpg",
+            "HP": "18146",
+            "ATK": "15897",
+            "DEF": "15146"
+        },
+        {
+            "id": 1170,
+            "title": "ディープインパクト (競走馬)",
+            "rank": "LR",
+            "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Deep_Impact_20090813.jpg/960px-Deep_Impact_20090813.jpg",
+            "HP": "18745",
+            "ATK": "16790",
+            "DEF": "15745"
+        },
+        {},
+        {}
+    ],
+    [
+        {
+            "id": 191,
+            "title": "大和_(戦艦)",
+            "rank": "LR",
+            "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Yamato_during_Trial_Service.jpg/960px-Yamato_during_Trial_Service.jpg",
+            "HP": "17238",
+            "ATK": "15303",
+            "DEF": "14238"
+        },
+        {
+            "id": 201,
+            "title": "武蔵_(戦艦)",
+            "rank": "LR",
+            "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Musashi_battleship_in_1942.jpg/960px-Musashi_battleship_in_1942.jpg",
+            "HP": "15567",
+            "ATK": "13432",
+            "DEF": "12567"
+        },
+        {},
+        {},
+        {},
+        {}
+    ]
+]
