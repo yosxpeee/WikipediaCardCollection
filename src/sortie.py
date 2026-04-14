@@ -97,7 +97,9 @@ class Sortie:
                     if item.title.value != level:
                         item.expanded = False
                     else:
+                        item.expanded = True
                         self.accordion_opened = level
+                        _save_sortie_info()
             else:
                 if level == self.accordion_opened:
                     for item in sortie_tab.controls[3].controls[1].controls:
@@ -883,16 +885,22 @@ class Sortie:
                     btn.bgcolor        = ft.Colors.ON_PRIMARY
                     btn.content.color  = ft.Colors.ON_SURFACE
                     btn.content.weight = ft.FontWeight.NORMAL
+        def _save_sortie_info():
+            try:
+                with open('sortie_info.json', 'w', encoding='utf-8') as f:
+                    tmp = {
+                        "last_select_formation": self.current_tab,
+                        "last_select_level" : self.accordion_opened,
+                        "formation": self.formations
+                    }
+                    json.dump(tmp, f, indent=4, ensure_ascii=False)
+            except Exception:
+                pass
         def _formation_dialog_common_update():
             """編成ダイアログの共通更新処理"""
             _set_current_formation(-1)
             self.current_select_card = {}
-            # 保存時は8編成形式で保存する
-            try:
-                with open('sortie_info.json', 'w', encoding='utf-8') as f:
-                    json.dump(self.formations, f, indent=4, ensure_ascii=False)
-            except Exception:
-                pass
+            _save_sortie_info()
             self.page.pop_dialog()
             _refresh_formation_panels()
             self.page.update()
@@ -995,7 +1003,7 @@ class Sortie:
                     content=ft.Text(str(i+1), text_align=ft.TextAlign.CENTER),
                     width=40,
                     height=36,
-                    on_click=(lambda e, idx=i: (setattr(self, 'current_tab', idx), _refresh_formation_panels(), self.page.update())),
+                    on_click=(lambda e, idx=i: (setattr(self, 'current_tab', idx), _save_sortie_info(), _refresh_formation_panels(), self.page.update())),
                 )
                 tab_buttons.append(btn)
             sortie_tab = ft.Column(
@@ -1108,9 +1116,10 @@ class Sortie:
             try:
                 with open('sortie_info.json', 'r', encoding='utf-8') as f:
                     loaded = json.load(f)
-                    self.formations = loaded
+                    self.formations = loaded["formation"]
                     # 表示更新
-                    self.current_tab = 0
+                    self.current_tab = loaded["last_select_formation"]
+                    _expansion_tile_control(loaded["last_select_level"], True)
                     _refresh_formation_panels()
             except Exception:
                 pass
