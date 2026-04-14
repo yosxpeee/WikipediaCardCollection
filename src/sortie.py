@@ -1088,9 +1088,9 @@ class Sortie:
                                     _create_level_ui("NORMAL",    "出撃制限：Cのみ",   True , False), #C
                                     _create_level_ui("HARD",      "出撃制限：UCまで",  False, False), #UC
                                     _create_level_ui("VERY HARD", "出撃制限：Rまで",   False, False), #R
-                                    _create_level_ui("HARD CORE", "出撃制限：SRまで",  False, False), #SR  (今のところここまで実装)
-                                    _create_level_ui("EXTREME",   "出撃制限：SSRまで", False, False), #SSR
-                                    _create_level_ui("INSANE",    "出撃制限：URまで",  False, True ), #UR
+                                    _create_level_ui("HARD CORE", "出撃制限：SRまで",  False, False), #SR
+                                    _create_level_ui("EXTREME",   "出撃制限：SSRまで", False, False), #SSR (今のところここまで実装)
+                                    _create_level_ui("INSANE",    "出撃制限：URまで",  False, False), #UR
                                     _create_level_ui("TORMENT",   "出撃制限：なし",    False, True ), #LR
                                     _create_level_ui("LUNATIC",   "出撃制限：なし",    False, True ), #LR+
                                 ],

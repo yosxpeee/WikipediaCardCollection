@@ -127,10 +127,15 @@ class Gacha:
             #    randList[0] = {"id":"139036",  "title":"宇宙空母ブルーノア"}          #R
             #    randList[0] = {"id":"371",     "title":"愛媛県"}                      #SR
             #    randList[0] = {"id":"1492869", "title":"キンシャサノキセキ"}          #SSR
-            #    randList[0] = {"id":"1855047", "title":"新宿駅"}                      #UR
-            #    randList[0] = {"id":"228773",  "title":"ディープインパクト (競走馬)"} #LR
             #    randList[0] = {"id":"6205",    "title":"大和_(戦艦)"}                 #UR
             #    randList[0] = {"id":"24163",   "title":"武蔵_(戦艦)"}                 #UR
+            #randList[0] = {"id":"1855047", "title":"新宿駅"}                      #UR
+            #randList[1] = {"id":"5145471", "title":"大谷翔平"}                      #UR
+            #randList[2] = {"id":"10785", "title":"シャチ"}                      #UR
+            #randList[3] = {"id":"16042", "title":"東條英機"}                      #UR
+            #randList[4] = {"id":"3967", "title":"木星"}                      #UR
+            #randList[5] = {"id":"2584807", "title":"マリリン・モンロー"}                      #UR
+            #randList[6] = {"id":"228773",  "title":"ディープインパクト (競走馬)"} #LR
             if randList == []:
                 force_stopped = True
                 break
