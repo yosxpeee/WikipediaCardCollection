@@ -176,10 +176,13 @@ class PowerUp:
         hp      = 0
         for r in RANK_TABLE:
             if r >= next_rankid:
-                defence, atk, hp = calc_status(d_resource, a_resource, rankid_to_rank(r, 0))
+                tmp_defence, tmp_atk, tmp_hp = calc_status(d_resource, a_resource, rankid_to_rank(r, 0))
                 if self.page.debug:
-                    debug_print(self.page.debug, f"{rankid_to_rank(r, 0)} | ATK:{atk} DEF:{defence} HP:{hp}")
+                    debug_print(self.page.debug, f"{rankid_to_rank(r, 0)} | ATK:{tmp_atk} DEF:{tmp_defence} HP:{tmp_hp}")
                 if r == next_rankid:
+                    defence = tmp_defence
+                    atk     = tmp_atk
+                    hp      = tmp_hp
                     simulate_data.append(
                         ft.Text(
                             f"{rankid_to_rank(r, 0).ljust(3, ' ')} | HP:{str(hp).ljust(5, ' ')} ATK:{str(atk).ljust(5, ' ')} DEF:{str(defence).ljust(5, ' ')}", 
@@ -190,7 +193,7 @@ class PowerUp:
                 else:
                     simulate_data.append(
                         ft.Text(
-                            f"{rankid_to_rank(r, 0).ljust(3, ' ')} | HP:{str(hp).ljust(5, ' ')} ATK:{str(atk).ljust(5, ' ')} DEF:{str(defence).ljust(5, ' ')}",
+                            f"{rankid_to_rank(r, 0).ljust(3, ' ')} | HP:{str(tmp_hp).ljust(5, ' ')} ATK:{str(tmp_atk).ljust(5, ' ')} DEF:{str(tmp_defence).ljust(5, ' ')}",
                             font_family="Consolas",
                         )
                     )
