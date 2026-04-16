@@ -6,8 +6,8 @@ import flet.canvas as cv
 import math
 import urllib
 
-from utils.utils import debug_print, rankid_to_rank, rank_to_rankid, calc_damage, quality_to_rank, get_sozai_flag, get_resources, get_urls, card_data_from_db, calc_status
-from utils.db import get_cards_by_rankid, get_cards_by_favorite, save_cards, get_card_from_pageid, update_favorite
+from utils.utils import debug_print, rankid_to_rank, rank_to_rankid, calc_damage, quality_to_rank, get_sozai_flag, get_resources, get_urls, card_data_from_db, calc_status, create_card_image_data
+from utils.db import get_cards_by_rankid, get_cards_by_favorite, save_cards, get_card_from_pageid, get_card_from_id, update_favorite
 from utils.ui import create_ranked_tabs, create_sortie_formation_image, create_card_image, create_reward_items_carousel, get_card_color
 from utils.webapi import fetch_random_wiki_articles, fetch_wikirank_data, fetch_wiki_info_data, fetch_wiki_summary
 
@@ -887,11 +887,28 @@ class Sortie:
                     btn.content.weight = ft.FontWeight.NORMAL
         def _save_sortie_info():
             try:
+                # 保存は軽量化して DB の id のみを保存する
+                minimal = []
+                for tab in self.formations:
+                    t = []
+                    for slot in tab:
+                        if slot == {} or slot is None:
+                            t.append({})
+                        else:
+                            # 優先して DB の主キー id を保存
+                            if isinstance(slot, dict) and slot.get("id") is not None:
+                                t.append({"id": slot.get("id")})
+                            elif isinstance(slot, dict) and slot.get("pageId") is not None:
+                                t.append({"pageId": slot.get("pageId")})
+                            else:
+                                # それ以外は空にする
+                                t.append({})
+                    minimal.append(t)
                 with open('sortie_info.json', 'w', encoding='utf-8') as f:
                     tmp = {
                         "last_select_formation": self.current_tab,
                         "last_select_level" : self.accordion_opened,
-                        "formation": self.formations
+                        "formation": minimal
                     }
                     json.dump(tmp, f, indent=4, ensure_ascii=False)
             except Exception:
@@ -1116,10 +1133,55 @@ class Sortie:
             try:
                 with open('sortie_info.json', 'r', encoding='utf-8') as f:
                     loaded = json.load(f)
-                    self.formations = loaded["formation"]
+                    raw = loaded.get("formation", [])
+                    converted = []
+                    # 新仕様: 各スロットは {} または {"id": <int>} のみを想定
+                    for tab in raw:
+                        new_tab = []
+                        for slot in tab:
+                            if not slot:
+                                new_tab.append({})
+                                continue
+                            # {"id": N} を想定して DB から展開する
+                            cid = None
+                            if isinstance(slot, dict) and slot.get("id") is not None:
+                                cid = slot.get("id")
+                            elif isinstance(slot, int):
+                                cid = slot
+                            if cid is not None:
+                                try:
+                                    rows = await asyncio.to_thread(get_card_from_id, cid)
+                                except Exception:
+                                    rows = []
+                                if rows and len(rows) > 0:
+                                    row = rows[0]
+                                    new_tab.append({
+                                        "id": row[0],
+                                        "title": row[2],
+                                        "rank": rankid_to_rank(row[5], row[7]),
+                                        "image": row[4],
+                                        "HP": row[9],
+                                        "ATK": row[10],
+                                        "DEF": row[11],
+                                    })
+                                else:
+                                    new_tab.append({})
+                            else:
+                                # 仕様外のデータは無視して空スロットにする
+                                new_tab.append({})
+                        converted.append(new_tab)
+                    # 正規化: 常に8タブ×6スロットの構造に整える
+                    normalized = [[{} for _ in range(6)] for _ in range(8)]
+                    for i, tab in enumerate(converted):
+                        if i >= 8:
+                            break
+                        for j in range(min(6, len(tab))):
+                            v = tab[j]
+                            normalized[i][j] = v if isinstance(v, dict) else {}
+                    self.formations = normalized
                     # 表示更新
-                    self.current_tab = loaded["last_select_formation"]
-                    _expansion_tile_control(loaded["last_select_level"], True)
+                    self.current_tab = loaded.get("last_select_formation", 0)
+                    _expansion_tile_control(loaded.get("last_select_level", self.accordion_opened), True)
                     _refresh_formation_panels()
             except Exception:
                 pass
