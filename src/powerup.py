@@ -12,8 +12,8 @@ class PowerUp:
         self.loading_overlay = page.overlay[1]
     async def do_powerup(self, target_id, next_rankid, atk, defence, hp, sozai_id):
         """強化実施処理"""
-        # 強化タブ自身を再読み込みして差し替える
         async def _reload_powerup_tab():
+            """画面リロード"""
             try:
                 # タブを一時的に無効化する
                 tabs_widget = self.page.controls[0]
@@ -141,8 +141,7 @@ class PowerUp:
         tab_bar_view.update()
         # 非同期で再読み込みを実行（UI スレッドをブロックしない）
         asyncio.create_task(_reload_powerup_tab())
-        # Note:
-        # タブ切替は再読み込みタスク内で元に戻すためここでは戻さない
+        # Note:タブ切替は再読み込みタスク内で元に戻すためここでは戻さない
         # （create() の完了後に表示更新される想定）
     def popup_powerup_dialog(self, target_id, sozai_id):
         """強化の確認画面表示"""
@@ -177,10 +176,13 @@ class PowerUp:
         hp      = 0
         for r in RANK_TABLE:
             if r >= next_rankid:
-                defence, atk, hp = calc_status(d_resource, a_resource, rankid_to_rank(r, 0))
+                tmp_defence, tmp_atk, tmp_hp = calc_status(d_resource, a_resource, rankid_to_rank(r, 0))
                 if self.page.debug:
-                    debug_print(self.page.debug, f"{rankid_to_rank(r, 0)} | ATK:{atk} DEF:{defence} HP:{hp}")
+                    debug_print(self.page.debug, f"{rankid_to_rank(r, 0)} | ATK:{tmp_atk} DEF:{tmp_defence} HP:{tmp_hp}")
                 if r == next_rankid:
+                    defence = tmp_defence
+                    atk     = tmp_atk
+                    hp      = tmp_hp
                     simulate_data.append(
                         ft.Text(
                             f"{rankid_to_rank(r, 0).ljust(3, ' ')} | HP:{str(hp).ljust(5, ' ')} ATK:{str(atk).ljust(5, ' ')} DEF:{str(defence).ljust(5, ' ')}", 
@@ -191,7 +193,7 @@ class PowerUp:
                 else:
                     simulate_data.append(
                         ft.Text(
-                            f"{rankid_to_rank(r, 0).ljust(3, ' ')} | HP:{str(hp).ljust(5, ' ')} ATK:{str(atk).ljust(5, ' ')} DEF:{str(defence).ljust(5, ' ')}",
+                            f"{rankid_to_rank(r, 0).ljust(3, ' ')} | HP:{str(tmp_hp).ljust(5, ' ')} ATK:{str(tmp_atk).ljust(5, ' ')} DEF:{str(tmp_defence).ljust(5, ' ')}",
                             font_family="Consolas",
                         )
                     )
@@ -257,7 +259,7 @@ class PowerUp:
             sozai_containers = []
             # 左側：ランク別タブの ListView を作成（共通化）
             from utils.ui import create_ranked_tabs
-            def _on_target_selected(cid, name, rk):
+            def _on_target_selected(cid, name, rk, hp, atk, deff, img):
                 nonlocal selected_target_id
                 selected_target_id = cid
                 selected_target_text.value = f"{cid} [{rk}] {name}"
@@ -271,36 +273,36 @@ class PowerUp:
             )
             for row in sozai_all:
                 # sozai_all は isSozai==1 の行のみ
-                    cid = row[0]
-                    name = row[2] or ""
-                    cont = ft.Container(
-                        padding=ft.Padding(top=0, left=6, right=6, bottom=0),
-                        bgcolor=None,
-                        content=ft.Row(
-                            controls=[
-                                ft.Text(str(cid).ljust(8, " "), font_family="Consolas"), 
-                                ft.Text(name, expand=True, tooltip=name, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS)
-                            ],
-                        ),
-                    )
-                    def _on_sozai_click(e, cid=cid, name=name, cont=cont):
-                        """素材リストをクリックしたときの処理"""
-                        nonlocal selected_sozai_id
-                        selected_sozai_id = cid
-                        selected_sozai_text.value = f"{cid} : {name}"
-                        selected_sozai_text.update()
-                        for c in sozai_containers:
-                            c.bgcolor = None
-                            c.content.controls[0].color = None
-                            c.content.controls[1].color = None
-                            c.update()
-                        cont.bgcolor = ft.Colors.YELLOW_100
-                        cont.content.controls[0].color = ft.Colors.BLACK
-                        cont.content.controls[1].color = ft.Colors.BLACK
-                        cont.update()
-                    cont.on_click = _on_sozai_click
-                    sozai_lv.controls.append(cont)
-                    sozai_containers.append(cont)
+                cid = row[0]
+                name = row[2] or ""
+                cont = ft.Container(
+                    padding=ft.Padding(top=0, left=6, right=6, bottom=0),
+                    bgcolor=None,
+                    content=ft.Row(
+                        controls=[
+                            ft.Text(str(cid).ljust(8, " "), font_family="Consolas"), 
+                            ft.Text(name, expand=True, tooltip=name, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS)
+                        ],
+                    ),
+                )
+                def _on_sozai_click(e, cid=cid, name=name, cont=cont):
+                    """素材リストをクリックしたときの処理"""
+                    nonlocal selected_sozai_id
+                    selected_sozai_id = cid
+                    selected_sozai_text.value = f"{cid} : {name}"
+                    selected_sozai_text.update()
+                    for c in sozai_containers:
+                        c.bgcolor = None
+                        c.content.controls[0].color = None
+                        c.content.controls[1].color = None
+                        c.update()
+                    cont.bgcolor = ft.Colors.YELLOW_100
+                    cont.content.controls[0].color = ft.Colors.BLACK
+                    cont.content.controls[1].color = ft.Colors.BLACK
+                    cont.update()
+                cont.on_click = _on_sozai_click
+                sozai_lv.controls.append(cont)
+                sozai_containers.append(cont)
             # 素材一覧が空ならプレースホルダを表示
             if len(sozai_lv.controls) == 0:
                 sozai_lv.controls.append(ft.Container(padding=ft.Padding.all(8), content=ft.Text("素材が見つかりません")))
@@ -341,6 +343,7 @@ class PowerUp:
                                         alignment=ft.Alignment.TOP_CENTER,
                                         content=ft.Column(
                                             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                                            spacing=0,
                                             controls=[
                                                 ft.Text("対象",weight=ft.FontWeight.BOLD), 
                                                 ft.Divider(color=ft.Colors.GREY, height=1), 
@@ -354,6 +357,7 @@ class PowerUp:
                                         alignment=ft.Alignment.TOP_CENTER,
                                         content=ft.Column(
                                             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                                            spacing=0,
                                             controls=[
                                                 ft.Text(f"素材",weight=ft.FontWeight.BOLD),
                                                 ft.Divider(color=ft.Colors.GREY, height=1),
@@ -368,6 +372,7 @@ class PowerUp:
                                                         ],
                                                     ),
                                                 ),
+                                                ft.Divider(color=ft.Colors.GREY, height=1),
                                                 sozai_lv,
                                             ],
                                         ),

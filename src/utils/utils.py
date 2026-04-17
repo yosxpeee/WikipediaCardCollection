@@ -1,7 +1,7 @@
 import requests
 import asyncio
 import random
-import random
+from requests.exceptions import Timeout
 
 # static tables
 HEADER = {
@@ -24,21 +24,29 @@ def debug_print(debug, msg):
     if debug:
         print(msg)
 
-def do_api(url):
-    """HTTPリクエスト(API)"""
+def do_api(debug, url, timeout=None):
+    """HTTPリクエスト(API)
+    timeout: seconds for requests.get; if provided, do_api will raise on timeout instead of retrying.
+    """
     while True:
         try:
-            response = requests.get(url, headers=HEADER)
+            response = requests.get(url, headers=HEADER, timeout=timeout)
             response.raise_for_status()  # エラー時にすぐ分かる
             break
+        except Timeout as e:
+            debug_print(debug, f"リクエストタイムアウト: sec={timeout} error={e}")
+            break
         except Exception as e:
-            pass
+            debug_print(debug, f"例外発生: error={e}")
+            break
     return response
 
-async def fetch_json(url, key_path=None):
-    """非同期でブロッキングなHTTP呼び出しをスレッドで実行するヘルパー"""
+async def fetch_json(debug, url, key_path=None):
+    """非同期でブロッキングなHTTP呼び出しをスレッドで実行するヘルパー
+    全体のタイムアウトは15秒。
+    """
     def _call():
-        r = do_api(url)
+        r = do_api(debug, url, timeout=15)
         j = r.json()
         if key_path is None:
             return j
@@ -46,7 +54,8 @@ async def fetch_json(url, key_path=None):
         for k in key_path:
             v = v.get(k, {})
         return v
-    return await asyncio.to_thread(_call)
+    # スレッド実行全体に対する保護（念のため）
+    return await asyncio.wait_for(asyncio.to_thread(_call), timeout=15)
 
 def rankid_to_rank(rankId, isSozai):
     """rank to rankid"""
@@ -59,6 +68,73 @@ def rank_to_rankid(rank):
     """rankid to rank"""
     key = next((k for k, v in RANK_TABLE.items() if v == rank), None)
     return key
+
+def quality_to_rank(quality):
+    """記事クオリティからランクへ変換"""
+    if quality == 100:
+        rank = "LR"
+    elif quality >= 90:
+        rank = "UR"
+    elif quality >= 80:
+        rank = "SSR"
+    elif quality >= 60:
+        rank = "SR"
+    elif quality >= 35:
+        rank = "R"
+    elif quality >= 20:
+        rank = "UC"
+    else:
+        rank = "C"
+    return rank
+
+def card_data_from_db(data_from_pageid):
+    #かぶったらAPIコールをせず内部データを使って更新する
+    full_url = data_from_pageid[0][3]
+    image_url = data_from_pageid[0][4]
+    #既存のデータは強化済みの可能性があるので元ランクのデータを使う
+    rank = rankid_to_rank(data_from_pageid[0][15], data_from_pageid[0][7])
+    quality = data_from_pageid[0][6]
+    isSozai = data_from_pageid[0][7]
+    extract = data_from_pageid[0][8]
+    hitPoint = int(data_from_pageid[0][9])
+    atk = int(data_from_pageid[0][10])
+    defence = int(data_from_pageid[0][11])
+    #favorite = data_from_pageid[0][12]
+    a_resource = int(data_from_pageid[0][13])
+    d_resource = int(data_from_pageid[0][14])
+    #r_resource = rankid_to_rank(data_from_pageid[0][15], data_from_pageid[0][7])
+    return full_url, image_url, rank, quality, isSozai, extract, hitPoint, atk, defence, a_resource, d_resource
+
+def get_sozai_flag(info_data, pageid):
+    """素材カードかどうかを取得"""
+    p_str = str(pageid)
+    isAimai         = any("曖昧さ回避" in category.get("title", "") for category in info_data["query"]["pages"][p_str]["categories"])
+    isSoftRedirect  = any("ソフトリダイレクト" in category.get("title", "") for category in info_data["query"]["pages"][p_str]["categories"])
+    if isAimai or isSoftRedirect:
+        isSozai = 1
+    else:
+        isSozai = 0
+    return isSozai
+
+def get_resources(info_data, pageid):
+    """攻撃力と防御力のリソースを取得"""
+    p_str = str(pageid)
+    d_resource = info_data["query"]["pages"][p_str]["length"]
+    a_resource = 0
+    for dayView in info_data["query"]["pages"][p_str]["pageviews"]:
+        if info_data["query"]["pages"][p_str]["pageviews"][dayView] != None:
+            a_resource = a_resource + info_data["query"]["pages"][p_str]["pageviews"][dayView]
+    return d_resource, a_resource
+
+def get_urls(info_data, pageid):
+    """URL系のパラメータを取得"""
+    p_str = str(pageid)
+    if "thumbnail" in info_data["query"]["pages"][p_str]:
+        image_url = info_data["query"]["pages"][p_str]["thumbnail"]["source"]
+    else:
+        image_url = ""
+    full_url = info_data["query"]["pages"][p_str]["fullurl"]
+    return image_url, full_url
 
 def calc_status(d_resource, a_resource, rank):
     """リソースからATK,DEF,HPの計算"""
@@ -117,18 +193,35 @@ def calc_damage(debug, id1_data, id2_data, id2_hp):
     """戦闘共通のダメージ計算"""
     defence_rnd = random.triangular(0.7, 1.3)
     wariai_rnd = random.triangular(0.05, 0.10)
+    type = "normal"
+    #回避を計算する(ダメージ0)
+    avoid_rnd = int(random.triangular(1, 100))
+    #print(f"回避係数: {avoid_rnd}")
+    if avoid_rnd >= 50 and avoid_rnd <= 52:
+        debug_print(debug, "相手が回避")
+        type = "avoid"
+        return 0, type
+    #クリティカルを計算する(1.5倍)
+    critical_rnd = int(random.triangular(1, 100))
+    #print(f"CRI係数: {critical_rnd}")
+    if critical_rnd >= 50 and critical_rnd <= 54:
+        debug_print(debug, "クリティカルダメージ発生")
+        critical_damage_rate = 1.5
+        type = "critical"
+    else:
+        critical_damage_rate = 1
     debug_print(debug, f"{id1_data["title"]} > {id2_data["title"]}")
     debug_print(debug, f"ランダム装甲: {defence_rnd}, 割合係数: {wariai_rnd}")
-    if int(id2_data["DEF"])*defence_rnd - int(id1_data["ATK"]) < 0:
+    if int(int(id2_data["DEF"])*defence_rnd) - int(int(id1_data["ATK"])*critical_damage_rate) < 0:
         #DEF*ランダム(0.7～1.3)-ATKして+200
         debug_print(debug, "実ダメージ")
-        id2_damage = abs(int(id2_data["DEF"])*defence_rnd - int(id1_data["ATK"])) + 200
+        id2_damage = abs(int(int(id2_data["DEF"])*defence_rnd) - int(int(id1_data["ATK"])*critical_damage_rate)) + 200
     else:
         #DEF-ATKでマイナスにならない（装甲抜けなかった）場合は割合ダメージ(5%～10%)+100
         #(艦これと違って割合ダメでも倒せるようにする)
         debug_print(debug, "割合+100")
-        id2_damage = id2_hp*wariai_rnd + 100
-    return id2_damage
+        id2_damage = int(id2_hp*wariai_rnd*critical_damage_rate) + 100
+    return id2_damage, type
 
 def create_card_image_data(data):
     """カード画像作成用のデータを作る"""

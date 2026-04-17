@@ -164,5 +164,6 @@ storage/
 
 # アプリで生成されるファイル
 *.db
+sortie_info.json
 settings.json
 icon.ico

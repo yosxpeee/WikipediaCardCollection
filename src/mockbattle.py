@@ -14,7 +14,7 @@ class MockBattle:
         """模擬戦のダイアログ表示"""
         def create_card_image_from_id(data):
             """カードイメージ作成"""
-            #Note: データ自体も欲しいので、utilsにある関数は呼ばず個別実装
+            #Note:データ自体も欲しいので、utilsにある関数は呼ばず個別実装
             rank = rankid_to_rank(data[0][5], 0)
             rank_origin = rankid_to_rank(data[0][15], 0)
             data_for_image = {
@@ -47,13 +47,36 @@ class MockBattle:
             log_col = mock_battle_dialog.content.controls[1].content.controls[2]
             player_bar._max_hp = int(player_data["HP"]) if str(player_data["HP"]).isdigit() else int(player_data["HP"])
             npc_bar._max_hp = int(npc_data["HP"]) if str(npc_data["HP"]).isdigit() else int(npc_data["HP"])
+            def update_pb_color(pb, pct):
+                try:
+                    if pct > 0.5:
+                        pb.color = ft.Colors.BLUE
+                    elif pct > 0.3:
+                        pb.color = ft.Colors.YELLOW
+                    elif pct > 0.1:
+                        pb.color = ft.Colors.ORANGE
+                    else:
+                        pb.color = ft.Colors.RED
+                except Exception:
+                    pass
+
+            # 初期色設定
+            try:
+                update_pb_color(player_bar, 1.0)
+                update_pb_color(npc_bar, 1.0)
+            except Exception:
+                pass
             for turn in range(10):
-                npc_dmg = calc_damage(self.page.debug, player_data, npc_data, npc_hp)
+                npc_dmg, type = calc_damage(self.page.debug, player_data, npc_data, npc_hp)
                 npc_hp -= int(npc_dmg)
                 if npc_hp <= 0:
                     npc_hp = 0
                     npc_bar.value = 0.0
-                    msg = f"Turn {turn+1}: プレイヤーの攻撃、対戦相手へ{int(npc_dmg)}ダメージを与えた。(対戦相手の残HP: 0)"
+                    update_pb_color(npc_bar, 0.0)
+                    if type == "critical":
+                        msg = f"Turn {turn+1}: [Critical] プレイヤーの攻撃、対戦相手へ{int(npc_dmg)}ダメージを与えた。(対戦相手の残HP: 0)"
+                    else:
+                        msg = f"Turn {turn+1}: プレイヤーの攻撃、対戦相手へ{int(npc_dmg)}ダメージを与えた。(対戦相手の残HP: 0)"
                     log_col.controls.append(ft.Text(msg))
                     self.page.update()
                     await asyncio.sleep(0.30)
@@ -64,17 +87,28 @@ class MockBattle:
                     break
                 else:
                     max_hp = getattr(npc_bar, '_max_hp', None) or int(npc_data["HP"])
-                    npc_bar.value = max(0.0, float(npc_hp) / float(max_hp))
-                    msg = f"Turn {turn+1}: プレイヤーの攻撃、対戦相手へ{int(npc_dmg)}ダメージを与えた。(対戦相手の残HP: {npc_hp})"
+                    val = max(0.0, float(npc_hp) / float(max_hp))
+                    npc_bar.value = val
+                    update_pb_color(npc_bar, val)
+                    if type == "critical":
+                        msg = f"Turn {turn+1}: [Critical] プレイヤーの攻撃、対戦相手へ{int(npc_dmg)}ダメージを与えた。(対戦相手の残HP: {npc_hp})"
+                    elif type == "avoid":
+                        msg = f"Turn {turn+1}: プレイヤーの攻撃、対戦相手は攻撃を回避した。(対戦相手の残HP: {npc_hp})"
+                    else:
+                        msg = f"Turn {turn+1}: プレイヤーの攻撃、対戦相手へ{int(npc_dmg)}ダメージを与えた。(対戦相手の残HP: {npc_hp})"
                     log_col.controls.append(ft.Text(msg))
                     self.page.update()
                 await asyncio.sleep(0.30)
-                player_dmg = calc_damage(self.page.debug, npc_data, player_data, player_hp)
+                player_dmg, type = calc_damage(self.page.debug, npc_data, player_data, player_hp)
                 player_hp -= int(player_dmg)
                 if player_hp <= 0:
                     player_hp = 0
                     player_bar.value = 0.0
-                    msg = f"Turn {turn+1}: 対戦相手の攻撃、プレイヤーへ{int(player_dmg)}のダメージを与えた。(プレイヤーの残HP: 0)"
+                    update_pb_color(player_bar, 0.0)
+                    if type == "critical":
+                        msg = f"Turn {turn+1}: [Critical] 対戦相手の攻撃、プレイヤーへ{int(player_dmg)}のダメージを与えた。(プレイヤーの残HP: 0)"
+                    else:
+                        msg = f"Turn {turn+1}: 対戦相手の攻撃、プレイヤーへ{int(player_dmg)}のダメージを与えた。(プレイヤーの残HP: 0)"
                     log_col.controls.append(ft.Text(msg))
                     self.page.update()
                     await asyncio.sleep(0.30)
@@ -85,8 +119,15 @@ class MockBattle:
                     break
                 else:
                     max_hp = getattr(player_bar, '_max_hp', None) or int(player_data["HP"])
-                    player_bar.value = max(0.0, float(player_hp) / float(max_hp))
-                    msg = f"Turn {turn+1}: 対戦相手の攻撃、プレイヤーへ{int(player_dmg)}のダメージを与えた。(プレイヤーの残HP: {player_hp})"
+                    valp = max(0.0, float(player_hp) / float(max_hp))
+                    player_bar.value = valp
+                    update_pb_color(player_bar, valp)
+                    if type == "critical":
+                        msg = f"Turn {turn+1}: [Critical] 対戦相手の攻撃、プレイヤーへ{int(player_dmg)}のダメージを与えた。(プレイヤーの残HP: {player_hp})"
+                    elif type == "avoid":
+                        msg = f"Turn {turn+1}: 対戦相手の攻撃、プレイヤーは攻撃を回避した。(プレイヤーの残HP: {player_hp})"
+                    else:
+                        msg = f"Turn {turn+1}: 対戦相手の攻撃、プレイヤーへ{int(player_dmg)}のダメージを与えた。(プレイヤーの残HP: {player_hp})"
                     log_col.controls.append(ft.Text(msg))
                     self.page.update()
                 await asyncio.sleep(0.30)
@@ -143,7 +184,7 @@ class MockBattle:
                                         bgcolor=ft.Colors.GREY_100, border_radius=5,
                                         padding=ft.Padding.all(5),
                                     ),
-                                    ft.ProgressBar(width=320, value=1.0),
+                                    ft.ProgressBar(width=320, value=1.0, color=ft.Colors.BLUE),
                                 ],
                             ),
                             ft.Text("vs"),
@@ -162,7 +203,7 @@ class MockBattle:
                                         bgcolor=ft.Colors.GREY_100, border_radius=5,
                                         padding=ft.Padding.all(5),
                                     ),
-                                    ft.ProgressBar(width=320, value=1.0),
+                                    ft.ProgressBar(width=320, value=1.0, color=ft.Colors.BLUE),
                                 ],
                             ),
                         ],
@@ -248,7 +289,7 @@ class MockBattle:
             target_containers = []
             # 左側：ランク別タブの ListView を作成（共通化）
             from utils.ui import create_ranked_tabs
-            def _on_player_selected(cid, name, rk):
+            def _on_player_selected(cid, name, rk, hp, atk, deff, img):
                 nonlocal selected_single_mock_player_card_id
                 selected_single_mock_player_card_id = cid
                 selected_single_mock_player_text.value = f"{cid} [{rk}] {name}"
@@ -291,6 +332,7 @@ class MockBattle:
                                         alignment=ft.Alignment.TOP_CENTER,
                                         content=ft.Column(
                                             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                                            spacing=0,
                                             controls=[
                                                 ft.Text("プレイヤー",weight=ft.FontWeight.BOLD), 
                                                 ft.Divider(color=ft.Colors.GREY, height=1), 
@@ -305,17 +347,23 @@ class MockBattle:
                                         content=ft.Column(
                                             width=268,
                                             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                                            spacing=0,
                                             controls=[
                                                 ft.Text("対戦相手",weight=ft.FontWeight.BOLD), 
                                                 ft.Divider(color=ft.Colors.GREY, height=1), 
-                                                ft.Button(ft.Text("  C級からランダムに選ぶ",font_family="Consolas"),on_click=lambda x:select_npc_by_rank("C")),
-                                                ft.Button(ft.Text(" UC級からランダムに選ぶ",font_family="Consolas"),on_click=lambda x:select_npc_by_rank("UC")),
-                                                ft.Button(ft.Text("  R級からランダムに選ぶ",font_family="Consolas"),on_click=lambda x:select_npc_by_rank("R")),
-                                                ft.Button(ft.Text(" SR級からランダムに選ぶ",font_family="Consolas"),on_click=lambda x:select_npc_by_rank("SR")),
-                                                ft.Button(ft.Text("SSR級からランダムに選ぶ",font_family="Consolas"),on_click=lambda x:select_npc_by_rank("SSR")),
-                                                ft.Button(ft.Text(" UR級からランダムに選ぶ",font_family="Consolas"),on_click=lambda x:select_npc_by_rank("UR")),
-                                                ft.Button(ft.Text(" LR級からランダムに選ぶ",font_family="Consolas"),on_click=lambda x:select_npc_by_rank("LR")),
-                                            ]
+                                                ft.Column(
+                                                    margin=ft.Margin.all(10),
+                                                    controls=[
+                                                        ft.Button(ft.Text("  C級からランダムに選ぶ",font_family="Consolas"),on_click=lambda x:select_npc_by_rank("C")),
+                                                        ft.Button(ft.Text(" UC級からランダムに選ぶ",font_family="Consolas"),on_click=lambda x:select_npc_by_rank("UC")),
+                                                        ft.Button(ft.Text("  R級からランダムに選ぶ",font_family="Consolas"),on_click=lambda x:select_npc_by_rank("R")),
+                                                        ft.Button(ft.Text(" SR級からランダムに選ぶ",font_family="Consolas"),on_click=lambda x:select_npc_by_rank("SR")),
+                                                        ft.Button(ft.Text("SSR級からランダムに選ぶ",font_family="Consolas"),on_click=lambda x:select_npc_by_rank("SSR")),
+                                                        ft.Button(ft.Text(" UR級からランダムに選ぶ",font_family="Consolas"),on_click=lambda x:select_npc_by_rank("UR")),
+                                                        ft.Button(ft.Text(" LR級からランダムに選ぶ",font_family="Consolas"),on_click=lambda x:select_npc_by_rank("LR")),
+                                                    ],
+                                                ),
+                                            ],
                                         ),
                                     ),
                                 ],
