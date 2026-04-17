@@ -4,8 +4,8 @@
 なんか巷で流行った某ゲームもどきのアプリです。  
 面白半分で作ったので怒られたら消します()  
 
-使用したAI
-- コーディングAI
+がっつりAI頼みで作成しておりまして、使用したものは列挙しておきます。  
+- コーディングエージェント
   - GPT-5 mini
 - 画像生成AI
   - クラウドサービス
@@ -14,9 +14,9 @@
   - ローカル
     - Wan 2.2
     - FLUX1.dev
-    - Anima preview1
-    - Anima preview2
-    - Qwen Image Edit
+    - Qwen Image Edit 2509
+    - Anima preview1～3
+    - Diving-Illustrious Semi-Real v1.0
 
 ## 動作環境
 Windows 11 25H2以上  
