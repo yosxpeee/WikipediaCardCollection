@@ -881,12 +881,10 @@ class Sortie:
                     btn.bgcolor        = ft.Colors.ON_SURFACE
                     btn.content.color  = ft.Colors.ON_PRIMARY
                     btn.content.weight = ft.FontWeight.BOLD
-                    print(f"{idx} BOLD")
                 else:
                     btn.bgcolor        = ft.Colors.ON_PRIMARY
                     btn.content.color  = ft.Colors.ON_SURFACE
                     btn.content.weight = ft.FontWeight.NORMAL
-                    print(f"{idx} NORMAL")
         def _save_sortie_info():
             try:
                 # 保存は軽量化して DB の id のみを保存する
