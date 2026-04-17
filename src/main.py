@@ -11,7 +11,7 @@ from setting import Setting
 from utils.db import initialize_db
 from utils.manage_settings import get_dark_theme
 
-DEBUG_MODE = True
+DEBUG_MODE = False
 
 async def main(page: ft.Page):
     """メイン"""
