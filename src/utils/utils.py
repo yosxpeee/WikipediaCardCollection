@@ -1,6 +1,8 @@
 import requests
 import asyncio
 import random
+import os
+import sys
 from requests.exceptions import Timeout
 
 # static tables
@@ -23,6 +25,20 @@ def debug_print(debug, msg):
     """デバッグ出力"""
     if debug:
         print(msg)
+
+
+def resource_path(relative_path: str) -> str:
+    """Return path to resource, works for dev and PyInstaller onefile.
+
+    When bundled by PyInstaller in onefile mode, data files added with
+    --add-data are extracted to `sys._MEIPASS` at runtime.
+    """
+    if getattr(sys, "frozen", False):
+        base = getattr(sys, "_MEIPASS", os.getcwd())
+    else:
+        base = os.getcwd()
+    # Normalize separators and join
+    return os.path.join(base, *relative_path.split('/'))
 
 def do_api(debug, url, timeout=None):
     """HTTPリクエスト(API)

@@ -8,7 +8,7 @@ if exist .venv\Scripts\activate.bat (
     python -m venv .venv
     call .venv\Scripts\activate.bat
     pip install --upgrade pip
-    pip install pyinstaller flet==0.83.0 requests beautifulsoup4 pillow
+    pip install pyinstaller flet==0.84.0 requests beautifulsoup4 pillow
 )
 
 REM Clean previous builds
@@ -28,7 +28,7 @@ python -c "from PIL import Image; img=Image.open(r'%ICON_PNG_ABS%'); img.save(r'
 REM Build single-file, windowed executable. Include assets folder so Flet can load images/SVGs.
 REM Note: on Windows use a semicolon between source and destination inside the --add-data argument
 set ICON_ARG=--icon "%ICON_ICO_ABS%"
-pyinstaller --noconfirm --onefile --windowed %ICON_ARG% --name WikipediaCardCollection src\main.py --add-data "src\assets;assets"
+pyinstaller --noconfirm --onefile --windowed %ICON_ARG% --name WikipediaCardCollection src\main.py --add-data "src\assets;assets" --add-data "src\enemy_master_data.json;src" --add-data "src\stage_data.json;src"
 
 if %ERRORLEVEL% equ 0 (
     echo Build finished. See dist\WikipediaCardCollection.exe

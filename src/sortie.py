@@ -6,7 +6,7 @@ import flet.canvas as cv
 import math
 import urllib
 
-from utils.utils import debug_print, rankid_to_rank, rank_to_rankid, calc_damage, quality_to_rank, get_sozai_flag, get_resources, get_urls, card_data_from_db, calc_status, create_card_image_data
+from utils.utils import debug_print, rankid_to_rank, rank_to_rankid, calc_damage, quality_to_rank, get_sozai_flag, get_resources, get_urls, card_data_from_db, calc_status, resource_path
 from utils.db import get_cards_by_rankid, get_cards_by_favorite, save_cards, get_card_from_pageid, get_card_from_id, update_favorite
 from utils.ui import create_ranked_tabs, create_sortie_formation_image, create_card_image, create_reward_items_carousel, get_card_color
 from utils.webapi import fetch_random_wiki_articles, fetch_wikirank_data, fetch_wiki_info_data, fetch_wiki_summary
@@ -881,10 +881,12 @@ class Sortie:
                     btn.bgcolor        = ft.Colors.ON_SURFACE
                     btn.content.color  = ft.Colors.ON_PRIMARY
                     btn.content.weight = ft.FontWeight.BOLD
+                    print(f"{idx} BOLD")
                 else:
                     btn.bgcolor        = ft.Colors.ON_PRIMARY
                     btn.content.color  = ft.Colors.ON_SURFACE
                     btn.content.weight = ft.FontWeight.NORMAL
+                    print(f"{idx} NORMAL")
         def _save_sortie_info():
             try:
                 # 保存は軽量化して DB の id のみを保存する
@@ -973,42 +975,44 @@ class Sortie:
         # ローディングオーバーレイを表示
         self.loading_overlay.visible = True
         self.page.update()
-        # ステージデータ読み出し
-        with open('src/stage_data.json', 'r', encoding='utf-8') as f:
-            stage_data = json.load(f)
-        # 対戦相手のマスターデータ読み出し
-        with open('src/enemy_master_data.json', 'r', encoding='utf-8') as f:
-            master_data = json.load(f)
-        # ダイアログのボタン作成
-        self.formation_close_button = ft.TextButton(
-            "キャンセル", 
-            on_click=lambda e:{
-                _cancel_load_formation()
-            }
-        )
-        self.formation_clear_button = ft.TextButton(
-            "外す", 
-            on_click=lambda e:{
-                _clear_formation()
-            }
-        )
-        self.formation_ok_button = ft.TextButton(
-            "編成する", 
-            on_click=lambda e: {
-                _apply_load_formation()
-            }
-        )
-        # ランクごとにDBからカード一覧を取得
-        ranks = ["LR", "UR", "SSR", "SR", "R", "UC", "C", "★"]
-        all_cards_by_rank = {}
-        for rk in ranks:
-            if rk == "★":
-                rows = await asyncio.to_thread(get_cards_by_favorite)
-            else:
-                rid = rank_to_rankid(rk)
-                rows = await asyncio.to_thread(get_cards_by_rankid, rid, 0)
-            all_cards_by_rank[rk] = rows
         try:
+            # ステージデータ読み出し
+            stage_path = resource_path('src/stage_data.json')
+            with open(stage_path, 'r', encoding='utf-8') as f:
+                stage_data = json.load(f)
+            # 対戦相手のマスターデータ読み出し
+            enemy_path = resource_path('src/enemy_master_data.json')
+            with open(enemy_path, 'r', encoding='utf-8') as f:
+                master_data = json.load(f)
+            # ダイアログのボタン作成
+            self.formation_close_button = ft.TextButton(
+                "キャンセル", 
+                on_click=lambda e:{
+                    _cancel_load_formation()
+                }
+            )
+            self.formation_clear_button = ft.TextButton(
+                "外す", 
+                on_click=lambda e:{
+                    _clear_formation()
+                }
+            )
+            self.formation_ok_button = ft.TextButton(
+                "編成する", 
+                on_click=lambda e: {
+                    _apply_load_formation()
+                }
+            )
+            # ランクごとにDBからカード一覧を取得
+            ranks = ["LR", "UR", "SSR", "SR", "R", "UC", "C", "★"]
+            all_cards_by_rank = {}
+            for rk in ranks:
+                if rk == "★":
+                    rows = await asyncio.to_thread(get_cards_by_favorite)
+                else:
+                    rid = rank_to_rankid(rk)
+                    rows = await asyncio.to_thread(get_cards_by_rankid, rid, 0)
+                all_cards_by_rank[rk] = rows
             await asyncio.sleep(1)
             # タブボタン参照リスト（作成前に宣言）
             tab_buttons = []
@@ -1184,7 +1188,8 @@ class Sortie:
                     _expansion_tile_control(loaded.get("last_select_level", self.accordion_opened), True)
                     _refresh_formation_panels()
             except Exception:
-                pass
+                # ファイルがなかった場合（新規プレイ時）編成パネルの更新処理だけは行う
+                _refresh_formation_panels()
         finally:
             # ローディングオーバーレイを非表示（例外が起きても必ず閉じる）
             try:
