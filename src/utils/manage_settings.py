@@ -7,7 +7,8 @@ SETTINGS_FILE = "settings.json"
 def load_settings():
     """settings.json から設定を読み込む"""
     default_settings = {
-        "dark_theme": False
+        "dark_theme": False,
+        "volume": 0.0
     }
     if os.path.exists(SETTINGS_FILE):
         try:
@@ -35,6 +36,16 @@ def get_dark_theme():
     """ダークテーマの設定を取得"""
     settings = load_settings()
     return settings.get("dark_theme", False)
+
+def get_volume():
+    settings = load_settings()
+    return settings.get("volume", 0.0)
+
+def change_volume(value):
+    settings = load_settings()
+    settings["volume"] = value
+    save_settings(settings)
+    return value
 
 def toggle_dark_theme(value):
     """ダークテーマの切り替え（ON/OFF）"""

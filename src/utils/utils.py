@@ -3,6 +3,7 @@ import asyncio
 import random
 import os
 import sys
+import flet_audio as fta
 from requests.exceptions import Timeout
 
 # static tables
@@ -25,7 +26,6 @@ def debug_print(debug, msg):
     """デバッグ出力"""
     if debug:
         print(msg)
-
 
 def resource_path(relative_path: str) -> str:
     """Return path to resource, works for dev and PyInstaller onefile.
@@ -104,6 +104,7 @@ def quality_to_rank(quality):
     return rank
 
 def card_data_from_db(data_from_pageid):
+    """DBの情報からカードイメージのデータを作成する"""
     #かぶったらAPIコールをせず内部データを使って更新する
     full_url = data_from_pageid[0][3]
     image_url = data_from_pageid[0][4]
@@ -262,3 +263,20 @@ def create_card_image_data(data):
         "resourceRANK": rank_origin,
     }
     return card_data
+
+def switch_BGM(page, file, volume):
+    audio = fta.Audio(
+        src=file,
+        autoplay=True,
+        volume=volume,   #100%
+        balance=0,  #同じバランス
+        release_mode=fta.ReleaseMode.LOOP,
+    )
+    try:
+        page.services.pop()
+    except:
+        pass
+    page.services.append(audio)
+
+async def stop_BGM(page):
+    await page.services[0].release()

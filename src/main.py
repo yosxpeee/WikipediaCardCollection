@@ -9,13 +9,14 @@ from sortie import Sortie
 from setting import Setting
 
 from utils.db import initialize_db
-from utils.manage_settings import get_dark_theme
+from utils.utils import switch_BGM, stop_BGM
+from utils.manage_settings import get_dark_theme, get_volume
 
 DEBUG_MODE = False
 
 async def main(page: ft.Page):
     """メイン"""
-    def _change_tabs(e):
+    async def _change_tabs(e):
         """タブの切り替え"""
         async def __load_and_set_zukan():
             """図鑑タブのロード"""
@@ -108,6 +109,7 @@ async def main(page: ft.Page):
             tab_bar_view.controls[3] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             tab_bar_view.controls[4] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             tab_bar_view.update()
+            switch_BGM(page, "bgm\\神隠しの真相_2.mp3", get_volume())
         # 図鑑タブに切り替えたとき
         if e.control.selected_index == 1:
             # 強化、模擬戦のタブの中身をクリア（メモリ節約）
@@ -133,6 +135,7 @@ async def main(page: ft.Page):
             except:
                 tabs_widget.disabled = False
                 tabs_widget.update()
+            switch_BGM(page, "bgm\\Cassette_Tape_Dream_2.mp3", get_volume())
         # 強化タブに切り替えたとき
         if e.control.selected_index == 2:
             # リロードが必要なタブの中身をクリアしておく（メモリ節約）
@@ -216,6 +219,7 @@ async def main(page: ft.Page):
             tab_bar_view.controls[3] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             tab_bar_view.controls[4] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             tab_bar_view.update()
+            await stop_BGM(page)
         # 最後に last_tab_index を更新
         last_tab_index = e.control.selected_index
     ####################
@@ -447,7 +451,8 @@ async def main(page: ft.Page):
             ),
         )
     )
-    # 念のためここでも更新を掛ける
+    # BGM設定
+    switch_BGM(page, "bgm\\神隠しの真相_2.mp3", get_volume())
     page.update()
 
 if __name__ == "__main__":

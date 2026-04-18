@@ -1,5 +1,5 @@
 import flet as ft
-from utils.manage_settings import get_dark_theme, toggle_dark_theme
+from utils.manage_settings import get_dark_theme, get_volume, change_volume, toggle_dark_theme
 
 class Setting:
     def __init__(self, page):
@@ -33,6 +33,12 @@ class Setting:
                         ),
                     ],
                 ),
+                ft.Row(
+                    controls=[
+                        ft.Text("音量", size=16, weight=ft.FontWeight.BOLD),
+                        ft.Slider(value=get_volume(), on_change_end=lambda e:{change_volume(e.control.value)}),
+                    ]
+                )
             ],
         )
         return setting_container
