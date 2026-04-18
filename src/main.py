@@ -109,7 +109,7 @@ async def main(page: ft.Page):
             tab_bar_view.controls[3] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             tab_bar_view.controls[4] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             tab_bar_view.update()
-            switch_BGM(page, "bgm\\神隠しの真相_2.mp3", get_volume())
+            switch_BGM(page, "bgm_gacha", get_volume())
         # 図鑑タブに切り替えたとき
         if e.control.selected_index == 1:
             # 強化、模擬戦のタブの中身をクリア（メモリ節約）
@@ -135,7 +135,7 @@ async def main(page: ft.Page):
             except:
                 tabs_widget.disabled = False
                 tabs_widget.update()
-            switch_BGM(page, "bgm\\Cassette_Tape_Dream_2.mp3", get_volume())
+            switch_BGM(page, "bgm_zukan", get_volume())
         # 強化タブに切り替えたとき
         if e.control.selected_index == 2:
             # リロードが必要なタブの中身をクリアしておく（メモリ節約）
@@ -161,6 +161,7 @@ async def main(page: ft.Page):
             except Exception:
                 tabs_widget.disabled = False
                 tabs_widget.update()
+            switch_BGM(page, "bgm_powerup", get_volume())
         # 模擬戦のタブに切り替えたとき
         if e.control.selected_index == 3:
             # リロードが必要なタブの中身をクリアしておく（メモリ節約）
@@ -186,6 +187,7 @@ async def main(page: ft.Page):
             except Exception:
                 tabs_widget.disabled = False
                 tabs_widget.update()
+            switch_BGM(page, "bgm_mockbattle", get_volume())
         # 出撃タブに切り替えたとき
         if e.control.selected_index == 4:
             # リロードが必要なタブの中身をクリアしておく（メモリ節約）
@@ -211,6 +213,7 @@ async def main(page: ft.Page):
             except Exception:
                 tabs_widget.disabled = False
                 tabs_widget.update()
+            switch_BGM(page, "bgm_sortie", get_volume())
         # 設定タブに切り替えたとき
         if e.control.selected_index == 5:
             # リロードが必要なタブの中身をクリアしておく（メモリ節約）
@@ -452,7 +455,7 @@ async def main(page: ft.Page):
         )
     )
     # BGM設定
-    switch_BGM(page, "bgm\\神隠しの真相_2.mp3", get_volume())
+    switch_BGM(page, "bgm_gacha", get_volume())
     page.update()
 
 if __name__ == "__main__":

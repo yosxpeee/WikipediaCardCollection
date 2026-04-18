@@ -6,10 +6,11 @@ import flet.canvas as cv
 import math
 import urllib
 
-from utils.utils import debug_print, rankid_to_rank, rank_to_rankid, calc_damage, quality_to_rank, get_sozai_flag, get_resources, get_urls, card_data_from_db, calc_status, resource_path
+from utils.utils import debug_print, rankid_to_rank, rank_to_rankid, calc_damage, quality_to_rank, get_sozai_flag, get_resources, get_urls, card_data_from_db, calc_status, resource_path, switch_BGM, stop_BGM
 from utils.db import get_cards_by_rankid, get_cards_by_favorite, save_cards, get_card_from_pageid, get_card_from_id, update_favorite
 from utils.ui import create_ranked_tabs, create_sortie_formation_image, create_card_image, create_reward_items_carousel, get_card_color
 from utils.webapi import fetch_random_wiki_articles, fetch_wikirank_data, fetch_wiki_info_data, fetch_wiki_summary
+from utils.manage_settings import get_volume
 
 class Sortie:
     def __init__(self, page):
@@ -288,11 +289,15 @@ class Sortie:
                         )
                     self.loading_overlay.controls[1].content.content.update()
                 await asyncio.sleep(0.2)
+                await stop_BGM(self.page)
                 if self.current_battle_winner == "ENEMY":
+                    switch_BGM(self.page, "bgm_sortie", get_volume())
                     return
                 if rewards == []:
+                    switch_BGM(self.page, "bgm_sortie", get_volume())
                     return
                 items_for_db = []
+                switch_BGM(self.page, "bgm_sortie_reward", get_volume())
                 for item in rewards:
                     if str(item).startswith("gacha"):
                         #ガチャを回す場合
@@ -526,7 +531,10 @@ class Sortie:
                         )
                         items.append(view_data)
                     reward_items_view = create_reward_items_carousel(items)
-                    reward_close_button = ft.TextButton("Close", disabled=True, on_click=lambda x:self.page.pop_dialog())
+                    reward_close_button = ft.TextButton("Close", disabled=True, on_click=lambda x:{
+                        self.page.pop_dialog(),
+                        switch_BGM(self.page, "bgm_sortie", get_volume())
+                    })
                     reward_dialog =ft.AlertDialog(
                         modal=True,
                         title="戦闘報酬",
@@ -539,6 +547,9 @@ class Sortie:
                     reward_close_button.disabled = False
                     #ページを再読み込みする
                     asyncio.create_task(_reload_sortie_tab())
+                else:
+                    #ここに来ることはないはずだが念のため
+                    switch_BGM(self.page, "bgm_sortie", get_volume())
             async def _sortie(player_data, enemy_data):
                 """戦闘処理"""
                 def append_log(s):
@@ -618,6 +629,8 @@ class Sortie:
                 ####################
                 # 初期化
                 await asyncio.sleep(0.2)
+                await stop_BGM(self.page)
+                switch_BGM(self.page, "bgm_sortie_fight", get_volume())
                 log_list = battle_dialog.content.controls[1].content.controls[2]
                 # 準備：最大HPと現在HPを収集
                 p_max = [0]*6

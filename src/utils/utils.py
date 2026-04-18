@@ -5,6 +5,7 @@ import os
 import sys
 import flet_audio as fta
 from requests.exceptions import Timeout
+from utils.manage_settings import load_settings
 
 # static tables
 HEADER = {
@@ -264,7 +265,29 @@ def create_card_image_data(data):
     }
     return card_data
 
-def switch_BGM(page, file, volume):
+def switch_BGM(page, scene, volume):
+    settings = load_settings()
+    file = settings[scene]
+    num = len(page.services)
+    debug_print(f"[BGM] {num} {scene} {file}")
+    #デフォルト設定の場合のBGM選択
+    if file == "default":
+        if scene == "bgm_gacha":
+            file = "bgm\\神隠しの真相_2.mp3"
+        if scene == "bgm_zukan":
+            file = "bgm\\Cassette_Tape_Dream_2.mp3"
+        if scene == "bgm_mockbattle":
+            file = "bgm\\Flutter.mp3"
+        if scene == "bgm_mockbattle_fight":
+            file = "bgm\\8-bit_Aggressive1.mp3"
+        if scene == "bgm_powerup":
+            file = "bgm\\鍛冶屋のドワーフ.mp3"
+        if scene == "bgm_sortie":
+            file = "bgm\\Devil_Disaster.mp3"
+        if scene == "bgm_sortie_fight":
+            file = "bgm\\危機.mp3"
+        if scene == "bgm_sortie_reward":
+            file = "bgm\\敬虔な祈りと首輪.mp3"
     audio = fta.Audio(
         src=file,
         autoplay=True,
@@ -279,4 +302,5 @@ def switch_BGM(page, file, volume):
     page.services.append(audio)
 
 async def stop_BGM(page):
+    debug_print("[BGM] stop")
     await page.services[0].release()

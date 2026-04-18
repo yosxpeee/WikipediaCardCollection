@@ -7,8 +7,16 @@ SETTINGS_FILE = "settings.json"
 def load_settings():
     """settings.json から設定を読み込む"""
     default_settings = {
-        "dark_theme": False,
-        "volume": 0.0
+        "dark_theme"          : False,
+        "volume"              : 0.0,
+        "bgm_gacha"           : "default",
+        "bgm_zukan"           : "default",
+        "bgm_mockbattle"      : "default",
+        "bgm_mockbattle_fight": "default",
+        "bgm_powerup"         : "default",
+        "bgm_sortie"          : "default",
+        "bgm_sortie_fight"    : "default",
+        "bgm_sortie_reward"   : "default",
     }
     if os.path.exists(SETTINGS_FILE):
         try:
