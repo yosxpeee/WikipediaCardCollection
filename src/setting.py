@@ -1,6 +1,17 @@
 import flet as ft
 import asyncio
-from utils.manage_settings import get_dark_theme, get_volume, change_volume, toggle_dark_theme
+from utils.manage_settings import get_dark_theme, get_volume, change_volume, toggle_dark_theme, load_settings, save_settings
+
+BGM_MAPPING = [
+    "bgm_gacha",
+    "bgm_zukan",
+    "bgm_mockbattle",
+    "bgm_mockbattle_fight",
+    "bgm_powerup",
+    "bgm_sortie",
+    "bgm_sortie_fight",
+    "bgm_sortie_reward",
+]
 
 class Setting:
     def __init__(self, page):
@@ -36,8 +47,15 @@ class Setting:
                 textfield.append(tf)
             return textfield
         def _reset_value(num):
-            """BGMを初期値に戻す"""
-            bgm_textfields[num].value=""
+            """BGMを初期値に戻す（settings.json へ反映）"""
+            bgm_textfields[num].value = ""
+            try:
+                settings = load_settings()
+                if 0 <= num < len(BGM_MAPPING):
+                    settings[BGM_MAPPING[num]] = ""
+                    save_settings(settings)
+            except Exception:
+                pass
         async def _change_bgm_file(idx: int):
             """指定BGMに変更する（mp3のみ許可） - 非同期で FilePicker を呼ぶ"""
             try:
@@ -55,9 +73,27 @@ class Setting:
             try:
                 bgm_textfields[idx].value = path
                 bgm_textfields[idx].update()
+                # 選択を settings.json に保存
+                try:
+                    settings = load_settings()
+                    if 0 <= idx < len(BGM_MAPPING):
+                        settings[BGM_MAPPING[idx]] = path
+                        save_settings(settings)
+                except Exception:
+                    pass
             except Exception:
                 pass
         bgm_textfields = _create_textfield()
+        # 初期値を settings.json から読み出してフィールドに反映
+        try:
+            settings = load_settings()
+            for i, key in enumerate(BGM_MAPPING):
+                try:
+                    bgm_textfields[i].value = settings.get(key, "")
+                except Exception:
+                    pass
+        except Exception:
+            pass
         setting_container=ft.Column(
             expand=True,
             alignment=ft.MainAxisAlignment.START,
