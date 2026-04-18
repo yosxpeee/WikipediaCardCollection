@@ -12,7 +12,7 @@ from utils.db import initialize_db
 from utils.utils import switch_BGM, stop_BGM
 from utils.manage_settings import get_dark_theme, get_volume
 
-DEBUG_MODE = False
+DEBUG_MODE = True
 
 async def main(page: ft.Page):
     """メイン"""

@@ -130,12 +130,19 @@ class Setting:
                         ),
                     ],
                 ),
+                ft.Divider(height=1),
+                ft.Row(
+                    controls=[ft.Text("BGM設定", size=16, weight=ft.FontWeight.BOLD)]
+                ),
                 ft.Row(
                     controls=[
-                        ft.Text("音量", size=16, weight=ft.FontWeight.BOLD),
+                        ft.Text("音量", size=14),
                         ft.Slider(value=get_volume(), on_change=_on_volume_change, on_change_end=_on_volume_change_end, width=300),
                         volume_label,
                     ],
+                ),
+                ft.Row(
+                     controls=[ft.Text("シーン別設定", size=14)]
                 ),
                 ft.Container(
                     content=ft.Column(

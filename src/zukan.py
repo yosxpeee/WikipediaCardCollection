@@ -18,7 +18,7 @@ class Zukan:
     def get_all_target_count(self):
         """総数を取得する(APIコール)"""
         url = "https://ja.wikipedia.org/wiki/Special:Statistics"
-        response = do_api(url)
+        response = do_api(self.page.debug, url, 15)
         soup = BeautifulSoup(response.text, "html.parser")
         # コンテンツページ数の部分を探す（class名で特定）
         stats = soup.find("table", class_="mw-statistics-table")
@@ -444,7 +444,8 @@ class Zukan:
             # 総記事数はブロッキングなのでバックグラウンドで取得
             try:
                 count = await asyncio.to_thread(self.get_all_target_count)
-            except Exception:
+            except Exception as e:
+                print(e)
                 count = -1
             # DBからデータを持ってくる
             data = get_all_cards()
