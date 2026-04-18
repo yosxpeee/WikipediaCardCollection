@@ -18,7 +18,7 @@ class Zukan:
     def get_all_target_count(self):
         """総数を取得する(APIコール)"""
         url = "https://ja.wikipedia.org/wiki/Special:Statistics"
-        response = do_api(self.page.debug, url, 15)
+        response = do_api(self.page.debug, url)
         soup = BeautifulSoup(response.text, "html.parser")
         # コンテンツページ数の部分を探す（class名で特定）
         stats = soup.find("table", class_="mw-statistics-table")
