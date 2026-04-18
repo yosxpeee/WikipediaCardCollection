@@ -46,10 +46,12 @@ def get_dark_theme():
     return settings.get("dark_theme", False)
 
 def get_volume():
+    """音量取得"""
     settings = load_settings()
     return settings.get("volume", 0.0)
 
 def change_volume(value):
+    """音量変更"""
     settings = load_settings()
     settings["volume"] = value
     save_settings(settings)

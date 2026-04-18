@@ -266,6 +266,7 @@ def create_card_image_data(data):
     return card_data
 
 def switch_BGM(page, scene, volume):
+    """BGM切り替え"""
     settings = load_settings()
     file = settings[scene]
     num = len(page.services)
@@ -302,5 +303,6 @@ def switch_BGM(page, scene, volume):
     page.services.append(audio)
 
 async def stop_BGM(page):
+    """BGM停止"""
     debug_print(page.debug, "[BGM] stop")
     await page.services[0].release()
