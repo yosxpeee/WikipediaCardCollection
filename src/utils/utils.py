@@ -269,7 +269,7 @@ def switch_BGM(page, scene, volume):
     settings = load_settings()
     file = settings[scene]
     num = len(page.services)
-    debug_print(f"[BGM] {num} {scene} {file}")
+    debug_print(page.debug, f"[BGM] {num} {scene} {file}")
     #デフォルト設定の場合のBGM選択
     if file == "default":
         if scene == "bgm_gacha":
@@ -302,5 +302,5 @@ def switch_BGM(page, scene, volume):
     page.services.append(audio)
 
 async def stop_BGM(page):
-    debug_print("[BGM] stop")
+    debug_print(page.debug, "[BGM] stop")
     await page.services[0].release()

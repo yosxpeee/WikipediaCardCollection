@@ -18,6 +18,9 @@
     - Anima preview1～3
     - Diving-Illustrious Semi-Real v1.0
 
+BGMについては以下のサイトのものを使わせていただいております。  
+DOVA-SYNDROME: https://dova-s.jp/  
+
 ## 動作環境
 Windows 11 25H2以上  
 python 3.11以上  
