@@ -83,6 +83,22 @@ class Setting:
                     pass
             except Exception:
                 pass
+        def _on_volume_change(e):
+            """音量スライダー操作中"""
+            try:
+                volume_label.value = f"{e.control.value:.2f}"
+                volume_label.update()
+            except Exception:
+                pass
+        def _on_volume_change_end(e):
+            """音量スライダー操作終了"""
+            try:
+                change_volume(e.control.value)
+            except Exception:
+                pass
+        ####################
+        # 画面作成処理開始
+        ####################
         bgm_textfields = _create_textfield()
         # 初期値を settings.json から読み出してフィールドに反映
         try:
@@ -94,6 +110,8 @@ class Setting:
                     pass
         except Exception:
             pass
+        # 音量表示ラベルとハンドラを作成
+        volume_label = ft.Text(f"{get_volume():.2f}", size=14, width=60)
         setting_container=ft.Column(
             expand=True,
             alignment=ft.MainAxisAlignment.START,
@@ -115,8 +133,9 @@ class Setting:
                 ft.Row(
                     controls=[
                         ft.Text("音量", size=16, weight=ft.FontWeight.BOLD),
-                        ft.Slider(value=get_volume(), on_change_end=lambda e:{change_volume(e.control.value)}),
-                    ]
+                        ft.Slider(value=get_volume(), on_change=_on_volume_change, on_change_end=_on_volume_change_end, width=300),
+                        volume_label,
+                    ],
                 ),
                 ft.Container(
                     content=ft.Column(
