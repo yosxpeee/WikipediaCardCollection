@@ -9,14 +9,14 @@ def load_settings():
     default_settings = {
         "dark_theme"          : False,
         "volume"              : 0.0,
-        "bgm_gacha"           : "default",
-        "bgm_zukan"           : "default",
-        "bgm_mockbattle"      : "default",
-        "bgm_mockbattle_fight": "default",
-        "bgm_powerup"         : "default",
-        "bgm_sortie"          : "default",
-        "bgm_sortie_fight"    : "default",
-        "bgm_sortie_reward"   : "default",
+        "bgm_gacha"           : "",
+        "bgm_zukan"           : "",
+        "bgm_mockbattle"      : "",
+        "bgm_mockbattle_fight": "",
+        "bgm_powerup"         : "",
+        "bgm_sortie"          : "",
+        "bgm_sortie_fight"    : "",
+        "bgm_sortie_reward"   : "",
     }
     if os.path.exists(SETTINGS_FILE):
         try:

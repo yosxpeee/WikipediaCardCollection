@@ -272,7 +272,7 @@ def switch_BGM(page, scene, volume):
     num = len(page.services)
     debug_print(page.debug, f"[BGM] {num} {scene} {file}")
     #デフォルト設定の場合のBGM選択
-    if file == "default":
+    if file == "":
         if scene == "bgm_gacha":
             file = "bgm\\神隠しの真相_2.mp3"
         if scene == "bgm_zukan":
