@@ -1,5 +1,6 @@
 import flet as ft
 import asyncio
+from utils.db import get_all_achievements
 
 class Achievements:
     def __init__(self, page):
@@ -13,9 +14,64 @@ class Achievements:
         self.loading_overlay.visible = True
         self.page.update()
         try:
-            await asyncio.sleep(1)
-            achievements_view = ft.Container(
-                content=ft.Text("実装中")
+            await asyncio.sleep(0.5) # 短縮してテストしやすくする
+            print("DB READ")
+            achievements_data = await asyncio.to_thread(get_all_achievements)
+            def _build_achievement_card(achievement):
+                """単一の実績カードを生成するヘルパー関数"""
+                # achievement: (id, type, title, description, done, date) のタプル
+                _, a_type, a_title, a_desc, is_done, a_date = achievement
+                status_text = "達成済み" if is_done else "未達成"
+                status_color = ft.Colors.GREEN_700 if is_done else ft.Colors.RED_500
+                # カードの見た目を定義
+                card = ft.Container(
+                    padding=ft.Padding.all(15),
+                    bgcolor=ft.Colors.WHITE,
+                    border_radius=8,
+                    shadow=ft.BoxShadow(blur_radius=3, color=ft.Colors.BLACK_26),
+                    content=ft.Column(
+                        spacing=8,
+                        controls=[
+                            ft.Text(a_title, size=18, color=ft.Colors.BLACK, weight=ft.FontWeight.BOLD),
+                            ft.Row(
+                                controls=[
+                                    ft.Container(
+                                        width=50, 
+                                        height=24, 
+                                        bgcolor=status_color, 
+                                        border_radius=4, 
+                                        content=ft.Icon(ft.Icons.CHECK_CIRCLE if is_done else ft.Icons.DO_NOT_DISTURB, scale=ft.Scale(scale=0.75)),
+                                    ),
+                                    ft.Text(status_text, color=status_color, weight=ft.FontWeight.BOLD),
+                                ],
+                            ),
+                            ft.Text(a_desc, size=14, color=ft.Colors.BLACK_54),
+                            ft.Row(
+                                controls=[
+                                    ft.Text("種別: " + a_type, color=ft.Colors.BLACK, size=12),
+                                    ft.Text(f"登録日: {a_date if a_date else '----/--/--'}", size=12, color=ft.Colors.BLACK_38)
+                                ]
+                            )
+                        ],
+                    ),
+                )
+                return card
+
+            # 全ての実績カードを生成
+            achievement_cards = [_build_achievement_card(a) for a in achievements_data]
+            achievements_view = ft.Column(
+                scroll=ft.ScrollMode.AUTO,
+                spacing=0,
+                controls=[
+                    ft.Text("🏆 実績一覧 🏆", size=28, weight=ft.FontWeight.BOLD),
+                    ft.Divider(color=ft.Colors.GREY),
+                    ft.Container(
+                        content=ft.Column(
+                            controls=achievement_cards,
+                            spacing=10,
+                        )
+                    )
+                ]
             )
         finally:
             # ローディングオーバーレイを非表示（例外が起きても必ず閉じる）

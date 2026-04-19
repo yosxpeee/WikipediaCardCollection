@@ -194,4 +194,17 @@ def rankup_card(target_id, next_rankid, atk, defence, hp, sozai_id):
     conn.commit()
     # 断片化を防ぎたいのでバキュームする
     cursor.execute('''VACUUM''')
+    conn.commit()
     conn.close()
+
+def get_all_achievements():
+    """全実績データを取得"""
+    conn = sqlite3.connect('cards.db')
+    cursor = conn.cursor()
+    data = []
+    sql = "SELECT id, type, title, description, done, date FROM achivements"
+    cursor.execute(sql)
+    for item in cursor:
+        data.append(item)
+    conn.close()
+    return data
