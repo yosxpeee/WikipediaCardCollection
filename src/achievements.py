@@ -42,7 +42,8 @@ class Achievements:
                                         border_radius=4, 
                                         content=ft.Icon(
                                             ft.Icons.CHECK_CIRCLE if is_done else ft.Icons.DO_NOT_DISTURB, 
-                                            scale=ft.Scale(scale=0.75)
+                                            scale=ft.Scale(scale=0.75),
+                                            color=ft.Colors.WHITE
                                         ),
                                     ),
                                     ft.Text(status_text, color=status_color, weight=ft.FontWeight.BOLD),
@@ -62,6 +63,7 @@ class Achievements:
                 spacing=0,
                 controls=[
                     ft.Text("🏆 実績一覧 🏆", size=28, weight=ft.FontWeight.BOLD),
+                    ft.Text("※ガチャの実績は出撃の報酬獲得では達成されません。",size=14),
                     ft.Divider(color=ft.Colors.GREY),
                     ft.GridView(
                         expand=True,
