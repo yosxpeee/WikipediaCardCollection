@@ -290,6 +290,8 @@ def switch_BGM(page, scene, volume):
             file = "bgm\\危機.mp3"
         if scene == "bgm_sortie_reward":
             file = "bgm\\敬虔な祈りと首輪.mp3"
+        if scene == "bgm_achievements":
+            file = "bgm\\首領.mp3"
     audio = fta.Audio(
         src=file,
         autoplay=True,

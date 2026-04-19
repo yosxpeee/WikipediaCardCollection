@@ -17,6 +17,7 @@ def load_settings():
         "bgm_sortie"          : "",
         "bgm_sortie_fight"    : "",
         "bgm_sortie_reward"   : "",
+        "bgm_achievements"    : "",
     }
     if os.path.exists(SETTINGS_FILE):
         try:

@@ -12,6 +12,7 @@ BGM_MAPPING = [
     "bgm_sortie",
     "bgm_sortie_fight",
     "bgm_sortie_reward",
+    "bgm_achievements",
 ]
 
 class Setting:
@@ -289,6 +290,24 @@ class Setting:
                                     ft.OutlinedButton(
                                         content="変更",
                                         on_click=lambda e, n=7: asyncio.create_task(_change_bgm_file(n)),
+                                    ),
+                                ],
+                            ),
+                            ft.Row(
+                                spacing=2,
+                                controls=[
+                                    ft.Container(
+                                        width=120,
+                                        content=ft.Text("実績"),
+                                    ),
+                                    bgm_textfields[7],
+                                    ft.OutlinedButton(
+                                        content="リセット",
+                                        on_click=lambda x:_reset_value(8),
+                                    ),
+                                    ft.OutlinedButton(
+                                        content="変更",
+                                        on_click=lambda e, n=8: asyncio.create_task(_change_bgm_file(n)),
                                     ),
                                 ],
                             ),

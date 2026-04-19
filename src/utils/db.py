@@ -50,7 +50,7 @@ def initialize_db():
     conn.commit()
     # 実績の初期値を追加する（マスターCSVから、既存と重複しないものだけ挿入）
     base_dir = os.path.dirname(os.path.dirname(__file__))  # src/
-    csv_path = os.path.join(base_dir, 'achivements_master.csv')
+    csv_path = os.path.join(base_dir, 'achievements_master.csv')
     if os.path.exists(csv_path):
         with open(csv_path, encoding='utf-8') as f:
             reader = csv.reader(f)
