@@ -1,5 +1,6 @@
 import flet as ft
 import asyncio
+
 from utils.manage_settings import get_dark_theme, get_volume, change_volume, toggle_dark_theme, load_settings, save_settings
 
 BGM_MAPPING = [

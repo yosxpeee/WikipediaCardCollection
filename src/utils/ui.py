@@ -26,6 +26,7 @@ def get_card_color(rank, isSozai):
     return color
 
 def create_rank_text(rank):
+    """ランクのテキストを生成する"""
     if rank == "LR":
         color_gradient = ft.LinearGradient(
             begin=ft.Alignment.CENTER_LEFT,

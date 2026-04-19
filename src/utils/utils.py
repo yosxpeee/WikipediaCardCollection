@@ -5,6 +5,7 @@ import os
 import sys
 import flet_audio as fta
 from requests.exceptions import Timeout
+
 from utils.manage_settings import load_settings
 
 # static tables

@@ -1,5 +1,6 @@
 import flet as ft
 import asyncio
+
 from utils.db import get_cards_by_rankid, get_random_card_by_rank, get_card_from_id, get_cards_by_favorite
 from utils.ui import create_card_image
 from utils.utils import rank_to_rankid, rankid_to_rank, calc_damage, switch_BGM, stop_BGM

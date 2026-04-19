@@ -1,4 +1,5 @@
 import sqlite3
+
 from utils.utils import rank_to_rankid
 
 def initialize_db():
