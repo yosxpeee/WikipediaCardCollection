@@ -1,5 +1,6 @@
 import flet as ft
 import asyncio
+
 from utils.db import get_card_from_id, rankup_card, get_cards_by_rankid, get_cards_by_sozai, get_cards_by_favorite
 from utils.utils import RANK_TABLE, debug_print, rankid_to_rank, rank_to_rankid, calc_status, create_card_image_data
 from utils.ui import get_card_color, create_card_image
