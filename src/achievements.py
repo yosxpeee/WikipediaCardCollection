@@ -27,7 +27,7 @@ class Achievements:
                     padding=ft.Padding.all(15),
                     bgcolor=ft.Colors.WHITE,
                     border_radius=8,
-                    shadow=ft.BoxShadow(blur_radius=4, color=ft.Colors.BLACK_26),
+                    shadow=ft.BoxShadow(blur_radius=8, color=ft.Colors.GREY if self.page.theme_mode == ft.ThemeMode.LIGHT else ft.Colors.WHITE),
                     content=ft.Column(
                         spacing=4,
                         controls=[
@@ -67,6 +67,7 @@ class Achievements:
                     ft.Divider(color=ft.Colors.GREY),
                     ft.GridView(
                         expand=True,
+                        padding=ft.Padding.all(15),
                         runs_count=3, # 3列指定
                         spacing=15, # カード間の間隔
                         run_spacing=15, # 行間の間隔
