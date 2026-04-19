@@ -3,7 +3,7 @@ import urllib.parse
 import asyncio
 
 from utils.utils import debug_print, calc_status, quality_to_rank, card_data_from_db, get_sozai_flag, get_resources, get_urls
-from utils.db import save_cards, get_card_from_pageid
+from utils.db import save_cards, get_card_from_pageid, get_all_achievements, update_achievement
 from utils.ui import get_card_color, create_card_image
 from utils.webapi import fetch_random_wiki_articles, fetch_wikirank_data, fetch_wiki_info_data, fetch_wiki_summary
 
@@ -13,6 +13,62 @@ class Gacha:
         self.page = page
         # ローディングオーバーレイの参照を保持
         self.loading_overlay = page.overlay[0]
+
+    def achievements_check(self, get_card_list):
+        """実績チェック処理（実装中）"""
+        ach_data = get_all_achievements()
+        msg = []
+        for line in ach_data:
+            if line[1] == "ガチャ" and line[4] == 0:
+                if line[2] == "RED POWER":
+                    #RED POWERが未達成ならSSRが含まれているか調べる
+                    pass
+                if line[2] == "豪運":
+                    #豪運が未達成ならURが含まれているか調べる
+                    pass
+                if line[2] == "伝説":
+                    #伝説が未達成ならLRが含まれているか調べる
+                    pass
+                if line[2] == "奇跡":
+                    #奇跡が未達成ならLRが2枚以上あるかか調べる
+                    pass
+                if line[2] == "カス":
+                    #カスが未達成ならすべてのカードが素材でないかつランクがCであるかどうか調べる
+                    pass
+                if line[2] == "鉱脈を掘り当てた":
+                    #鉱脈を掘り当てたが未達成なら素材カードの数を取得する
+                    pass
+                if line[2] == "一撃の刃":
+                    #一撃の刃が未達成ならATKとDEFの差を調べる
+                    pass
+                if line[2] == "鉄壁":
+                    #鉄壁が未達成ならATKとDEFの差を調べる
+                    pass
+                if line[2] == "BINGO":
+                    #BINGOが未達成ならPageIdが3桁以上のゾロ目のカードを引いたか調べる
+                    isPageIdZoro = False
+                    for card in get_card_list:
+                        print(card)
+                        if isPageIdZoro == False:
+                            is_all_same = len(set(str(card["pageId"]))) == 1
+                            if len(str(card["pageId"])) >= 3 and is_all_same == True:
+                                print(f"条件を満たしたカードがある：id={card["pageId"]}")
+                                isPageIdZoro = True
+                    if isPageIdZoro == True:
+                        update_achievement(int(line[0]))
+                        msg.append(ft.Text("実績を達成：BINGO", color=ft.Colors.BLACK))
+                    else:
+                        print("BINGO：未達成")
+        if msg != []:
+            msg_container = ft.Column(
+                controls=msg
+            )
+            self.page.show_dialog(
+                ft.SnackBar(
+                    content=msg_container, 
+                    duration=1500
+                )
+            )
     async def draw(self, num):
         """ガチャ実行処理"""
         def _make_thumb_content(idx, selected):
@@ -129,7 +185,7 @@ class Gacha:
             #    randList[0] = {"id":"1492869", "title":"キンシャサノキセキ"}          #SSR
             #    randList[0] = {"id":"6205",    "title":"大和_(戦艦)"}                 #UR
             #    randList[0] = {"id":"24163",   "title":"武蔵_(戦艦)"}                 #UR
-            #randList[0] = {"id":"1855047", "title":"新宿駅"}                      #UR
+            randList[0] = {"id":"333333", "title":"獄門島"}                      #UR
             #randList[1] = {"id":"5145471", "title":"大谷翔平"}                      #UR
             #randList[2] = {"id":"10785", "title":"シャチ"}                      #UR
             #randList[3] = {"id":"16042", "title":"東條英機"}                      #UR
@@ -262,7 +318,7 @@ class Gacha:
         self.loading_overlay.visible = False
         self.page.update()
         # 結果を閉じるボタンの準備
-        self.close_button = ft.TextButton("Close", on_click=lambda e: self.page.pop_dialog())
+        self.close_button = ft.TextButton("Close", on_click=lambda e: (self.page.pop_dialog(), self.achievements_check(get_card_list)))
         # 選択インデックス（初期は0）
         selected_index = 0
         # Grid のサムネイルコントロール群を作る

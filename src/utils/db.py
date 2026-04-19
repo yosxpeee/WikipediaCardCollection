@@ -1,6 +1,7 @@
 import sqlite3
 import os
 import csv
+from datetime import datetime
 
 from utils.utils import rank_to_rankid, resource_path
 
@@ -49,7 +50,7 @@ def initialize_db():
     ''')
     conn.commit()
     # 実績の初期値を追加する（マスターCSVから、既存と重複しないものだけ挿入）
-    csv_path = resource_path('src/achievements_master.json')
+    csv_path = resource_path('src/achievements_master.csv')
     if os.path.exists(csv_path):
         with open(csv_path, encoding='utf-8') as f:
             reader = csv.reader(f)
@@ -208,3 +209,15 @@ def get_all_achievements():
         data.append(item)
     conn.close()
     return data
+
+def update_achievement(id):
+    """実績達成"""
+    formatted_date = datetime.now().strftime('%Y/%m/%d')
+    conn = sqlite3.connect('cards.db')
+    cursor = conn.cursor()
+    cursor.execute(
+        '''UPDATE achivements SET done = ?, date = ? WHERE id = ?''',
+        (1, formatted_date, int(id))
+    )
+    conn.commit()
+    conn.close()
