@@ -463,7 +463,7 @@ async def main(page: ft.Page):
                                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                                     controls=[
                                         ft.Image(
-                                            "icon_sortie.svg", 
+                                            "icon_achievements.svg", 
                                             color=ft.Colors.ON_SURFACE,
                                             width=24, 
                                             height=24

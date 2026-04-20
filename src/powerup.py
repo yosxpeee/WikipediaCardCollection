@@ -1,7 +1,7 @@
 import flet as ft
 import asyncio
 
-from utils.db import get_card_from_id, rankup_card, get_cards_by_rankid, get_cards_by_sozai, get_cards_by_favorite
+from utils.db import get_all_cards, get_card_from_id, rankup_card, get_cards_by_rankid, get_cards_by_sozai, get_cards_by_favorite, get_all_achievements, update_achievement
 from utils.utils import RANK_TABLE, debug_print, rankid_to_rank, rank_to_rankid, calc_status, create_card_image_data
 from utils.ui import get_card_color, create_card_image
 
@@ -11,6 +11,40 @@ class PowerUp:
         self.page = page
         # ローディングオーバーレイの参照を保持(図鑑のものを使いまわし)
         self.loading_overlay = page.overlay[1]
+    def achievements_check(self):
+        """実績チェック処理"""
+        def do_update_achievement():
+            """更新処理"""
+            update_achievement(int(line[0]))
+            msg.append(ft.Text(f"実績を達成：{line[2]}", color=ft.Colors.BLACK))
+        ach_data = get_all_achievements()
+        # あらかじめ条件に必要なデータを抽出する
+        db_data = get_all_cards()
+        powerup_LR = 0
+        for card in db_data:
+            #LRランクのカードかつresourceRANKの値とrankの値が食い違うもの（つまりLRまで強化したカード）をカウントする
+            if (rankid_to_rank(card[5], card[7]) == "LR") and (card[15] != card[4]):
+                powerup_LR+=1
+        msg = []
+        for line in ach_data:
+            if line[1] == "強化" and line[4] == 0:
+                if line[2] == "作られし伝説":
+                    if powerup_LR >= 1:
+                        do_update_achievement()
+                if line[2] == "英雄製造所":
+                    if powerup_LR >= 10:
+                        do_update_achievement()
+        if msg != []:
+            msg_container = ft.Column(
+                controls=msg
+            )
+            self.page.show_dialog(
+                ft.SnackBar(
+                    content=msg_container, 
+                    duration=1500,
+                    bgcolor=ft.Colors.LIGHT_GREEN,
+                )
+            )
     async def do_powerup(self, target_id, next_rankid, atk, defence, hp, sozai_id):
         """強化実施処理"""
         async def _reload_powerup_tab():
@@ -113,7 +147,10 @@ class PowerUp:
         # 完了通知POP(完了後のカードイメージを出力する)
         row_data = get_card_from_id(target_id)
         row_data_for_image = create_card_image_data(row_data[0])
-        self.close_button = ft.TextButton("Close", on_click=lambda e: self.page.pop_dialog())
+        self.close_button = ft.TextButton("Close", on_click=lambda e: (
+            self.page.pop_dialog(),
+            self.achievements_check()
+        ))
         complete_dialog = ft.AlertDialog(
             modal=True,
             title=ft.Text("強化完了"),

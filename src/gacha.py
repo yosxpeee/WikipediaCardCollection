@@ -356,7 +356,10 @@ class Gacha:
         self.loading_overlay.visible = False
         self.page.update()
         # 結果を閉じるボタンの準備
-        self.close_button = ft.TextButton("Close", on_click=lambda e: (self.page.pop_dialog(), self.achievements_check(get_card_list)))
+        self.close_button = ft.TextButton("Close", on_click=lambda e: (
+            self.page.pop_dialog(), 
+            self.achievements_check(get_card_list)
+        ))
         # 選択インデックス（初期は0）
         selected_index = 0
         # Grid のサムネイルコントロール群を作る
