@@ -7,7 +7,7 @@ import math
 import urllib
 
 from utils.utils import debug_print, rankid_to_rank, rank_to_rankid, calc_damage, quality_to_rank, get_sozai_flag, get_resources, get_urls, card_data_from_db, calc_status, resource_path, switch_BGM, stop_BGM
-from utils.db import get_cards_by_rankid, get_cards_by_favorite, save_cards, get_card_from_pageid, get_card_from_id, update_favorite
+from utils.db import get_cards_by_rankid, get_cards_by_favorite, save_cards, get_card_from_pageid, get_card_from_id, update_favorite, get_all_achievements, update_achievement
 from utils.ui import create_ranked_tabs, create_sortie_formation_image, create_card_image, create_reward_items_carousel, get_card_color
 from utils.webapi import fetch_random_wiki_articles, fetch_wikirank_data, fetch_wiki_info_data, fetch_wiki_summary
 from utils.manage_settings import get_volume
@@ -29,6 +29,43 @@ class Sortie:
         self.current_enemies_formation = [{},{},{},{},{},{}]
         self.accordion_opened = "NORMAL"
         self.current_battle_winner = "ENEMY"
+    def achievements_check(self, level, stage):
+        """実績解除処理"""
+        def do_update_achievement():
+            """更新処理"""
+            update_achievement(int(line[0]))
+            msg.append(ft.Text(f"実績を達成：{line[2]}", color=ft.Colors.BLACK))
+        ach_data = get_all_achievements()
+        msg = []
+        for line in ach_data:
+            if line[1] == "出撃" and line[4] == 0:
+                if line[2] == "出撃NORMAL制覇"    and level == "NORMAL"    and stage == "Stage 3":
+                    do_update_achievement()
+                if line[2] == "出撃HARD制覇"      and level == "HARD"      and stage == "Stage 3":
+                    do_update_achievement()
+                if line[2] == "出撃VERY HARD制覇" and level == "VERY HARD" and stage == "Stage 3":
+                    do_update_achievement()
+                if line[2] == "出撃HARD CORE制覇" and level == "HARD CORE" and stage == "Stage 3":
+                    do_update_achievement()
+                if line[2] == "出撃EXTREME制覇"   and level == "EXTREME"   and stage == "Stage 3":
+                    do_update_achievement()
+                if line[2] == "出撃INSANE制覇"    and level == "INSANE"    and stage == "Stage 3":
+                    do_update_achievement()
+                if line[2] == "出撃TORMENT制覇"   and level == "TORMENT"   and stage == "Stage 3":
+                    do_update_achievement()
+                if line[2] == "出撃LUNATIC制覇"   and level == "LUNATIC"   and stage == "Stage 3":
+                    do_update_achievement()
+        if msg != []:
+            msg_container = ft.Column(
+                controls=msg
+            )
+            self.page.show_dialog(
+                ft.SnackBar(
+                    content=msg_container, 
+                    duration=1500,
+                    bgcolor=ft.Colors.LIGHT_GREEN,
+                )
+            )
     async def create(self):
         """画面作成"""
         def _set_current_formation(no):
@@ -174,7 +211,7 @@ class Sortie:
                     data[5],
                 ],
             )
-        def _start_battle(data, title):
+        def _start_battle(level, stage):#data, title):
             """戦闘ダイアログを表示する"""
             async def _reload_sortie_tab():
                 """画面リロード"""
@@ -533,6 +570,7 @@ class Sortie:
                     reward_items_view = create_reward_items_carousel(items)
                     reward_close_button = ft.TextButton("Close", disabled=True, on_click=lambda x:{
                         self.page.pop_dialog(),
+                        self.achievements_check(level, stage),
                         switch_BGM(self.page, "bgm_sortie", get_volume())
                     })
                     reward_dialog =ft.AlertDialog(
@@ -733,6 +771,7 @@ class Sortie:
             ####################
             # 戦闘開始画面の表示
             ####################
+            data = stage_data[level][stage]
             #6枚編成済みかチェック(現在のタブ)
             for chk_data in self.formations[self.current_tab]:
                 if chk_data == {}:
@@ -760,7 +799,7 @@ class Sortie:
                 if rank_to_rankid(chk_data["rank"]) > rank_to_rankid(self.current_enemies_formation[0]["rank"]):
                     self.page.show_dialog(ft.SnackBar(ft.Text(f"難易度別の出撃条件を満たしていません。編成を変えてください。"), duration=1500))
                     return
-            grid_player = _create_formation_grid(self.formations[self.current_tab],         False)
+            grid_player = _create_formation_grid(self.formations[self.current_tab], False)
             grid_enemy  = _create_formation_grid(self.current_enemies_formation, True )
             battle_close_button = ft.TextButton("Close", disabled=True, on_click=lambda x:{
                 self.page.pop_dialog(),
@@ -768,7 +807,7 @@ class Sortie:
             })
             battle_dialog = ft.AlertDialog(
                 modal=True,
-                title=f"出撃：{title}",
+                title=f"出撃：{level} ({stage})",
                 content=ft.Column(
                     controls=[
                         ft.Row(
@@ -838,7 +877,7 @@ class Sortie:
                                 "Stage 1", 
                                 width=100,
                                 style=ft.ButtonStyle(shape=ft.BeveledRectangleBorder()),
-                                on_click=lambda x:_start_battle(stage_data[level]["Stage 1"], f"{level} (Stage 1)")
+                                on_click=lambda x:_start_battle(level, "Stage 1"),
                             ),
                             ft.Text(stage_data[level]["Stage 1"]["description"]),
                         ]
@@ -849,7 +888,7 @@ class Sortie:
                                 "Stage 2", 
                                 width=100,
                                 style=ft.ButtonStyle(shape=ft.BeveledRectangleBorder()),
-                                on_click=lambda x:_start_battle(stage_data[level]["Stage 2"], f"{level} (Stage 2)")
+                                on_click=lambda x:_start_battle(level, "Stage 2"),
                             ),
                             ft.Text(stage_data[level]["Stage 2"]["description"]),
                         ]
@@ -860,7 +899,7 @@ class Sortie:
                                 "Stage 3", 
                                 width=100,
                                 style=ft.ButtonStyle(shape=ft.BeveledRectangleBorder()),
-                                on_click=lambda x:_start_battle(stage_data[level]["Stage 3"], f"{level} (Stage 3)")
+                                on_click=lambda x:_start_battle(level, "Stage 3"),
                             ),
                             ft.Text(stage_data[level]["Stage 3"]["description"]),
                         ]
