@@ -59,18 +59,26 @@ class Achievements:
             # 全ての実績カードを生成
             achievement_cards = [_build_achievement_card(a) for a in achievements_data]
             achievements_view = ft.Column(
-                scroll=ft.ScrollMode.AUTO,
                 spacing=0,
                 controls=[
-                    ft.Text("🏆 実績一覧 🏆", size=28, weight=ft.FontWeight.BOLD),
+                    ft.Row(
+                        controls=[
+                            ft.Text("🏆 実績一覧 🏆", size=28, weight=ft.FontWeight.BOLD),
+                            ft.Container(expand=True),
+                            ft.Checkbox(label="出撃", value=True),
+                            ft.Checkbox(label="ガチャ", value=True),
+                            ft.Checkbox(label="強化", value=True),
+                        ]
+                    ),
                     ft.Text("※ガチャの実績は出撃の報酬獲得では達成されません。",size=14),
                     ft.Divider(color=ft.Colors.GREY),
                     ft.GridView(
+                        scroll=ft.ScrollMode.AUTO,
                         expand=True,
                         padding=ft.Padding.all(15),
-                        runs_count=3, # 3列指定
-                        spacing=15, # カード間の間隔
-                        run_spacing=15, # 行間の間隔
+                        runs_count=3,     # 3列指定
+                        spacing=15,       # カード間の間隔
+                        run_spacing=15,   # 行間の間隔
                         controls=achievement_cards,
                     )
                 ]

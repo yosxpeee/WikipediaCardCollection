@@ -47,7 +47,7 @@ class Gacha:
             if hasDoubleDef == False:
                 if card["DEF"] >= card["ATK"]*2 and card["isSozai"] == 0:
                     hasDoubleDef = True
-            # ページIDがゾロ目か調べる
+            # ページIDが3桁以上のゾロ目か調べる
             if hasPageIdZoro == False:
                 is_all_same = len(set(str(card["pageId"]))) == 1
                 if len(str(card["pageId"])) >= 3 and is_all_same == True:
@@ -76,13 +76,15 @@ class Gacha:
                     if rank_statistics["LR"] >= 1:
                         do_update_achievement()
                 if line[2] == "奇跡":
+                    #奇跡が未達成ならLRが2枚以上含まれているか調べる
                     if rank_statistics["LR"] >= 2:
                         do_update_achievement()
                 if line[2] == "カス":
+                    #カスが未達成なら全部Cかどうか調べる
                     if rank_statistics["C"] == 10:
                         do_update_achievement()
                 if line[2] == "鉱脈を掘り当てた":
-                    #鉱脈を掘り当てたが未達成なら素材カードの数を取得する
+                    #鉱脈を掘り当てたが未達成なら素材カードの数が5枚以上か調べる
                     if rank_statistics["--"] >= 5:
                         do_update_achievement()
                 if line[2] == "一撃の刃":
