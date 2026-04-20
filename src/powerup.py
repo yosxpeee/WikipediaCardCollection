@@ -23,8 +23,13 @@ class PowerUp:
         powerup_LR = 0
         for card in db_data:
             #LRランクのカードかつresourceRANKの値とrankの値が食い違うもの（つまりLRまで強化したカード）をカウントする
-            if (rankid_to_rank(card[5], card[7]) == "LR") and (card[15] != card[4]):
+            if (rankid_to_rank(card[5], card[7]) == "LR") and (card[15] != card[5]):
                 powerup_LR+=1
+        debug_print(self.page.debug, "########################################")
+        debug_print(self.page.debug, "## statistics for achievement ##########")
+        debug_print(self.page.debug, "########################################")
+        debug_print(self.page.debug, f"LRまで強化したカードの枚数: {powerup_LR}")
+        debug_print(self.page.debug, "########################################")
         msg = []
         for line in ach_data:
             if line[1] == "強化" and line[4] == 0:

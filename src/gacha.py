@@ -35,7 +35,6 @@ class Gacha:
         hasDoubleAtk = False
         hasDoubleDef = False
         for card in get_card_list:
-            print(card)
             # 引いたカードのランクと数を集計
             if card["isSozai"] == 1:
                 rank_statistics["--"] += 1
@@ -53,8 +52,10 @@ class Gacha:
                 is_all_same = len(set(str(card["pageId"]))) == 1
                 if len(str(card["pageId"])) >= 3 and is_all_same == True:
                     hasPageIdZoro = True
+        debug_print(self.page.debug, "########################################")
         debug_print(self.page.debug, "## statistics for achievement ##########")
-        debug_print(self.page.debug, rank_statistics)
+        debug_print(self.page.debug, "########################################")
+        debug_print(self.page.debug, f"引いたカードのランク内訳: {rank_statistics}")
         debug_print(self.page.debug, f"hasPageIdZoro: {hasPageIdZoro}")
         debug_print(self.page.debug, f"hasDoubleAtk: {hasDoubleAtk}")
         debug_print(self.page.debug, f"hasDoubleDef: {hasDoubleDef}")
