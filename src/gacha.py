@@ -13,52 +13,89 @@ class Gacha:
         self.page = page
         # ローディングオーバーレイの参照を保持
         self.loading_overlay = page.overlay[0]
-
     def achievements_check(self, get_card_list):
-        """実績チェック処理（実装中）"""
+        """実績チェック処理"""
+        def do_update_achievement():
+            """更新処理"""
+            update_achievement(int(line[0]))
+            msg.append(ft.Text(f"実績を達成：{line[2]}", color=ft.Colors.BLACK))
         ach_data = get_all_achievements()
+        # あらかじめ条件に必要なデータを抽出する
+        rank_statistics = {
+            "--": 0,
+            "C": 0,
+            "UC": 0,
+            "R": 0,
+            "SR": 0,
+            "SSR": 0,
+            "UR": 0,
+            "LR": 0,
+        }
+        hasPageIdZoro = False
+        hasDoubleAtk = False
+        hasDoubleDef = False
+        for card in get_card_list:
+            print(card)
+            # 引いたカードのランクと数を集計
+            if card["isSozai"] == 1:
+                rank_statistics["--"] += 1
+            else:
+                rank_statistics[card["rank"]] += 1
+            # DEFとATKの差を調べる
+            if hasDoubleAtk == False:
+                if card["ATK"] >= card["DEF"]*2 and card["isSozai"] == 0:
+                    hasDoubleAtk = True
+            if hasDoubleDef == False:
+                if card["DEF"] >= card["ATK"]*2 and card["isSozai"] == 0:
+                    hasDoubleDef = True
+            # ページIDがゾロ目か調べる
+            if hasPageIdZoro == False:
+                is_all_same = len(set(str(card["pageId"]))) == 1
+                if len(str(card["pageId"])) >= 3 and is_all_same == True:
+                    hasPageIdZoro = True
+        debug_print(self.page.debug, "## statistics for achievement ##########")
+        debug_print(self.page.debug, rank_statistics)
+        debug_print(self.page.debug, f"hasPageIdZoro: {hasPageIdZoro}")
+        debug_print(self.page.debug, f"hasDoubleAtk: {hasDoubleAtk}")
+        debug_print(self.page.debug, f"hasDoubleDef: {hasDoubleDef}")
+        debug_print(self.page.debug, "########################################")
         msg = []
         for line in ach_data:
             if line[1] == "ガチャ" and line[4] == 0:
                 if line[2] == "RED POWER":
                     #RED POWERが未達成ならSSRが含まれているか調べる
-                    pass
+                    if rank_statistics["SSR"] >= 1:
+                        do_update_achievement()
                 if line[2] == "豪運":
                     #豪運が未達成ならURが含まれているか調べる
-                    pass
+                    if rank_statistics["UR"] >= 1:
+                        do_update_achievement()
                 if line[2] == "伝説":
                     #伝説が未達成ならLRが含まれているか調べる
-                    pass
+                    if rank_statistics["LR"] >= 1:
+                        do_update_achievement()
                 if line[2] == "奇跡":
-                    #奇跡が未達成ならLRが2枚以上あるかか調べる
-                    pass
+                    if rank_statistics["LR"] >= 2:
+                        do_update_achievement()
                 if line[2] == "カス":
-                    #カスが未達成ならすべてのカードが素材でないかつランクがCであるかどうか調べる
-                    pass
+                    if rank_statistics["C"] == 10:
+                        do_update_achievement()
                 if line[2] == "鉱脈を掘り当てた":
                     #鉱脈を掘り当てたが未達成なら素材カードの数を取得する
-                    pass
+                    if rank_statistics["--"] >= 5:
+                        do_update_achievement()
                 if line[2] == "一撃の刃":
                     #一撃の刃が未達成ならATKとDEFの差を調べる
-                    pass
+                    if hasDoubleAtk == True:
+                        do_update_achievement()
                 if line[2] == "鉄壁":
                     #鉄壁が未達成ならATKとDEFの差を調べる
-                    pass
+                    if hasDoubleDef == True:
+                        do_update_achievement()
                 if line[2] == "BINGO":
                     #BINGOが未達成ならPageIdが3桁以上のゾロ目のカードを引いたか調べる
-                    isPageIdZoro = False
-                    for card in get_card_list:
-                        print(card)
-                        if isPageIdZoro == False:
-                            is_all_same = len(set(str(card["pageId"]))) == 1
-                            if len(str(card["pageId"])) >= 3 and is_all_same == True:
-                                print(f"条件を満たしたカードがある：id={card["pageId"]}")
-                                isPageIdZoro = True
-                    if isPageIdZoro == True:
-                        update_achievement(int(line[0]))
-                        msg.append(ft.Text("実績を達成：BINGO", color=ft.Colors.BLACK))
-                    else:
-                        print("BINGO：未達成")
+                    if hasPageIdZoro == True:
+                        do_update_achievement()
         if msg != []:
             msg_container = ft.Column(
                 controls=msg
@@ -66,7 +103,8 @@ class Gacha:
             self.page.show_dialog(
                 ft.SnackBar(
                     content=msg_container, 
-                    duration=1500
+                    duration=1500,
+                    bgcolor=ft.Colors.LIGHT_GREEN,
                 )
             )
     async def draw(self, num):
@@ -185,7 +223,7 @@ class Gacha:
             #    randList[0] = {"id":"1492869", "title":"キンシャサノキセキ"}          #SSR
             #    randList[0] = {"id":"6205",    "title":"大和_(戦艦)"}                 #UR
             #    randList[0] = {"id":"24163",   "title":"武蔵_(戦艦)"}                 #UR
-            randList[0] = {"id":"333333", "title":"獄門島"}                      #UR
+            #randList[0] = {"id":"333333", "title":"獄門島"}                      #R(ゾロ目)
             #randList[1] = {"id":"5145471", "title":"大谷翔平"}                      #UR
             #randList[2] = {"id":"10785", "title":"シャチ"}                      #UR
             #randList[3] = {"id":"16042", "title":"東條英機"}                      #UR
