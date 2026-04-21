@@ -40,7 +40,7 @@ def initialize_db():
     ####################
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS achivements (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY,
             type TEXT NOT NULL,
             title TEXT NOT NULL,
             description TEXT NOT NULL,
@@ -63,13 +63,14 @@ def initialize_db():
                     continue
                 if len(row) < 3:
                     continue
-                a_type = row[0].strip()
-                title = row[1].strip()
-                description = row[2].strip()
-                cursor.execute('''SELECT COUNT(*) FROM achivements WHERE type = ? AND title = ?''', (a_type, title))
+                id = row[0].strip()
+                a_type = row[1].strip()
+                title = row[2].strip()
+                description = row[3].strip()
+                cursor.execute('''SELECT COUNT(*) FROM achivements WHERE id = ? AND type = ? AND title = ?''', (id, a_type, title))
                 exists_count = cursor.fetchone()[0]
                 if exists_count == 0:
-                    cursor.execute('''INSERT INTO achivements (type, title, description, done, date) VALUES (?, ?, ?, 0, NULL)''', (a_type, title, description))
+                    cursor.execute('''INSERT INTO achivements (id, type, title, description, done, date) VALUES (?, ?, ?, 0, NULL)''', (id, a_type, title, description))
         conn.commit()
     conn.close()
 
