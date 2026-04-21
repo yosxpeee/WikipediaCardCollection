@@ -59,8 +59,38 @@ class Achievements:
                     ),
                 )
                 return card
-            # 全ての実績カードを生成
-            achievement_cards = [_build_achievement_card(a) for a in achievements_data]
+            def _apply_filters(e=None):
+                """フィルターを適用する"""
+                selected = [cb.label for cb in checkboxes if cb.value]
+                filtered = [a for a in self._achievements_data if a[1] in selected]
+                # 表示順を再保証（種別→ID）
+                filtered.sort(key=lambda a: (type_order.get(a[1], 99), a[0]))
+                grid.controls = [_build_achievement_card(a) for a in filtered]
+                try:
+                    self.page.update()
+                except Exception:
+                    pass
+            # 全ての実績カード元データを保持
+            self._achievements_data = achievements_data
+            # フィルタ用チェックボックスを作成し、変更時に表示を更新する
+            grid = ft.GridView(
+                scroll=ft.ScrollMode.AUTO,
+                expand=True,
+                padding=ft.Padding.all(15),
+                runs_count=3,     # 3列指定
+                spacing=15,       # カード間の間隔
+                run_spacing=15,   # 行間の間隔
+                controls=[],
+            )
+            cb_gacha = ft.Checkbox(label="ガチャ", value=True)
+            cb_zukan = ft.Checkbox(label="図鑑", value=True)
+            cb_sortie = ft.Checkbox(label="出撃", value=True)
+            cb_strength = ft.Checkbox(label="強化", value=True)
+            checkboxes = [cb_gacha, cb_zukan, cb_sortie, cb_strength]
+            for cb in checkboxes:
+                cb.on_change = _apply_filters
+            # 初期表示（全表示）
+            _apply_filters()
             achievements_view = ft.Column(
                 spacing=0,
                 controls=[
@@ -68,22 +98,15 @@ class Achievements:
                         controls=[
                             ft.Text("🏆 実績一覧 🏆", size=28, weight=ft.FontWeight.BOLD),
                             ft.Container(expand=True),
-                            ft.Checkbox(label="出撃", value=True),
-                            ft.Checkbox(label="ガチャ", value=True),
-                            ft.Checkbox(label="強化", value=True),
+                            cb_gacha,
+                            cb_zukan,
+                            cb_sortie,
+                            cb_strength,
                         ]
                     ),
                     ft.Text("※ガチャの実績は出撃の報酬獲得では達成されません。",size=14),
                     ft.Divider(color=ft.Colors.GREY),
-                    ft.GridView(
-                        scroll=ft.ScrollMode.AUTO,
-                        expand=True,
-                        padding=ft.Padding.all(15),
-                        runs_count=3,     # 3列指定
-                        spacing=15,       # カード間の間隔
-                        run_spacing=15,   # 行間の間隔
-                        controls=achievement_cards,
-                    )
+                    grid,
                 ]
             )
         except Exception as e:
