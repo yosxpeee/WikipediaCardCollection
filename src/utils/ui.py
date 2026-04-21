@@ -137,12 +137,18 @@ def create_ranked_tabs(ranks, all_cards_by_rank, on_select_callback=None, initia
             ),
             value="asc",
         )
-        # apply initial state for this tab if provided
+        # apply initial state for this tab if provided (including page index)
         try:
             if initial_state is not None and isinstance(initial_state, dict):
                 if initial_state.get("rank_index") is not None and int(initial_state.get("rank_index")) == idx:
                     sort_dd.value = initial_state.get("sort_key", sort_dd.value)
                     sort_rg.value = initial_state.get("sort_order", sort_rg.value)
+                    # page index (ページネーション) を復元
+                    try:
+                        pi = int(initial_state.get("page_index", 0))
+                        page["idx"] = pi
+                    except Exception:
+                        pass
         except Exception:
             pass
         search_tf = ft.TextField(
@@ -324,7 +330,7 @@ def create_ranked_tabs(ranks, all_cards_by_rank, on_select_callback=None, initia
                 pass
             try:
                 if callable(on_state_change):
-                    on_state_change(idx, dd.value, rg.value)
+                    on_state_change(idx, dd.value, rg.value, page.get("idx"))
             except Exception:
                 pass
 
@@ -335,7 +341,7 @@ def create_ranked_tabs(ranks, all_cards_by_rank, on_select_callback=None, initia
                 pass
             try:
                 if callable(on_state_change):
-                    on_state_change(idx, dd.value, rg.value)
+                    on_state_change(idx, dd.value, rg.value, page.get("idx"))
             except Exception:
                 pass
 
@@ -343,14 +349,24 @@ def create_ranked_tabs(ranks, all_cards_by_rank, on_select_callback=None, initia
         sort_rg.on_change = _sort_rg_on_change
         search_tf.on_submit = refresh_lv
         # ページ操作ハンドラ
-        def _on_prev(e, page=page, ref=refresh_lv):
+        def _on_prev(e, page=page, ref=refresh_lv, idx=idx, dd=sort_dd, rg=sort_rg):
             if page["idx"] > 0:
                 page["idx"] -= 1
                 ref()
-        def _on_next(e, page=page, ref=refresh_lv, total_rows_getter=lambda rk=rk: len([r for r in all_cards_by_rank.get(rk, []) if (search_tf.value or "").strip().lower() in ((r[2] or "").lower()) or (search_tf.value or "").strip()==""])):
+                try:
+                    if callable(on_state_change):
+                        on_state_change(idx, dd.value, rg.value, page.get("idx"))
+                except Exception:
+                    pass
+        def _on_next(e, page=page, ref=refresh_lv, total_rows_getter=lambda rk=rk: len([r for r in all_cards_by_rank.get(rk, []) if (search_tf.value or "").strip().lower() in ((r[2] or "").lower()) or (search_tf.value or "").strip()==""]), idx=idx, dd=sort_dd, rg=sort_rg):
             # next は refresh 内で上限チェックが入るのでインクリメントして更新
             page["idx"] += 1
             ref()
+            try:
+                if callable(on_state_change):
+                    on_state_change(idx, dd.value, rg.value, page.get("idx"))
+            except Exception:
+                pass
         prev_btn.on_click = _on_prev
         next_btn.on_click = _on_next
         def _on_search_clear(e, tf=search_tf, ref=refresh_lv):
@@ -398,7 +414,7 @@ def create_ranked_tabs(ranks, all_cards_by_rank, on_select_callback=None, initia
             except Exception:
                 pass
             if callable(on_state_change):
-                on_state_change(idx, sort_key, sort_order)
+                on_state_change(idx, sort_key, sort_order, None)
         except Exception:
             pass
 

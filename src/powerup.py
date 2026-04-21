@@ -11,6 +11,11 @@ class PowerUp:
         self.page = page
         # ローディングオーバーレイの参照を保持(図鑑のものを使いまわし)
         self.loading_overlay = page.overlay[1]
+        # ランクタブ・ソート順の記憶
+        self._remembered_rank_index = 0
+        self._remembered_sort_key = "id"
+        self._remembered_sort_order = "asc"
+        self._remembered_page_index = 0
     def achievements_check(self):
         """実績チェック処理"""
         def do_update_achievement():
@@ -302,12 +307,48 @@ class PowerUp:
             sozai_containers = []
             # 左側：ランク別タブの ListView を作成（共通化）
             from utils.ui import create_ranked_tabs
+            def _on_rank_sort_changed(rank_idx, sort_key, sort_order, page_index=None):
+                try:
+                    if rank_idx is not None:
+                        self._remembered_rank_index = int(rank_idx)
+                except Exception:
+                    pass
+                try:
+                    if sort_key is not None:
+                        self._remembered_sort_key = sort_key
+                except Exception:
+                    pass
+                try:
+                    if sort_order is not None:
+                        self._remembered_sort_order = sort_order
+                except Exception:
+                    pass
+                try:
+                    if page_index is not None:
+                        self._remembered_page_index = int(page_index)
+                except Exception:
+                    pass
+                try:
+                    self.page.update()
+                except Exception:
+                    pass
             def _on_target_selected(cid, name, rk, hp, atk, deff, img):
                 nonlocal selected_target_id
                 selected_target_id = cid
                 selected_target_text.value = f"{cid} [{rk}] {name}"
                 selected_target_text.update()
-            target_tab = create_ranked_tabs(ranks, all_cards_by_rank, on_select_callback=_on_target_selected)
+            target_tab = create_ranked_tabs(
+                ranks,
+                all_cards_by_rank,
+                on_select_callback=_on_target_selected,
+                initial_state={
+                    "rank_index": self._remembered_rank_index,
+                    "sort_key": self._remembered_sort_key,
+                    "sort_order": self._remembered_sort_order,
+                    "page_index": self._remembered_page_index,
+                },
+                on_state_change=_on_rank_sort_changed,
+            )
             # 右側：素材一覧（isSozai == 1）
             sozai_lv = ft.ListView(
                 expand=True, 

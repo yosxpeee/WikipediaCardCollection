@@ -33,6 +33,7 @@ class Sortie:
         self._remembered_rank_index = 0
         self._remembered_sort_key = "id"
         self._remembered_sort_order = "asc"
+        self._remembered_page_index = 0
     def achievements_check(self, level, stage):
         """実績解除処理"""
         def do_update_achievement():
@@ -102,7 +103,7 @@ class Sortie:
                 pass
         def _create_formation_dialog():
             """編成用画面のダイアログ作成"""
-            def _on_rank_sort_changed(rank_idx, sort_key, sort_order):
+            def _on_rank_sort_changed(rank_idx, sort_key, sort_order, page_index=None):
                 try:
                     if rank_idx is not None:
                         self._remembered_rank_index = int(rank_idx)
@@ -116,6 +117,11 @@ class Sortie:
                 try:
                     if sort_order is not None:
                         self._remembered_sort_order = sort_order
+                except Exception:
+                    pass
+                try:
+                    if page_index is not None:
+                        self._remembered_page_index = int(page_index)
                 except Exception:
                     pass
                 try:
@@ -136,6 +142,7 @@ class Sortie:
                             "rank_index": self._remembered_rank_index,
                             "sort_key": self._remembered_sort_key,
                             "sort_order": self._remembered_sort_order,
+                            "page_index": self._remembered_page_index,
                         },
                         on_state_change=_on_rank_sort_changed,
                     ),
