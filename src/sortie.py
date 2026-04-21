@@ -29,6 +29,10 @@ class Sortie:
         self.current_enemies_formation = [{},{},{},{},{},{}]
         self.accordion_opened = "NORMAL"
         self.current_battle_winner = "ENEMY"
+        # 編集ダイアログ内の選択状態記憶
+        self._remembered_rank_index = 0
+        self._remembered_sort_key = "id"
+        self._remembered_sort_order = "asc"
     def achievements_check(self, level, stage):
         """実績解除処理"""
         def do_update_achievement():
@@ -98,13 +102,43 @@ class Sortie:
                 pass
         def _create_formation_dialog():
             """編成用画面のダイアログ作成"""
+            def _on_rank_sort_changed(rank_idx, sort_key, sort_order):
+                try:
+                    if rank_idx is not None:
+                        self._remembered_rank_index = int(rank_idx)
+                except Exception:
+                    pass
+                try:
+                    if sort_key is not None:
+                        self._remembered_sort_key = sort_key
+                except Exception:
+                    pass
+                try:
+                    if sort_order is not None:
+                        self._remembered_sort_order = sort_order
+                except Exception:
+                    pass
+                try:
+                    self.page.update()
+                except Exception:
+                    pass
             formation_dialog = ft.AlertDialog(
                 modal=True,
                 title=f"編成スロット：{self.current_slot_no+1} (編成{self.current_tab+1})",
                 content=ft.Container(
                     width=700,
                     expand=True,
-                    content=create_ranked_tabs(ranks, all_cards_by_rank, on_select_callback=_on_target_selected),
+                    content=create_ranked_tabs(
+                        ranks,
+                        all_cards_by_rank,
+                        on_select_callback=_on_target_selected,
+                        initial_state={
+                            "rank_index": self._remembered_rank_index,
+                            "sort_key": self._remembered_sort_key,
+                            "sort_order": self._remembered_sort_order,
+                        },
+                        on_state_change=_on_rank_sort_changed,
+                    ),
                 ),
                 actions=[
                     self.formation_close_button,
