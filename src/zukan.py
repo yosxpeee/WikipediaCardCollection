@@ -2,7 +2,7 @@ import flet as ft
 import asyncio
 from bs4 import BeautifulSoup
 
-from utils.utils import do_api, rankid_to_rank, create_card_image_data
+from utils.utils import debug_print, do_api, rankid_to_rank, create_card_image_data
 from utils.db import get_all_cards, update_favorite, update_achievement, get_all_achievements
 from utils.ui import create_card_image, create_rank_text
 
@@ -445,7 +445,7 @@ class Zukan:
             try:
                 count = await asyncio.to_thread(self.get_all_target_count)
             except Exception as e:
-                print(e)
+                debug_print(self.page.debug, e)
                 count = -1
             # DBからデータを持ってくる
             data = get_all_cards()
