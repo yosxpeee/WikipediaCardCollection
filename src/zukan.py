@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 
 from utils.utils import do_api, rankid_to_rank, create_card_image_data
 from utils.db import get_all_cards, update_favorite, update_achievement, get_all_achievements
-from utils.ui import create_card_image
+from utils.ui import create_card_image, create_rank_text
 
 PAGE_PER_CARDS = 30
 
@@ -58,7 +58,6 @@ class Zukan:
             title_padding=ft.Padding.all(10),
         )
         self.page.show_dialog(self.dialog)
-
     async def create(self):
         """画面作成"""
         def _build_zukan_list(page):
@@ -105,7 +104,7 @@ class Zukan:
                 rank_origin = rankid_to_rank(row_data[15], row_data[7])
                 num_text = str(row_data[0]).ljust(8, " ")
                 pageid_text = str(row_data[1]).ljust(8, " ")
-                rank_text = str(rank).ljust(4, " ")
+                rank_text = create_rank_text(rank)
                 if rank == rank_origin:
                     nameText = row_data[2] if row_data[2] is not None else ""
                 else:
@@ -129,7 +128,7 @@ class Zukan:
                         controls=[
                             ft.Text(num_text, font_family="Consolas"),
                             ft.Text(pageid_text, font_family="Consolas"),
-                            ft.Text(rank_text, font_family="Consolas"),
+                            rank_text,
                             ft.Container(
                                 width=370,
                                 content=ft.GestureDetector(
