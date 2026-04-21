@@ -70,7 +70,7 @@ def initialize_db():
                 cursor.execute('''SELECT COUNT(*) FROM achivements WHERE id = ? AND type = ? AND title = ?''', (id, a_type, title))
                 exists_count = cursor.fetchone()[0]
                 if exists_count == 0:
-                    cursor.execute('''INSERT INTO achivements (id, type, title, description, done, date) VALUES (?, ?, ?, 0, NULL)''', (id, a_type, title, description))
+                    cursor.execute('''INSERT INTO achivements (id, type, title, description, done, date) VALUES (?, ?, ?, ?, 0, NULL)''', (id, a_type, title, description))
         conn.commit()
     conn.close()
 

@@ -16,6 +16,9 @@ class Achievements:
         try:
             await asyncio.sleep(0.5)
             achievements_data = await asyncio.to_thread(get_all_achievements)
+            # 表示順を種別→ID昇順にソート
+            type_order = {"ガチャ": 0, "図鑑":1, "出撃": 2, "強化": 3}
+            achievements_data.sort(key=lambda a: (type_order.get(a[1], 99), a[0]))
             def _build_achievement_card(achievement):
                 """単一の実績カードを生成するヘルパー関数"""
                 # achievement: (id, type, title, description, done, date) のタプル

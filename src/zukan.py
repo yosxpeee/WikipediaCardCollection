@@ -3,7 +3,7 @@ import asyncio
 from bs4 import BeautifulSoup
 
 from utils.utils import do_api, rankid_to_rank, create_card_image_data
-from utils.db import get_all_cards, update_favorite
+from utils.db import get_all_cards, update_favorite, update_achievement, get_all_achievements
 from utils.ui import create_card_image
 
 PAGE_PER_CARDS = 30
@@ -58,6 +58,7 @@ class Zukan:
             title_padding=ft.Padding.all(10),
         )
         self.page.show_dialog(self.dialog)
+
     async def create(self):
         """画面作成"""
         def _build_zukan_list(page):
@@ -662,6 +663,30 @@ class Zukan:
                     ),
                 ],
             )
+            #実績チェック
+            def do_update_achievement():
+                """更新処理"""
+                update_achievement(int(line[0]))
+                msg.append(ft.Text(f"実績を達成：{line[2]}", color=ft.Colors.BLACK))
+            ach_data = get_all_achievements()
+            msg = []
+            for line in ach_data:
+                if line[1] == "図鑑" and line[4] == 0:
+                    if line[2] == "コレクター" and len(data) >= 1000:
+                        do_update_achievement()
+                    if line[2] == "博物館" and len(data) >= 10000:
+                        do_update_achievement()
+            if msg != []:
+                msg_container = ft.Column(
+                    controls=msg
+                )
+                self.page.show_dialog(
+                    ft.SnackBar(
+                        content=msg_container, 
+                        duration=1500,
+                        bgcolor=ft.Colors.LIGHT_GREEN,
+                    )
+                )
         finally:
             # ローディングオーバーレイを非表示（例外が起きても必ず閉じる）
             try:
