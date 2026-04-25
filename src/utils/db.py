@@ -51,27 +51,26 @@ def initialize_db():
     conn.commit()
     # 実績の初期値を追加する（マスターCSVから、既存と重複しないものだけ挿入）
     csv_path = resource_path('src/achievements_master.csv')
-    if os.path.exists(csv_path):
-        with open(csv_path, encoding='utf-8') as f:
-            reader = csv.reader(f)
-            for row in reader:
-                if not row:
-                    continue
-                # コメント行をスキップ
-                line = ''.join(row).strip()
-                if line.startswith('#'):
-                    continue
-                if len(row) < 3:
-                    continue
-                id = row[0].strip()
-                a_type = row[1].strip()
-                title = row[2].strip()
-                description = row[3].strip()
-                cursor.execute('''SELECT COUNT(*) FROM achivements WHERE id = ? AND type = ? AND title = ?''', (id, a_type, title))
-                exists_count = cursor.fetchone()[0]
-                if exists_count == 0:
-                    cursor.execute('''INSERT INTO achivements (id, type, title, description, done, date) VALUES (?, ?, ?, ?, 0, NULL)''', (id, a_type, title, description))
-        conn.commit()
+    with open(csv_path, encoding='utf-8') as f:
+        reader = csv.reader(f)
+        for row in reader:
+            if not row:
+                continue
+            # コメント行をスキップ
+            line = ''.join(row).strip()
+            if line.startswith('#'):
+                continue
+            if len(row) < 3:
+                continue
+            id = row[0].strip()
+            a_type = row[1].strip()
+            title = row[2].strip()
+            description = row[3].strip()
+            cursor.execute('''SELECT COUNT(*) FROM achivements WHERE id = ? AND type = ? AND title = ?''', (id, a_type, title))
+            exists_count = cursor.fetchone()[0]
+            if exists_count == 0:
+                cursor.execute('''INSERT INTO achivements (id, type, title, description, done, date) VALUES (?, ?, ?, ?, 0, NULL)''', (id, a_type, title, description))
+    conn.commit()
     conn.close()
 
 def save_cards(cards):
