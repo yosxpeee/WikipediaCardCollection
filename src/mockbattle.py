@@ -1,8 +1,10 @@
 import flet as ft
 import asyncio
+
 from utils.db import get_cards_by_rankid, get_random_card_by_rank, get_card_from_id, get_cards_by_favorite
 from utils.ui import create_card_image
-from utils.utils import rank_to_rankid, rankid_to_rank, calc_damage
+from utils.utils import rank_to_rankid, rankid_to_rank, calc_damage, switch_BGM, stop_BGM
+from utils.manage_settings import get_volume
 
 class MockBattle:
     def __init__(self, page):
@@ -38,6 +40,8 @@ class MockBattle:
             return create_card_image(data_for_image, True, False), data_for_image
         async def mock_battle(player_data, npc_data):
             """模擬戦（非同期でUI更新しながら進行）"""
+            await stop_BGM(self.page)
+            switch_BGM(self.page, "bgm_mockbattle_fight", get_volume())
             player_hp = int(player_data["HP"])
             npc_hp = int(npc_data["HP"])
             # 参照しやすいようにバーオブジェクトを取得
@@ -233,19 +237,16 @@ class MockBattle:
             actions=[
                 ft.TextButton(
                     content="Close", 
-                    on_click=lambda e: self.page.pop_dialog(),
+                    on_click=lambda e: {
+                        self.page.pop_dialog(),
+                        switch_BGM(self.page, "bgm_mockbattle", get_volume())
+                    },
                     disabled=True,
                 )
             ]
         )
         self.page.show_dialog(mock_battle_dialog)
-        # バトルを非同期タスクとして開始（UI スレッドをブロックしない）
-        try:
-            asyncio.create_task(mock_battle(player_data, npc_data))
-        except Exception:
-            # フォールバック（同期呼び出し）
-            import threading
-            threading.Thread(target=lambda: asyncio.run(mock_battle(player_data, npc_data))).start()
+        asyncio.create_task(mock_battle(player_data, npc_data))
     async def create(self):
         """画面作成"""
         def select_npc_by_rank(rank):

@@ -26,6 +26,7 @@ def get_card_color(rank, isSozai):
     return color
 
 def create_rank_text(rank):
+    """ランクのテキストを生成する"""
     if rank == "LR":
         color_gradient = ft.LinearGradient(
             begin=ft.Alignment.CENTER_LEFT,
@@ -87,7 +88,7 @@ def create_rank_text(rank):
         content=rank_text,
     )
 
-def create_ranked_tabs(ranks, all_cards_by_rank, on_select_callback=None):
+def create_ranked_tabs(ranks, all_cards_by_rank, on_select_callback=None, initial_state=None, on_state_change=None):
     """ランク別のタブ付きカード選択リストを作成して返す。
 
     Args:
@@ -103,7 +104,7 @@ def create_ranked_tabs(ranks, all_cards_by_rank, on_select_callback=None):
     selected_cid = {"val": None}
     # 各タブの refresh 関数を保持して、選択変更時に全タブを再描画する
     refresh_funcs = []
-    for rk in ranks:
+    for idx, rk in enumerate(ranks):
         lv = ft.ListView(
             expand=True,
             spacing=0,
@@ -136,6 +137,20 @@ def create_ranked_tabs(ranks, all_cards_by_rank, on_select_callback=None):
             ),
             value="asc",
         )
+        # apply initial state for this tab if provided (including page index)
+        try:
+            if initial_state is not None and isinstance(initial_state, dict):
+                if initial_state.get("rank_index") is not None and int(initial_state.get("rank_index")) == idx:
+                    sort_dd.value = initial_state.get("sort_key", sort_dd.value)
+                    sort_rg.value = initial_state.get("sort_order", sort_rg.value)
+                    # page index (ページネーション) を復元
+                    try:
+                        pi = int(initial_state.get("page_index", 0))
+                        page["idx"] = pi
+                    except Exception:
+                        pass
+        except Exception:
+            pass
         search_tf = ft.TextField(
             value="",
             label="カード名検索",
@@ -308,18 +323,50 @@ def create_ranked_tabs(ranks, all_cards_by_rank, on_select_callback=None):
                 ),
             ),
         )
-        sort_dd.on_select = refresh_lv
-        sort_rg.on_change = refresh_lv
+        def _sort_dd_on_select(e, rk=rk, idx=idx, ref=refresh_lv, dd=sort_dd, rg=sort_rg):
+            try:
+                ref(e)
+            except Exception:
+                pass
+            try:
+                if callable(on_state_change):
+                    on_state_change(idx, dd.value, rg.value, page.get("idx"))
+            except Exception:
+                pass
+
+        def _sort_rg_on_change(e, rk=rk, idx=idx, ref=refresh_lv, dd=sort_dd, rg=sort_rg):
+            try:
+                ref(e)
+            except Exception:
+                pass
+            try:
+                if callable(on_state_change):
+                    on_state_change(idx, dd.value, rg.value, page.get("idx"))
+            except Exception:
+                pass
+
+        sort_dd.on_select = _sort_dd_on_select
+        sort_rg.on_change = _sort_rg_on_change
         search_tf.on_submit = refresh_lv
         # ページ操作ハンドラ
-        def _on_prev(e, page=page, ref=refresh_lv):
+        def _on_prev(e, page=page, ref=refresh_lv, idx=idx, dd=sort_dd, rg=sort_rg):
             if page["idx"] > 0:
                 page["idx"] -= 1
                 ref()
-        def _on_next(e, page=page, ref=refresh_lv, total_rows_getter=lambda rk=rk: len([r for r in all_cards_by_rank.get(rk, []) if (search_tf.value or "").strip().lower() in ((r[2] or "").lower()) or (search_tf.value or "").strip()==""])):
+                try:
+                    if callable(on_state_change):
+                        on_state_change(idx, dd.value, rg.value, page.get("idx"))
+                except Exception:
+                    pass
+        def _on_next(e, page=page, ref=refresh_lv, total_rows_getter=lambda rk=rk: len([r for r in all_cards_by_rank.get(rk, []) if (search_tf.value or "").strip().lower() in ((r[2] or "").lower()) or (search_tf.value or "").strip()==""]), idx=idx, dd=sort_dd, rg=sort_rg):
             # next は refresh 内で上限チェックが入るのでインクリメントして更新
             page["idx"] += 1
             ref()
+            try:
+                if callable(on_state_change):
+                    on_state_change(idx, dd.value, rg.value, page.get("idx"))
+            except Exception:
+                pass
         prev_btn.on_click = _on_prev
         next_btn.on_click = _on_next
         def _on_search_clear(e, tf=search_tf, ref=refresh_lv):
@@ -344,6 +391,34 @@ def create_ranked_tabs(ranks, all_cards_by_rank, on_select_callback=None):
             controls=[ft.TabBar(tab_alignment=ft.TabAlignment.CENTER, tabs=[ft.Tab(label=r) for r in ranks]), ft.TabBarView(expand=True, controls=tab_views)],
         ),
     )
+    # restore selected tab if provided
+    try:
+        if initial_state is not None and isinstance(initial_state, dict) and initial_state.get("rank_index") is not None:
+            tabs.selected_index = int(initial_state.get("rank_index"))
+    except Exception:
+        pass
+
+    # notify parent when tab index changes
+    def _tabs_on_change(e):
+        try:
+            idx = e.control.selected_index
+            # try to extract sort controls from the corresponding tab view if possible
+            # fallback to None for sort values
+            sort_key = None
+            sort_order = None
+            try:
+                view = tab_views[idx]
+                # header row is view.content.controls[0] which contains sort_ui
+                # but safe extraction is difficult; instead call on_state_change with None values
+                pass
+            except Exception:
+                pass
+            if callable(on_state_change):
+                on_state_change(idx, sort_key, sort_order, None)
+        except Exception:
+            pass
+
+    tabs.on_change = _tabs_on_change
     return tabs
 
 def create_card_image(data, isShow, isFbButton, on_fav_changed=None):

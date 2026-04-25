@@ -162,8 +162,9 @@ cython_debug/
 # Flet
 storage/
 
-# アプリで生成されるファイル
+# アプリで生成されるファイルなど
 *.db
 sortie_info.json
 settings.json
 icon.ico
+bgm/*

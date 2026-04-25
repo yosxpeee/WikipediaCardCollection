@@ -3,7 +3,10 @@ import asyncio
 import random
 import os
 import sys
+import flet_audio as fta
 from requests.exceptions import Timeout
+
+from utils.manage_settings import load_settings
 
 # static tables
 HEADER = {
@@ -25,7 +28,6 @@ def debug_print(debug, msg):
     """デバッグ出力"""
     if debug:
         print(msg)
-
 
 def resource_path(relative_path: str) -> str:
     """Return path to resource, works for dev and PyInstaller onefile.
@@ -104,6 +106,7 @@ def quality_to_rank(quality):
     return rank
 
 def card_data_from_db(data_from_pageid):
+    """DBの情報からカードイメージのデータを作成する"""
     #かぶったらAPIコールをせず内部データを使って更新する
     full_url = data_from_pageid[0][3]
     image_url = data_from_pageid[0][4]
@@ -262,3 +265,47 @@ def create_card_image_data(data):
         "resourceRANK": rank_origin,
     }
     return card_data
+
+def switch_BGM(page, scene, volume):
+    """BGM切り替え"""
+    settings = load_settings()
+    file = settings[scene]
+    num = len(page.services)
+    debug_print(page.debug, f"[BGM] {num} {scene} {file}")
+    #デフォルト設定の場合のBGM選択
+    if file == "":
+        if scene == "bgm_gacha":
+            file = "bgm\\神隠しの真相_2.mp3"
+        if scene == "bgm_zukan":
+            file = "bgm\\Cassette_Tape_Dream_2.mp3"
+        if scene == "bgm_mockbattle":
+            file = "bgm\\Flutter.mp3"
+        if scene == "bgm_mockbattle_fight":
+            file = "bgm\\8-bit_Aggressive1.mp3"
+        if scene == "bgm_powerup":
+            file = "bgm\\鍛冶屋のドワーフ.mp3"
+        if scene == "bgm_sortie":
+            file = "bgm\\Devil_Disaster.mp3"
+        if scene == "bgm_sortie_fight":
+            file = "bgm\\危機.mp3"
+        if scene == "bgm_sortie_reward":
+            file = "bgm\\敬虔な祈りと首輪.mp3"
+        if scene == "bgm_achievements":
+            file = "bgm\\首領.mp3"
+    audio = fta.Audio(
+        src=file,
+        autoplay=True,
+        volume=volume,   #100%
+        balance=0,  #同じバランス
+        release_mode=fta.ReleaseMode.LOOP,
+    )
+    try:
+        page.services.pop()
+    except:
+        pass
+    page.services.append(audio)
+
+async def stop_BGM(page):
+    """BGM停止"""
+    debug_print(page.debug, "[BGM] stop")
+    await page.services[0].release()

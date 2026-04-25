@@ -1,4 +1,5 @@
 import asyncio
+
 from utils.utils import fetch_json, debug_print
 
 # APIエンドポイントのベースURLを定義（必要に応じて）

@@ -2,9 +2,9 @@ import flet as ft
 import asyncio
 from bs4 import BeautifulSoup
 
-from utils.utils import do_api, rankid_to_rank, create_card_image_data
-from utils.db import get_all_cards, update_favorite
-from utils.ui import create_card_image
+from utils.utils import debug_print, do_api, rankid_to_rank, create_card_image_data
+from utils.db import get_all_cards, update_favorite, update_achievement, get_all_achievements
+from utils.ui import create_card_image, create_rank_text
 
 PAGE_PER_CARDS = 30
 
@@ -18,7 +18,7 @@ class Zukan:
     def get_all_target_count(self):
         """総数を取得する(APIコール)"""
         url = "https://ja.wikipedia.org/wiki/Special:Statistics"
-        response = do_api(url)
+        response = do_api(self.page.debug, url)
         soup = BeautifulSoup(response.text, "html.parser")
         # コンテンツページ数の部分を探す（class名で特定）
         stats = soup.find("table", class_="mw-statistics-table")
@@ -104,7 +104,7 @@ class Zukan:
                 rank_origin = rankid_to_rank(row_data[15], row_data[7])
                 num_text = str(row_data[0]).ljust(8, " ")
                 pageid_text = str(row_data[1]).ljust(8, " ")
-                rank_text = str(rank).ljust(4, " ")
+                rank_text = create_rank_text(rank)
                 if rank == rank_origin:
                     nameText = row_data[2] if row_data[2] is not None else ""
                 else:
@@ -128,7 +128,7 @@ class Zukan:
                         controls=[
                             ft.Text(num_text, font_family="Consolas"),
                             ft.Text(pageid_text, font_family="Consolas"),
-                            ft.Text(rank_text, font_family="Consolas"),
+                            rank_text,
                             ft.Container(
                                 width=370,
                                 content=ft.GestureDetector(
@@ -444,7 +444,8 @@ class Zukan:
             # 総記事数はブロッキングなのでバックグラウンドで取得
             try:
                 count = await asyncio.to_thread(self.get_all_target_count)
-            except Exception:
+            except Exception as e:
+                debug_print(self.page.debug, e)
                 count = -1
             # DBからデータを持ってくる
             data = get_all_cards()
@@ -661,6 +662,30 @@ class Zukan:
                     ),
                 ],
             )
+            #実績チェック
+            def do_update_achievement():
+                """更新処理"""
+                update_achievement(int(line[0]))
+                msg.append(ft.Text(f"実績を達成：{line[2]}", color=ft.Colors.BLACK))
+            ach_data = get_all_achievements()
+            msg = []
+            for line in ach_data:
+                if line[1] == "図鑑" and line[4] == 0:
+                    if line[2] == "コレクター" and len(data) >= 1000:
+                        do_update_achievement()
+                    if line[2] == "博物館" and len(data) >= 10000:
+                        do_update_achievement()
+            if msg != []:
+                msg_container = ft.Column(
+                    controls=msg
+                )
+                self.page.show_dialog(
+                    ft.SnackBar(
+                        content=msg_container, 
+                        duration=1500,
+                        bgcolor=ft.Colors.LIGHT_GREEN,
+                    )
+                )
         finally:
             # ローディングオーバーレイを非表示（例外が起きても必ず閉じる）
             try:

@@ -1,12 +1,19 @@
 import sqlite3
-from utils.utils import rank_to_rankid
+import os
+import csv
+from datetime import datetime
+
+from utils.utils import rank_to_rankid, resource_path
 
 def initialize_db():
     """DB初期化"""
     conn = sqlite3.connect('cards.db')
     cursor = conn.cursor()
     # ファイルがない、ファイルがあってもテーブルがない場合は新規作成する
-    # IDは数値、それ以外は全部文字列    
+    ####################
+    # カードテーブル
+    ####################
+    # IDは数値、それ以外は全部文字列
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS gacha_cards (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -28,6 +35,43 @@ def initialize_db():
         )
     ''')
     conn.commit()
+    ####################
+    # 実績テーブル
+    ####################
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS achivements (
+            id INTEGER PRIMARY KEY,
+            type TEXT NOT NULL,
+            title TEXT NOT NULL,
+            description TEXT NOT NULL,
+            done BOOLEAN NOT NULL DEFAULT 0,
+            date TEXT
+        )
+    ''')
+    conn.commit()
+    # 実績の初期値を追加する（マスターCSVから、既存と重複しないものだけ挿入）
+    csv_path = resource_path('src/achievements_master.csv')
+    if os.path.exists(csv_path):
+        with open(csv_path, encoding='utf-8') as f:
+            reader = csv.reader(f)
+            for row in reader:
+                if not row:
+                    continue
+                # コメント行をスキップ
+                line = ''.join(row).strip()
+                if line.startswith('#'):
+                    continue
+                if len(row) < 3:
+                    continue
+                id = row[0].strip()
+                a_type = row[1].strip()
+                title = row[2].strip()
+                description = row[3].strip()
+                cursor.execute('''SELECT COUNT(*) FROM achivements WHERE id = ? AND type = ? AND title = ?''', (id, a_type, title))
+                exists_count = cursor.fetchone()[0]
+                if exists_count == 0:
+                    cursor.execute('''INSERT INTO achivements (id, type, title, description, done, date) VALUES (?, ?, ?, ?, 0, NULL)''', (id, a_type, title, description))
+        conn.commit()
     conn.close()
 
 def save_cards(cards):
@@ -149,5 +193,32 @@ def rankup_card(target_id, next_rankid, atk, defence, hp, sozai_id):
         (str(next_rankid), str(hp), str(atk), str(defence), int(target_id))
     )
     cursor.execute(f"""DELETE FROM gacha_cards WHERE id = {int(sozai_id)}""")
+    conn.commit()
+    # 断片化を防ぎたいのでバキュームする
+    cursor.execute('''VACUUM''')
+    conn.commit()
+    conn.close()
+
+def get_all_achievements():
+    """全実績データを取得"""
+    conn = sqlite3.connect('cards.db')
+    cursor = conn.cursor()
+    data = []
+    sql = "SELECT id, type, title, description, done, date FROM achivements"
+    cursor.execute(sql)
+    for item in cursor:
+        data.append(item)
+    conn.close()
+    return data
+
+def update_achievement(id):
+    """実績達成"""
+    formatted_date = datetime.now().strftime('%Y/%m/%d')
+    conn = sqlite3.connect('cards.db')
+    cursor = conn.cursor()
+    cursor.execute(
+        '''UPDATE achivements SET done = ?, date = ? WHERE id = ?''',
+        (1, formatted_date, int(id))
+    )
     conn.commit()
     conn.close()

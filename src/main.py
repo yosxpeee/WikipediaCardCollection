@@ -7,15 +7,17 @@ from powerup import PowerUp
 from mockbattle import MockBattle
 from sortie import Sortie
 from setting import Setting
+from achievements import Achievements
 
 from utils.db import initialize_db
-from utils.manage_settings import get_dark_theme
+from utils.utils import switch_BGM, stop_BGM
+from utils.manage_settings import get_dark_theme, get_volume
 
 DEBUG_MODE = False
 
 async def main(page: ft.Page):
     """メイン"""
-    def _change_tabs(e):
+    async def _change_tabs(e):
         """タブの切り替え"""
         async def __load_and_set_zukan():
             """図鑑タブのロード"""
@@ -95,6 +97,25 @@ async def main(page: ft.Page):
             tabs_widget.update()
             ov = page.overlay[1]
             ov.visible = False
+        async def __load_and_set_achievements():
+            """模擬戦タブのロード"""
+            try:
+                content = await achievements.create()
+                tab_bar_view.controls[5] = ft.Container(
+                    content=content,
+                    alignment=ft.Alignment.CENTER,
+                )
+                tab_bar_view.update()
+            except Exception as ex:
+                tab_bar_view.controls[5] = ft.Column([
+                    ft.Text("読み込みに失敗しました。"),
+                    ft.Text(str(ex)),
+                ])
+                tab_bar_view.update()
+            tabs_widget.disabled = False
+            tabs_widget.update()
+            ov = page.overlay[1]
+            ov.visible = False
         # コントロール取得
         nonlocal last_tab_index
         tabs_widget = e.control
@@ -107,13 +128,16 @@ async def main(page: ft.Page):
             tab_bar_view.controls[2] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             tab_bar_view.controls[3] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             tab_bar_view.controls[4] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
+            tab_bar_view.controls[5] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             tab_bar_view.update()
+            switch_BGM(page, "bgm_gacha", get_volume())
         # 図鑑タブに切り替えたとき
         if e.control.selected_index == 1:
             # 強化、模擬戦のタブの中身をクリア（メモリ節約）
             tab_bar_view.controls[2] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             tab_bar_view.controls[3] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             tab_bar_view.controls[4] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
+            tab_bar_view.controls[5] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             # オーバーレイを即表示して画面操作をブロック
             ov = page.overlay[1]
             ov.visible = True
@@ -133,12 +157,14 @@ async def main(page: ft.Page):
             except:
                 tabs_widget.disabled = False
                 tabs_widget.update()
+            switch_BGM(page, "bgm_zukan", get_volume())
         # 強化タブに切り替えたとき
         if e.control.selected_index == 2:
             # リロードが必要なタブの中身をクリアしておく（メモリ節約）
             tab_bar_view.controls[1] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             tab_bar_view.controls[3] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             tab_bar_view.controls[4] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
+            tab_bar_view.controls[5] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             # 図鑑と同じオーバーレイを表示して読み込み中に UI を覆う
             overlay = page.overlay[1]
             overlay.visible = True
@@ -158,12 +184,14 @@ async def main(page: ft.Page):
             except Exception:
                 tabs_widget.disabled = False
                 tabs_widget.update()
+            switch_BGM(page, "bgm_powerup", get_volume())
         # 模擬戦のタブに切り替えたとき
         if e.control.selected_index == 3:
             # リロードが必要なタブの中身をクリアしておく（メモリ節約）
             tab_bar_view.controls[1] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             tab_bar_view.controls[2] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             tab_bar_view.controls[4] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
+            tab_bar_view.controls[5] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             # 図鑑と同じオーバーレイを表示して読み込み中に UI を覆う
             overlay = page.overlay[1]
             overlay.visible = True
@@ -183,12 +211,14 @@ async def main(page: ft.Page):
             except Exception:
                 tabs_widget.disabled = False
                 tabs_widget.update()
+            switch_BGM(page, "bgm_mockbattle", get_volume())
         # 出撃タブに切り替えたとき
         if e.control.selected_index == 4:
             # リロードが必要なタブの中身をクリアしておく（メモリ節約）
             tab_bar_view.controls[1] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             tab_bar_view.controls[2] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             tab_bar_view.controls[3] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
+            tab_bar_view.controls[5] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             # 図鑑と同じオーバーレイを表示して読み込み中に UI を覆う
             overlay = page.overlay[1]
             overlay.visible = True
@@ -208,14 +238,44 @@ async def main(page: ft.Page):
             except Exception:
                 tabs_widget.disabled = False
                 tabs_widget.update()
-        # 設定タブに切り替えたとき
+            switch_BGM(page, "bgm_sortie", get_volume())
+        # 実績タブに切り替えたとき
         if e.control.selected_index == 5:
             # リロードが必要なタブの中身をクリアしておく（メモリ節約）
             tab_bar_view.controls[1] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             tab_bar_view.controls[2] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             tab_bar_view.controls[3] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             tab_bar_view.controls[4] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
+            # オーバーレイを即表示して画面操作をブロック
+            ov = page.overlay[1]
+            ov.visible = True
+            page.update()
+            # 読み込み中はタブ切替を禁止
+            tabs_widget.disabled = True
+            tabs_widget.update()
+            # 実績タブの内容を非同期で読み込む
+            try:
+                achievements = Achievements(page)
+                tab_bar_view.controls[5] = ft.Container(
+                    content=ft.Text("読み込み中...", size=18),
+                    alignment=ft.Alignment.CENTER,
+                )
+                tab_bar_view.update()
+                asyncio.create_task(__load_and_set_achievements())
+            except:
+                tabs_widget.disabled = False
+                tabs_widget.update()
+            switch_BGM(page, "bgm_achievements", get_volume())
+        # 設定タブに切り替えたとき
+        if e.control.selected_index == 6:
+            # リロードが必要なタブの中身をクリアしておく（メモリ節約）
+            tab_bar_view.controls[1] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
+            tab_bar_view.controls[2] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
+            tab_bar_view.controls[3] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
+            tab_bar_view.controls[4] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
+            tab_bar_view.controls[5] = ft.Container(content=None, alignment=ft.Alignment.CENTER)
             tab_bar_view.update()
+            await stop_BGM(page)
         # 最後に last_tab_index を更新
         last_tab_index = e.control.selected_index
     ####################
@@ -307,7 +367,7 @@ async def main(page: ft.Page):
     page.controls.append(
         ft.Tabs(
             selected_index=0,
-            length=6,
+            length=7,
             expand=True,
             on_change=_change_tabs,
             content=ft.Column(
@@ -403,6 +463,22 @@ async def main(page: ft.Page):
                                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                                     controls=[
                                         ft.Image(
+                                            "icon_achievements.svg", 
+                                            color=ft.Colors.ON_SURFACE,
+                                            width=24, 
+                                            height=24
+                                        ),
+                                        ft.Text("実績"),
+                                    ],
+                                ),
+                            ),
+                            ft.Tab(
+                                label=ft.Column(
+                                    spacing=2,
+                                    alignment=ft.MainAxisAlignment.CENTER,
+                                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                                    controls=[
+                                        ft.Image(
                                             "icon_settings.svg", 
                                             color=ft.Colors.ON_SURFACE,
                                             width=24, 
@@ -437,6 +513,10 @@ async def main(page: ft.Page):
                                 alignment=ft.Alignment.CENTER,
                                 content=None,
                             ),
+                            ft.Container(   # 実績
+                                alignment=ft.Alignment.CENTER,
+                                content=None,
+                            ),
                             ft.Container(   # 設定
                                 alignment=ft.Alignment.CENTER,
                                 content=setting.create(),
@@ -447,7 +527,8 @@ async def main(page: ft.Page):
             ),
         )
     )
-    # 念のためここでも更新を掛ける
+    # BGM設定
+    switch_BGM(page, "bgm_gacha", get_volume())
     page.update()
 
 if __name__ == "__main__":
